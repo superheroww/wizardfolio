@@ -175,7 +175,7 @@ export default function RegionExposureChart({
                   </span>
                 </div>
                 <span className="tabular-nums text-zinc-600 dark:text-zinc-300">
-                  {r.value.toFixed(1)}%
+                  {r.value.toFixed(1).replace(/\.0$/, "")}%
                 </span>
               </li>
             ))}

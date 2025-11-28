@@ -55,24 +55,34 @@ export default function ResultsPage() {
     }
   };
 
-  const handleShare = async () => {
-    const shareUrl = window.location.href;
+const handleShare = async () => {
+  const shareUrl = window.location.href;
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "My Portfolio Exposure",
-          text: "Check out my portfolio look-through powered by WizardFolio",
-          url: shareUrl,
-        });
-      } catch {
-        // user cancelled share
-      }
-    } else {
-      await navigator.clipboard.writeText(shareUrl);
-      alert("Link copied to clipboard!");
-    }
+  const shareData = {
+    title: "My Portfolio Exposure",
+    text: "Check out my portfolio look-through powered by WizardFolio",
+    url: shareUrl,
   };
+
+  if (navigator.share) {
+    try {
+      await navigator.share(shareData);
+      return;
+    } catch (err) {
+      // If user cancels, just silently return
+      // If it fails for another reason, fall through to clipboard
+      console.warn("navigator.share failed, falling back to clipboard:", err);
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(shareUrl);
+    alert("Link copied to clipboard!");
+  } catch (err) {
+    console.error("Failed to copy link:", err);
+  }
+};
+
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) =>
     setTouchStartX(e.touches[0].clientX);
@@ -310,7 +320,7 @@ export default function ResultsPage() {
                 {pos.symbol || "—"}
               </span>
               <span className="tabular-nums text-zinc-600 dark:text-zinc-300">
-                {(pos.weightPct ?? 0).toFixed(1)}%
+                {(pos.weightPct ?? 0).toFixed(1).replace(/\.0$/, "")}%
               </span>
             </li>
           ))}

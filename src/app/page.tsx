@@ -2,26 +2,21 @@
 
 import * as React from "react";
 import { useState, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { UserPosition } from "@/lib/exposureEngine";
 import PortfolioInput from "@/components/PortfolioInput";
 import { DEFAULT_POSITIONS } from "@/data/defaultPositions";
 
-type HomePageProps = {
-  searchParams?: {
-    positions?: string;
-  };
-};
-
-export default function HomePage({ searchParams }: HomePageProps) {
+export default function HomePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const positionsParam = searchParams.get("positions");
 
   const initialPositions = useMemo<UserPosition[]>(() => {
-    const raw = searchParams?.positions;
-    if (!raw) return DEFAULT_POSITIONS;
+    if (!positionsParam) return DEFAULT_POSITIONS;
 
     try {
-      const decoded = decodeURIComponent(raw);
+      const decoded = decodeURIComponent(positionsParam);
       const parsed = JSON.parse(decoded);
       if (Array.isArray(parsed)) {
         return parsed as UserPosition[];
@@ -31,12 +26,11 @@ export default function HomePage({ searchParams }: HomePageProps) {
     }
 
     return DEFAULT_POSITIONS;
-  }, [searchParams?.positions]);
+  }, [positionsParam]);
 
-  // State derived from URL params
   const [positions, setPositions] = useState<UserPosition[]>(initialPositions);
 
-  // ⭐ NEW: when searchParams change, update the input fields
+  // when the URL query changes (coming back from /results), sync state
   useEffect(() => {
     setPositions(initialPositions);
   }, [initialPositions]);

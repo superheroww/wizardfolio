@@ -56,7 +56,7 @@ export default function HoldingsTable({
                   {item.symbol}
                 </td>
                 <td className="py-2 text-right text-sm text-zinc-700 dark:text-zinc-200">
-                  {item.weightPct.toFixed(2)}%
+                  {item.weightPct.toFixed(2).replace(/\.0$/, "")}%
                 </td>
               </tr>
             ))}
@@ -78,7 +78,7 @@ export default function HoldingsTable({
               {item.symbol}
             </span>
             <span className="text-zinc-700 dark:text-zinc-200">
-              {item.weightPct.toFixed(2)}%
+              {item.weightPct.toFixed(2).replace(/\.0$/, "")}%
             </span>
           </div>
         ))}

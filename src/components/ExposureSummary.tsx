@@ -319,7 +319,7 @@ export default function ExposureSummary({
             {classification}
           </p>
           <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-            {total.toFixed(1)}% • Top weights only
+            {total.toFixed(1)}.replace(/\.0$/, "")% • Top weights only
           </p>
         </div>
 
@@ -330,7 +330,7 @@ export default function ExposureSummary({
               {hoveredSlice.label}
             </span>
             <span className="ml-1 text-white/80">
-              {hoveredSlice.weightPct.toFixed(1)}%
+              {hoveredSlice.weightPct.toFixed(1).replace(/\.0$/, "")}%
             </span>
           </div>
         )}

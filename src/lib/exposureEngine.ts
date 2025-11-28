@@ -37,7 +37,7 @@ export function computeExposure(positions: UserPosition[]): ExposureBreakdown[] 
   const result: ExposureBreakdown[] = Array.from(exposureMap.entries()).map(
     ([symbol, weight]) => ({
       symbol,
-      weightPct: Number(weight.toFixed(2)),
+      weightPct: Number(weight.toFixed(2).replace(/\.0$/, "")),
     })
   );
 
