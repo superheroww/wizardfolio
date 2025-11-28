@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import type React from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   computeExposure,
   ExposureBreakdown,
@@ -9,10 +8,11 @@ import {
 } from "@/lib/exposureEngine";
 import ExposureSummary from "@/components/ExposureSummary";
 import HoldingsTable from "@/components/HoldingsTable";
+import RegionExposureChart from "@/components/RegionExposureChart";
+import OffersCard from "@/components/OffersCard";
 import { DEFAULT_POSITIONS } from "@/data/defaultPositions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Share2 } from "lucide-react";
-import { toPng } from "html-to-image";
 
 export default function ResultsPage() {
   const router = useRouter();
@@ -31,17 +31,13 @@ export default function ResultsPage() {
   }, [positionsParam]);
 
   const [exposure, setExposure] = useState<ExposureBreakdown[]>([]);
-  const [slide, setSlide] = useState<0 | 1>(0); // 0 = exposure, 1 = holdings
+  const [slide, setSlide] = useState<0 | 1 | 2>(0); // 0 = exposure, 1 = region, 2 = holdings
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
-  // ref for the whole “gallery” card we want to turn into an image
-  const cardRef = useRef<HTMLDivElement | null>(null);
-
-  // Limit holdings to top 10 for teaser
   const top10 = useMemo(
     () =>
       [...exposure]
-        .sort((a, b) => b.weightPct - a.weightPct)
+        .sort((a, b) => (b.weightPct ?? 0) - (a.weightPct ?? 0))
         .slice(0, 10),
     [exposure]
   );
@@ -54,36 +50,21 @@ export default function ResultsPage() {
   const handleEditInputs = () => router.push("/");
 
   const handleShare = async () => {
-    if (!cardRef.current) return;
+    const shareUrl = window.location.href;
 
-    try {
-      // Turn the card into a PNG data URL
-      const dataUrl = await toPng(cardRef.current, {
-        cacheBust: true,
-      });
-
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      const file = new File([blob], "wizardfolio-exposure.png", {
-        type: "image/png",
-      });
-
-      if (navigator.canShare?.({ files: [file] })) {
+    if (navigator.share) {
+      try {
         await navigator.share({
-          files: [file],
           title: "My Portfolio Exposure",
-          text: "Powered by WizardFolio",
+          text: "Check out my portfolio look-through powered by WizardFolio",
+          url: shareUrl,
         });
-      } else {
-        // Fallback: download PNG if files can’t be shared
-        const link = document.createElement("a");
-        link.href = dataUrl;
-        link.download = "wizardfolio-exposure.png";
-        link.click();
+      } catch {
+        // user cancelled share
       }
-    } catch (err) {
-      console.error("Error sharing image", err);
-      // Last-resort fallback: do nothing or show a toast if you add one later
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      alert("Link copied to clipboard!");
     }
   };
 
@@ -94,23 +75,38 @@ export default function ResultsPage() {
     if (touchStartX == null) return;
     const deltaX = e.changedTouches[0].clientX - touchStartX;
 
+    // swipe threshold
     if (Math.abs(deltaX) > 40) {
-      setSlide(deltaX < 0 ? 1 : 0);
+      if (deltaX < 0) {
+        // left → next slide
+        setSlide((prev) => (prev === 2 ? 2 : ((prev + 1) as 0 | 1 | 2)));
+      } else {
+        // right → previous slide
+        setSlide((prev) => (prev === 0 ? 0 : ((prev - 1) as 0 | 1 | 2)));
+      }
     }
 
     setTouchStartX(null);
   };
 
-  const title =
-    slide === 0 ? "Your true exposure" : "Holdings breakdown";
+  const title = (() => {
+    switch (slide) {
+      case 0:
+        return "Your true exposure";
+      case 1:
+        return "By region";
+      case 2:
+        return "Top holdings";
+      default:
+        return "Your true exposure";
+    }
+  })();
 
   return (
     <div className="space-y-4">
-      <div
-        ref={cardRef}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-fuchsia-500 via-indigo-500 to-blue-600 p-px shadow-2xl shadow-pink-400/50"
-      >
-        {/* SHARE BUTTON — absolute top right */}
+      {/* Gallery card */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-fuchsia-500 via-indigo-500 to-blue-600 p-px shadow-2xl shadow-pink-400/50">
+        {/* Share button in top-right */}
         <button
           onClick={handleShare}
           className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur border border-white/50 shadow-sm hover:bg-white dark:bg-zinc-800/70 dark:hover:bg-zinc-800"
@@ -129,28 +125,38 @@ export default function ResultsPage() {
             </p>
           </div>
 
-          {/* Content Block */}
+          {/* Content block (3-slide gallery) */}
           <div
-            className="rounded-2xl border border-zinc-100 bg-white/90 p-4 dark:border-zinc-800 dark:bg-zinc-900"
+            className="rounded-2xl border border-zinc-100 bg-white/90 p-4 dark:border-zinc-800 dark:bg-zinc-900 min-h-[320px] flex flex-col justify-center"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
-            {slide === 0 ? (
+            {slide === 0 && (
               <ExposureSummary exposure={exposure} showHeader={false} />
-            ) : (
+            )}
+            {slide === 1 && (
+              <RegionExposureChart exposure={exposure} embedded />
+            )}
+            {slide === 2 && (
               <HoldingsTable exposure={top10} showHeader={false} />
             )}
           </div>
 
-          {/* Gallery dots */}
+          {/* Gallery dots: exposure • region • holdings */}
           <div className="flex justify-center gap-2 pt-1">
-            {[0, 1].map((idx) => (
+            {[0, 1, 2].map((idx) => (
               <button
                 key={idx}
                 type="button"
-                onClick={() => setSlide(idx as 0 | 1)}
+                onClick={() => setSlide(idx as 0 | 1 | 2)}
                 className="group"
-                aria-label={idx === 0 ? "Exposure" : "Holdings"}
+                aria-label={
+                  idx === 0
+                    ? "Exposure"
+                    : idx === 1
+                    ? "Region"
+                    : "Holdings"
+                }
               >
                 <span
                   className={[
@@ -170,6 +176,50 @@ export default function ResultsPage() {
           Powered by <span className="text-white/90">WizardFolio</span>
         </div>
       </div>
+
+      {/* Your mix (original ETFs / positions) */}
+      <section className="rounded-3xl border border-zinc-200 bg-white/90 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+            Your mix
+          </h3>
+          <button
+            type="button"
+            onClick={handleEditInputs}
+            className="text-[11px] font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+          >
+            Edit inputs
+          </button>
+        </div>
+
+        <ul className="divide-y divide-zinc-100 text-xs dark:divide-zinc-800 sm:text-sm">
+          {positions.map((pos, idx) => (
+            <li
+              key={`${pos.symbol}-${idx}`}
+              className="flex items-center justify-between py-1.5"
+            >
+              <span className="font-medium text-zinc-800 dark:text-zinc-100">
+                {pos.symbol || "—"}
+              </span>
+              <span className="tabular-nums text-zinc-600 dark:text-zinc-300">
+                {(pos.weightPct ?? 0).toFixed(1)}%
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+          Based on the mix you entered on the previous step.
+        </p>
+      </section>
+
+      {/* Offers card: Simplii + broker (Questrade or Wealthsimple) */}
+      <OffersCard
+        broker="questrade" // or "wealthsimple"
+        simpliiReferralUrl="https://blue.mbsy.co/789ll2"
+        wealthsimpleReferralUrl="www.wealthsimple.com/invite/SL6S1G"
+        questradeReferralUrl="https://start.questrade.com/?oaa_promo=646631628488027&s_cid=RAF14_share_link_refer_a_friend_email&utm_medium=share_link&utm_source=refer_a_friend&utm_campaign=RAF14&utm_content=personalized_link"
+      />
     </div>
   );
 }
