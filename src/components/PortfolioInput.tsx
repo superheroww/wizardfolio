@@ -122,7 +122,7 @@ export default function PortfolioInput({
         {positions.map((pos, index) => (
           <div
             key={index}
-            className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3 dark:border-zinc-700 dark:bg-zinc-900/70 sm:flex-row sm:items-end"
+            className="flex w-full flex-nowrap items-end gap-3 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3 dark:border-zinc-700 dark:bg-zinc-900/70"
           >
             <div className="flex-1 min-w-0">
               <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
@@ -133,7 +133,7 @@ export default function PortfolioInput({
                 onSelect={(symbol) => updatePosition(index, { symbol })}
               />
             </div>
-            <div className="flex w-full flex-col gap-1 min-w-[90px] sm:w-32">
+            <div className="flex flex-col gap-1 w-24 min-w-[80px]">
               <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
                 Weight %
               </label>
@@ -154,7 +154,7 @@ export default function PortfolioInput({
             <button
               type="button"
               onClick={() => removeRow(index)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 text-xs text-zinc-500 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full border border-zinc-200 text-xs text-zinc-500 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
             >
               ×
             </button>
