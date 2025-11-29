@@ -4,16 +4,10 @@ import { useEffect, useMemo, useState, type FormEvent, type TouchEvent } from "r
 import ExposureSummary from "@/components/ExposureSummary";
 import HoldingsTable from "@/components/HoldingsTable";
 import RegionExposureChart from "@/components/RegionExposureChart";
-import { DEFAULT_POSITIONS } from "@/data/defaultPositions";
 import { useRouter } from "next/navigation";
 import { AppleShareIcon } from "@/components/icons/AppleShareIcon";
 import { usePostHogSafe } from "@/lib/usePostHogSafe";
-
-// Local copy of the position type (no more exposureEngine)
-type UserPosition = {
-  symbol: string;
-  weightPct: number;
-};
+import { UserPosition } from "@/lib/exposureEngine";
 
 type ApiExposureRow = {
   holding_symbol: string;
@@ -36,21 +30,18 @@ const FEATURE_OPTIONS = [
 ];
 
 type ResultsPageClientProps = {
-  positionsParam: string | null;
+  initialPositions: UserPosition[];
+  positionsQueryString: string;
 };
 
-export default function ResultsPageClient({ positionsParam }: ResultsPageClientProps) {
+export default function ResultsPageClient({
+  initialPositions,
+  positionsQueryString,
+}: ResultsPageClientProps) {
   const router = useRouter();
   const { capture } = usePostHogSafe();
 
-  const positions = useMemo<UserPosition[]>(() => {
-    if (!positionsParam) return DEFAULT_POSITIONS as UserPosition[];
-    try {
-      return JSON.parse(decodeURIComponent(positionsParam)) as UserPosition[];
-    } catch {
-      return DEFAULT_POSITIONS as UserPosition[];
-    }
-  }, [positionsParam]);
+  const positions = initialPositions;
 
   const [exposure, setExposure] = useState<ApiExposureRow[]>([]);
   const [slide, setSlide] = useState<0 | 1 | 2 | 3>(0);
@@ -148,8 +139,8 @@ export default function ResultsPageClient({ positionsParam }: ResultsPageClientP
   }, [positions, capture]);
 
   const handleEditInputs = () => {
-    if (positionsParam) {
-      router.push(`/?positions=${positionsParam}`);
+    if (positionsQueryString) {
+      router.push(`/?${positionsQueryString}`);
     } else {
       router.push("/");
     }

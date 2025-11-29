@@ -1,15 +1,11 @@
 "use client";
 
-import * as React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import PortfolioInput from "@/components/PortfolioInput";
 import { DEFAULT_POSITIONS } from "@/data/defaultPositions";
-
-type UserPosition = {
-  symbol: string;
-  weightPct: number;
-};
+import { UserPosition } from "@/lib/exposureEngine";
+import { buildPositionsSearchParams } from "@/lib/positionsQuery";
 
 export default function HomePage() {
   const router = useRouter();
@@ -20,8 +16,12 @@ export default function HomePage() {
   );
 
   const handleAnalyze = () => {
-    const encoded = encodeURIComponent(JSON.stringify(positions));
-    router.push(`/results?positions=${encoded}`);
+    const params = buildPositionsSearchParams(positions);
+    if (!params) {
+      return;
+    }
+
+    router.push(`/results?${params}`);
   };
 
   return (
