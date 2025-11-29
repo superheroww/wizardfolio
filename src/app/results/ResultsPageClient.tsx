@@ -3,6 +3,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
   type TouchEvent,
@@ -15,6 +16,7 @@ import { AppleShareIcon } from "@/components/icons/AppleShareIcon";
 import { usePostHogSafe } from "@/lib/usePostHogSafe";
 import { normalizePositions } from "@/lib/positionsQuery";
 import { UserPosition } from "@/lib/exposureEngine";
+import { useImageShare } from "@/hooks/useImageShare";
 
 type ApiExposureRow = {
   holding_symbol: string;
@@ -71,6 +73,8 @@ export default function ResultsPageClient({
   const [email, setEmail] = useState("");
   const [feedbackState, setFeedbackState] = useState<SubmissionState>("idle");
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const { shareElementAsImage, isSharing } = useImageShare();
 
   const top10 = useMemo(
     () =>
@@ -171,39 +175,18 @@ export default function ResultsPageClient({
   };
 
   const handleShare = async () => {
-    const shareUrl = window.location.href;
+    if (!cardRef.current || isSharing) return;
 
-    const shareData = {
-      title: "My Portfolio Exposure",
-      text: "Check out my portfolio look-through powered by WizardFolio",
-      url: shareUrl,
-    };
+    await shareElementAsImage(cardRef.current, {
+      fileName: "wizardfolio-exposure.png",
+      title: "WizardFolio ETF exposure",
+      text: "ETF look-through powered by WizardFolio (wizardfolio.com)",
+    });
 
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-        capture("results_shared", {
-          method: "web_share",
-          has_exposure: exposure.length > 0,
-        });
-        return;
-      } catch (err) {
-        console.warn(
-          "navigator.share failed, falling back to clipboard:",
-          err
-        );
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      capture("results_shared", {
-        method: "clipboard",
-        has_exposure: exposure.length > 0,
-      });
-    } catch (err) {
-      console.error("Failed to copy link:", err);
-    }
+    capture("results_shared", {
+      method: "image_share",
+      has_exposure: exposure.length > 0,
+    });
   };
 
   const handleTouchStart = (e: TouchEvent<HTMLDivElement>) =>
@@ -295,13 +278,22 @@ export default function ResultsPageClient({
     <div className="space-y-4">
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-fuchsia-500 via-indigo-500 to-blue-600 p-px shadow-2xl shadow-pink-400/50">
         <button
+          type="button"
           onClick={handleShare}
-          className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur border border-white/50 shadow-sm hover:bg-white dark:bg-zinc-800/70 dark:hover:bg-zinc-800"
+          disabled={isSharing}
+          aria-label="Share your ETF exposure"
+          title={
+            isSharing ? "Preparing your snapshot…" : "Share your exposure card"
+          }
+          className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur border border-white/50 shadow-sm hover:bg-white dark:bg-zinc-800/70 dark:hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-wait"
         >
           <AppleShareIcon className="h-4 w-4 text-zinc-700 dark:text-zinc-200" />
         </button>
 
-        <div className="flex flex-col gap-4 rounded-3xl bg-white/95 p-5 dark:bg-zinc-900/80">
+        <div
+          ref={cardRef}
+          className="flex flex-col gap-4 rounded-3xl bg-white/95 p-5 dark:bg-zinc-900/80"
+        >
           <div className="flex items-start justify-between gap-2">
             <div className="flex flex-col gap-1">
               <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">

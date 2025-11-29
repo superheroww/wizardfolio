@@ -126,9 +126,6 @@ export default function PortfolioInput({
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Enter each asset and its percentage. Aim for a total of 100%.
         </p>
-        <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-          For this demo you can analyze up to {MAX_ASSETS} ETFs at a time.
-        </p>
       </header>
 
       <div className="space-y-2">
