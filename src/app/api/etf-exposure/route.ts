@@ -93,7 +93,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { data, error } = await supabase.rpc<ExposureRow>("calculate_exposure", {
+    // FIXED: remove generic on rpc and cast the result explicitly
+    const { data, error } = await supabase.rpc("calculate_exposure", {
       etfs,
       weights: payload.weights,
     });
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest) {
     }
 
     const response: EtfExposureResponse = {
-      exposure: data ?? [],
+      exposure: (data ?? []) as ExposureRow[],
     };
 
     return NextResponse.json(response, { status: 200, headers: CACHE_HEADERS });
