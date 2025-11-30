@@ -337,9 +337,10 @@ export default function BenchmarkComparisonCard({
                   const optionSymbol =
                     option.positions?.[0]?.symbol?.trim().toUpperCase() ??
                     option.id.toUpperCase();
-                  const isDisabled =
+                  const isDisabled = Boolean(
                     normalizedSingleSymbol &&
-                    optionSymbol === normalizedSingleSymbol;
+                      optionSymbol === normalizedSingleSymbol,
+                  );
 
                   return (
                     <option
