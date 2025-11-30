@@ -10,6 +10,7 @@ import {
 } from "react";
 import ExposureSummary from "@/components/ExposureSummary";
 import HoldingsTable from "@/components/HoldingsTable";
+import MixLine from "@/components/MixLine";
 import RegionExposureChart from "@/components/RegionExposureChart";
 import { useRouter } from "next/navigation";
 import { AppleShareIcon } from "@/components/icons/AppleShareIcon";
@@ -299,8 +300,9 @@ export default function ResultsPageClient({
               <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
                 {title}
               </h2>
+              <MixLine positions={sanitizedPositions} />
               <p className="text-xs text-zinc-600 dark:text-zinc-300">
-                Powered by WizardFolio • Swipe or tap the dots to explore.
+                Powered by WizardFolio
               </p>
             </div>
           </div>
