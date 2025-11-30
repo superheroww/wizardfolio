@@ -47,22 +47,24 @@ export default function BenchmarkExposureCard({
   );
 
   const filteredRows = useMemo<BenchmarkExposureRow[]>(() => {
-    if (activeTab !== "stock") {
-      return data;
+    const limit = 10;
+
+    if (activeTab === "stock") {
+      const unique: BenchmarkExposureRow[] = [];
+      const seen = new Set<string>();
+
+      for (const row of data) {
+        const label = row.group_key;
+        if (seen.has(label)) continue;
+        seen.add(label);
+        unique.push(row);
+        if (unique.length >= limit) break;
+      }
+
+      return unique;
     }
 
-    const unique: BenchmarkExposureRow[] = [];
-    const seen = new Set<string>();
-
-    for (const row of data) {
-      const label = row.group_key;
-      if (seen.has(label)) continue;
-      seen.add(label);
-      unique.push(row);
-      if (unique.length >= 5) break;
-    }
-
-    return unique;
+    return data.slice(0, limit);
   }, [data, activeTab]);
 
   const displayRows = filteredRows;
@@ -74,11 +76,6 @@ export default function BenchmarkExposureCard({
   const activeTabConfig =
     TAB_CONFIGS.find((tab) => tab.groupBy === activeTab) ?? TAB_CONFIGS[0];
 
-  const cardTitle =
-    activeTab === "stock"
-      ? `Top 5 stocks in ${benchmarkSymbol || "the benchmark"}`
-      : `See how ${benchmarkSymbol || "the benchmark"} is allocated`;
-
   return (
     <section className="space-y-4 rounded-3xl border border-zinc-200 bg-white/90 p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
       <div className="space-y-1">
@@ -86,7 +83,7 @@ export default function BenchmarkExposureCard({
           Benchmark exposure
         </p>
         <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-          {cardTitle}
+          Benchmark exposure
         </h3>
         <p className="text-sm text-zinc-500 dark:text-zinc-300">
           Based on {benchmarkSymbol || "the benchmark"}’s own holdings.

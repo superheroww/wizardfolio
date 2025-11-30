@@ -51,7 +51,7 @@ export async function fetchBenchmarkExposure(
     return [];
   }
 
-  return (data ?? []).map((row) => {
+  return (data ?? []).map((row: any) => {
     const groupKey =
       (row as { group_key?: string }).group_key ??
       (row as { label?: string }).label ??
