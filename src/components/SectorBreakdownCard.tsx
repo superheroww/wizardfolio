@@ -1,10 +1,16 @@
 "use client";
 
+import { useMemo } from "react";
 import type { ApiExposureRow } from "@/lib/exposureEngine";
 import { aggregateBySector } from "@/lib/exposureAggregations";
+import { useBenchmarkExposure } from "@/hooks/useBenchmarkExposure";
+import { calculateTilts, type GroupExposure } from "@/lib/benchmarkTilts";
+import BenchmarkTiltSection from "@/components/BenchmarkTiltSection";
 
 type SectorBreakdownCardProps = {
   exposure: ApiExposureRow[];
+  benchmarkSymbol: string;
+  benchmarkLabel: string;
 };
 
 const SECTOR_GRADIENTS = [
@@ -17,11 +23,34 @@ const SECTOR_GRADIENTS = [
   "from-cyan-500 via-cyan-400 to-cyan-300",
 ];
 
-export function SectorBreakdownCard({ exposure }: SectorBreakdownCardProps) {
+export function SectorBreakdownCard({
+  exposure,
+  benchmarkSymbol,
+  benchmarkLabel,
+}: SectorBreakdownCardProps) {
   const sectors = aggregateBySector(exposure);
   const topSectors = sectors.slice(0, 5);
   const othersCount = Math.max(sectors.length - topSectors.length, 0);
   const maxWeight = topSectors[0]?.weightPct ?? 0;
+  const sectorExposureForTilts = useMemo<GroupExposure[]>(
+    () =>
+      sectors.map((sector) => ({
+        label: sector.sector,
+        weightPct: sector.weightPct,
+      })),
+    [sectors],
+  );
+
+  const {
+    data: benchmarkRows,
+    isLoading: isBenchmarkLoading,
+    error: benchmarkError,
+  } = useBenchmarkExposure(benchmarkSymbol, "sector");
+
+  const { overweights, underweights } = useMemo(
+    () => calculateTilts(sectorExposureForTilts, benchmarkRows),
+    [sectorExposureForTilts, benchmarkRows],
+  );
 
   if (!topSectors.length) {
     return (
@@ -71,6 +100,16 @@ export function SectorBreakdownCard({ exposure }: SectorBreakdownCardProps) {
           </p>
         )}
       </div>
+
+      <BenchmarkTiltSection
+        title={`Tilts vs ${benchmarkLabel} by sector`}
+        contextLabel="sector"
+        benchmarkLabel={benchmarkLabel}
+        overweights={overweights}
+        underweights={underweights}
+        isLoading={isBenchmarkLoading}
+        error={benchmarkError}
+      />
     </section>
   );
 }

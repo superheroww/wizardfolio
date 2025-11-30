@@ -14,6 +14,7 @@ import HoldingsTable from "@/components/HoldingsTable";
 import MixLine from "@/components/MixLine";
 import RegionExposureChart from "@/components/RegionExposureChart";
 import { SectorBreakdownCard } from "@/components/SectorBreakdownCard";
+import BenchmarkExposureCard from "@/components/BenchmarkExposureCard";
 import { useRouter } from "next/navigation";
 import { AppleShareIcon } from "@/components/icons/AppleShareIcon";
 import { usePostHogSafe } from "@/lib/usePostHogSafe";
@@ -118,6 +119,13 @@ export default function ResultsPageClient({
       BENCHMARK_MIXES[0],
     [selectedBenchmarkId],
   );
+
+  const benchmarkSymbol =
+    selectedBenchmark.positions?.[0]?.symbol ?? selectedBenchmark.id;
+  const benchmarkLabel =
+    selectedBenchmark.positions?.[0]?.symbol ??
+    selectedBenchmark.label ??
+    selectedBenchmark.id;
 
   const [exposure, setExposure] = useState<ApiExposureRow[]>([]);
   const [slide, setSlide] = useState<SlideIndex>(0);
@@ -496,11 +504,19 @@ export default function ResultsPageClient({
                   )}
 
                   {slide === 1 && (
-                    <RegionExposureChart exposure={exposure} />
+                    <RegionExposureChart
+                      exposure={exposure}
+                      benchmarkSymbol={benchmarkSymbol}
+                      benchmarkLabel={benchmarkLabel}
+                    />
                   )}
 
                   {slide === 2 && (
-                    <SectorBreakdownCard exposure={exposure} />
+                    <SectorBreakdownCard
+                      exposure={exposure}
+                      benchmarkSymbol={benchmarkSymbol}
+                      benchmarkLabel={benchmarkLabel}
+                    />
                   )}
 
                   {slide === 3 && (
@@ -661,15 +677,18 @@ export default function ResultsPageClient({
       </div>
 
       {hasValidPositions && (
-        <BenchmarkComparisonCard
-          userLabel="Your mix"
-          benchmark={selectedBenchmark}
-          comparison={benchmarkComparison}
-          benchmarks={BENCHMARK_MIXES}
-          onBenchmarkChange={(id) => setSelectedBenchmarkId(id)}
-          isLoading={isLoading || isBenchmarkLoading}
-          error={benchmarkError}
-        />
+        <>
+          <BenchmarkComparisonCard
+            userLabel="Your mix"
+            benchmark={selectedBenchmark}
+            comparison={benchmarkComparison}
+            benchmarks={BENCHMARK_MIXES}
+            onBenchmarkChange={(id) => setSelectedBenchmarkId(id)}
+            isLoading={isLoading || isBenchmarkLoading}
+            error={benchmarkError}
+          />
+          <BenchmarkExposureCard benchmarkSymbol={benchmarkSymbol} />
+        </>
       )}
 
       <section className="rounded-3xl border border-zinc-200 bg-white/90 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
