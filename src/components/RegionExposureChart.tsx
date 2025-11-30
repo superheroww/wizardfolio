@@ -1,10 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { aggregateByRegion } from "@/lib/exposureAggregations";
-import { calculateTilts, type GroupExposure } from "@/lib/benchmarkTilts";
-import { useBenchmarkExposure } from "@/hooks/useBenchmarkExposure";
-import BenchmarkTiltSection from "@/components/BenchmarkTiltSection";
 
 export type ApiExposureRow = {
   holding_symbol: string;
@@ -17,8 +13,6 @@ export type ApiExposureRow = {
 
 type RegionExposureChartProps = {
   exposure?: ApiExposureRow[];
-  benchmarkSymbol: string;
-  benchmarkLabel: string;
 };
 
 // Simple color palette (matches your vibe)
@@ -59,8 +53,6 @@ function isBond(assetClassRaw: string | null | undefined): boolean {
 
 export default function RegionExposureChart({
   exposure,
-  benchmarkSymbol,
-  benchmarkLabel,
 }: RegionExposureChartProps) {
   const safeExposure = React.useMemo(
     () => (Array.isArray(exposure) ? exposure : []),
@@ -101,31 +93,6 @@ export default function RegionExposureChart({
   ].filter((r) => r.value > 0.1); // hide truly zero slices
 
   const hasData = regions.some((r) => r.value > 0.5);
-
-  const regionSlices = React.useMemo(
-    () => aggregateByRegion(safeExposure),
-    [safeExposure],
-  );
-
-  const regionExposureForTilts = React.useMemo<GroupExposure[]>(
-    () =>
-      regionSlices.map((slice) => ({
-        label: slice.region,
-        weightPct: slice.weightPct,
-      })),
-    [regionSlices],
-  );
-
-  const {
-    data: benchmarkRows,
-    isLoading: isBenchmarkLoading,
-    error: benchmarkError,
-  } = useBenchmarkExposure(benchmarkSymbol, "region");
-
-  const { overweights, underweights } = React.useMemo(
-    () => calculateTilts(regionExposureForTilts, benchmarkRows),
-    [regionExposureForTilts, benchmarkRows],
-  );
 
   return (
     <section className="rounded-3xl border border-zinc-200 bg-white/90 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
@@ -185,16 +152,6 @@ export default function RegionExposureChart({
           Add some ETFs above to see your regional split.
         </p>
       )}
-
-      <BenchmarkTiltSection
-        title={`Tilts vs ${benchmarkLabel} by region`}
-        contextLabel="region"
-        benchmarkLabel={benchmarkLabel}
-        overweights={overweights}
-        underweights={underweights}
-        isLoading={isBenchmarkLoading}
-        error={benchmarkError}
-      />
     </section>
   );
 }

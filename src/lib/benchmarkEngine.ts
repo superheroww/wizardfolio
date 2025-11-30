@@ -12,7 +12,14 @@ const US_LARGE_CAP_SYMBOLS = new Set([
   "ITOT",
 ]);
 
-const GLOBAL_ETF_SYMBOLS = new Set(["VT", "VXUS", "XAW", "XTOT"]);
+const GLOBAL_ETF_SYMBOLS = new Set([
+  "VT",
+  "VXUS",
+  "XAW",
+  "XTOT",
+  "XEQT.TO",
+  "VEQT.TO",
+]);
 
 const TO_BENCHMARK_SYMBOL_MAP: Record<string, string> = {
   "VEQT.TO": "veqt",
@@ -75,6 +82,14 @@ const isDisplayTicker = (symbol: string): boolean => {
 const findBenchmarkById = (id: string): BenchmarkMix =>
   BENCHMARK_MIXES.find((mix) => mix.id === id) ?? BENCHMARK_MIXES[0];
 
+export const findBenchmarkBySymbol = (symbol: string): BenchmarkMix | undefined => {
+  const normalized = symbol.trim().toUpperCase();
+  return BENCHMARK_MIXES.find((mix) => {
+    const mixSymbol = mix.positions?.[0]?.symbol?.trim().toUpperCase() ?? "";
+    return mixSymbol === normalized || mix.id.toUpperCase() === normalized;
+  });
+};
+
 const isValidPosition = (pos: UserPosition) =>
   typeof pos.symbol === "string" && pos.symbol.trim() !== "" && Number.isFinite(pos.weightPct);
 
@@ -129,6 +144,21 @@ export function pickDefaultBenchmark(userPositions: UserPosition[]): BenchmarkMi
 
   return findBenchmarkById("qqq");
 }
+
+export function getFallbackBenchmark(singleSymbol: string) {
+  const normalized = singleSymbol.trim().toUpperCase();
+
+  if (US_LARGE_CAP_SYMBOLS.has(normalized)) {
+    return "VT";
+  }
+
+  if (GLOBAL_ETF_SYMBOLS.has(normalized)) {
+    return "VOO";
+  }
+
+  return "VOO";
+}
+
 
 export function compareMixes(
   user: { ticker: string; weightPct: number }[],

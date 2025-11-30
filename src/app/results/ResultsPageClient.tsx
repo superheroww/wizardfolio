@@ -14,7 +14,6 @@ import HoldingsTable from "@/components/HoldingsTable";
 import MixLine from "@/components/MixLine";
 import RegionExposureChart from "@/components/RegionExposureChart";
 import { SectorBreakdownCard } from "@/components/SectorBreakdownCard";
-import BenchmarkExposureCard from "@/components/BenchmarkExposureCard";
 import { useRouter } from "next/navigation";
 import { AppleShareIcon } from "@/components/icons/AppleShareIcon";
 import { usePostHogSafe } from "@/lib/usePostHogSafe";
@@ -22,7 +21,12 @@ import { normalizePositions } from "@/lib/positionsQuery";
 import type { ApiExposureRow, UserPosition } from "@/lib/exposureEngine";
 import { useImageShare } from "@/hooks/useImageShare";
 import { BENCHMARK_MIXES } from "@/lib/benchmarkPresets";
-import { compareMixes, pickDefaultBenchmark } from "@/lib/benchmarkEngine";
+import {
+  compareMixes,
+  pickDefaultBenchmark,
+  getFallbackBenchmark,
+  findBenchmarkBySymbol,
+} from "@/lib/benchmarkEngine";
 import type { MixComparisonResult } from "@/lib/benchmarkEngine";
 
 type SubmissionState = "idle" | "loading" | "success" | "error";
@@ -101,10 +105,40 @@ export default function ResultsPageClient({
   const hasValidPositions = sanitizedPositions.length > 0;
   const positions = hasValidPositions ? sanitizedPositions : initialPositions;
 
-  const defaultBenchmark = useMemo(
-    () => pickDefaultBenchmark(sanitizedPositions),
-    [sanitizedPositions],
-  );
+  const singleETFSymbol = useMemo(() => {
+    if (sanitizedPositions.length !== 1) {
+      return null;
+    }
+
+    const single = sanitizedPositions[0];
+    if (single.weightPct === 100) {
+      return single.symbol.trim().toUpperCase();
+    }
+
+    return null;
+  }, [sanitizedPositions]);
+
+  const defaultBenchmark = useMemo(() => {
+    const base = pickDefaultBenchmark(sanitizedPositions);
+
+    if (!singleETFSymbol) {
+      return base;
+    }
+
+    const baseSymbol =
+      base.positions?.[0]?.symbol?.trim().toUpperCase() ??
+      base.id.toUpperCase();
+
+    if (baseSymbol === singleETFSymbol) {
+      const fallbackSymbol = getFallbackBenchmark(singleETFSymbol);
+      const fallbackBenchmark = findBenchmarkBySymbol(fallbackSymbol);
+      if (fallbackBenchmark) {
+        return fallbackBenchmark;
+      }
+    }
+
+    return base;
+  }, [sanitizedPositions, singleETFSymbol]);
   const [selectedBenchmarkId, setSelectedBenchmarkId] = useState(
     defaultBenchmark.id,
   );
@@ -441,7 +475,7 @@ export default function ResultsPageClient({
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-fuchsia-500 via-indigo-500 to-blue-600 p-px shadow-2xl shadow-pink-400/50">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-fuchsia-500 via-indigo-500 to-blue-600 p-px">
           <button
             type="button"
             onClick={handleShare}
@@ -504,19 +538,11 @@ export default function ResultsPageClient({
                   )}
 
                   {slide === 1 && (
-                    <RegionExposureChart
-                      exposure={exposure}
-                      benchmarkSymbol={benchmarkSymbol}
-                      benchmarkLabel={benchmarkLabel}
-                    />
+                    <RegionExposureChart exposure={exposure} />
                   )}
 
                   {slide === 2 && (
-                    <SectorBreakdownCard
-                      exposure={exposure}
-                      benchmarkSymbol={benchmarkSymbol}
-                      benchmarkLabel={benchmarkLabel}
-                    />
+                    <SectorBreakdownCard exposure={exposure} />
                   )}
 
                   {slide === 3 && (
@@ -678,16 +704,16 @@ export default function ResultsPageClient({
 
       {hasValidPositions && (
         <>
-          <BenchmarkComparisonCard
-            userLabel="Your mix"
-            benchmark={selectedBenchmark}
-            comparison={benchmarkComparison}
-            benchmarks={BENCHMARK_MIXES}
-            onBenchmarkChange={(id) => setSelectedBenchmarkId(id)}
-            isLoading={isLoading || isBenchmarkLoading}
-            error={benchmarkError}
-          />
-          <BenchmarkExposureCard benchmarkSymbol={benchmarkSymbol} />
+        <BenchmarkComparisonCard
+          userLabel="Your mix"
+          benchmark={selectedBenchmark}
+          comparison={benchmarkComparison}
+          benchmarks={BENCHMARK_MIXES}
+          onBenchmarkChange={(id) => setSelectedBenchmarkId(id)}
+          exposure={exposure}
+          userExposureMix={userExposureMix}
+          singleSymbol={singleETFSymbol}
+        />
         </>
       )}
 

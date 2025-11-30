@@ -37,6 +37,7 @@ export function calculateTilts(
   userExposure: GroupExposure[],
   benchmarkExposure: BenchmarkExposureRow[],
   limit = 5,
+  minDelta = 0,
 ): TiltSummary {
   const buckets = new Map<
     string,
@@ -69,7 +70,11 @@ export function calculateTilts(
     delta: entry.user - entry.benchmark,
   }));
 
-  const overweights = entries
+  const filteredEntries = entries.filter(
+    (entry) => Math.abs(entry.delta) >= minDelta,
+  );
+
+  const overweights = filteredEntries
     .filter((entry) => entry.delta > 0)
     .sort((a, b) => b.delta - a.delta)
     .slice(0, limit)
@@ -78,7 +83,7 @@ export function calculateTilts(
       deltaFormatted: formatDelta(entry.delta),
     }));
 
-  const underweights = entries
+  const underweights = filteredEntries
     .filter((entry) => entry.delta < 0)
     .sort((a, b) => a.delta - b.delta)
     .slice(0, limit)
