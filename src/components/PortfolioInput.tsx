@@ -60,7 +60,6 @@ function SymbolSelector({ value, onSelect }: SymbolSelectorProps) {
         onBlur={() => setIsFocused(false)}
         placeholder="Search symbol"
         className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-base sm:text-sm outline-none transition focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900"
-        // ^ text-base on mobile (~16px) to avoid iOS zoom, sm:text-sm on larger screens
       />
       {dropdownVisible && (
         <div className="absolute left-0 right-0 z-10 mt-1 max-h-40 overflow-auto rounded-lg border border-zinc-200 bg-white text-sm shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
@@ -92,22 +91,52 @@ export default function PortfolioInput({
   onChange,
   onAnalyze,
 }: PortfolioInputProps) {
-  const totalWeight = positions.reduce((acc, p) => acc + (p.weightPct || 0), 0);
-  const isTotalValid = totalWeight > 99.9 && totalWeight < 100.1;
-  const hasEmptySymbol = positions.some((p) => !p.symbol.trim());
-  const canAnalyze = positions.length > 0 && isTotalValid && !hasEmptySymbol;
+  // 🚨 Ignore empty rows (symbol "" AND weight 0)
+  const validRows = positions.filter(
+    (p) => p.symbol.trim() !== "" && p.weightPct > 0
+  );
+
+  // SUM ONLY VALID ROWS
+  const totalWeight = validRows.reduce((acc, p) => acc + p.weightPct, 0);
+
+  // 🚨 STRICT 100% requirement (with tiny floating tolerance)
+  const isTotalValid = Math.abs(totalWeight - 100) < 0.0001;
+
+  // Must have symbol for each valid row
+  const hasEmptySymbol = validRows.some((p) => !p.symbol.trim());
+
+  // Button enable logic
+  const canAnalyze = validRows.length > 0 && isTotalValid && !hasEmptySymbol;
 
   const canAddMore = positions.length < MAX_ASSETS;
 
-  const updatePosition = useCallback(
-    (index: number, patch: Partial<UserPosition>) => {
-      const next = positions.map((p, i) =>
-        i === index ? { ...p, ...patch } : p
-      );
-      onChange(next);
-    },
-    [positions, onChange]
-  );
+const updatePosition = useCallback(
+  (index: number, patch: Partial<UserPosition>) => {
+    const next = positions.map((p, i) =>
+      i === index ? { ...p, ...patch } : p
+    );
+
+    onChange(next);
+
+    // AUTO-ADD NEW ROW LOGIC
+    const row = next[index];
+    const rowIsComplete =
+      row.symbol.trim() !== "" && row.weightPct > 0;
+
+    const lastRow = next[next.length - 1];
+    const lastRowIsEmpty =
+      lastRow.symbol.trim() === "" && lastRow.weightPct === 0;
+
+    const canAdd = next.length < MAX_ASSETS;
+
+    // If this row is complete AND the form has no empty row at the bottom → add one
+    if (rowIsComplete && !lastRowIsEmpty && canAdd) {
+      onChange([...next, { symbol: "", weightPct: 0 }]);
+    }
+  },
+  [positions, onChange]
+);
+
 
   const addRow = () => {
     if (!canAddMore) return;
@@ -149,7 +178,6 @@ export default function PortfolioInput({
               </label>
               <input
                 className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-base sm:text-sm outline-none ring-0 focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900"
-                // ^ text-base on mobile (~16px) to stop Safari zoom
                 type="number"
                 min={0}
                 max={100}
@@ -187,7 +215,7 @@ export default function PortfolioInput({
           </span>
           {!isTotalValid && (
             <span className="ml-1 text-xs text-rose-500 dark:text-rose-400">
-              (should be ~100%)
+              (must be 100%)
             </span>
           )}
         </div>
