@@ -49,13 +49,18 @@ const SLIDE_ANALYTICS: Record<SlideIndex, string> = {
   4: "Feedback",
 };
 
-const DOT_LABELS: Record<SlideIndex, string> = {
-  0: "Exposure",
-  1: "Region",
-  2: "Sector",
-  3: "Holdings",
-  4: "Feedback",
-};
+const TAB_VIEWS: { id: SlideIndex; label: string }[] = [
+  { id: 0, label: "Exposure" },
+  { id: 1, label: "Regions" },
+  { id: 2, label: "Sectors" },
+  { id: 3, label: "Holdings" },
+  { id: 4, label: "Survey" },
+];
+
+const DOT_LABELS = TAB_VIEWS.reduce<Record<SlideIndex, string>>((acc, view) => {
+  acc[view.id] = view.label;
+  return acc;
+}, {} as Record<SlideIndex, string>);
 
 const SLIDE_INDICES: SlideIndex[] = [0, 1, 2, 3, 4];
 
@@ -178,7 +183,7 @@ export default function ResultsPageClient({
     };
 
     fetchExposure();
-  }, [sanitizedPositions, capture, hasPositionsParam]);
+  }, [sanitizedPositions, hasPositionsParam]);
 
   const handleEditInputs = () => {
     if (positionsQueryString) {
@@ -220,6 +225,19 @@ export default function ResultsPageClient({
 
     setTouchStartX(null);
   };
+
+  const cycleSlide = (direction: 1 | -1) => {
+    setSlide((prev) => {
+      const currentIndex = SLIDE_INDICES.indexOf(prev);
+      const nextIndex =
+        (currentIndex + direction + SLIDE_INDICES.length) %
+        SLIDE_INDICES.length;
+      return SLIDE_INDICES[nextIndex];
+    });
+  };
+
+  const handlePrevSlide = () => cycleSlide(-1);
+  const handleNextSlide = () => cycleSlide(1);
 
   const title = SLIDE_TITLES[slide];
 
@@ -277,210 +295,250 @@ export default function ResultsPageClient({
 
   return (
     <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-fuchsia-500 via-indigo-500 to-blue-600 p-px shadow-2xl shadow-pink-400/50">
-        <button
-          type="button"
-          onClick={handleShare}
-          disabled={isSharing}
-          aria-label="Share your ETF exposure"
-          title={
-            isSharing ? "Preparing your snapshot…" : "Share your exposure card"
-          }
-          className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur border border-white/50 shadow-sm hover:bg-white dark:bg-zinc-800/70 dark:hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-wait"
-        >
-          <AppleShareIcon className="h-4 w-4 text-zinc-700 dark:text-zinc-200" />
-        </button>
+      <div>
+        <div className="hidden md:flex items-center justify-between gap-3 text-xs sm:text-sm mb-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {TAB_VIEWS.map((view) => (
+              <button
+                key={view.id}
+                type="button"
+                onClick={() => setSlide(view.id)}
+                className={[
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition",
+                  view.id === slide
+                    ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
+                    : "bg-transparent text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800",
+                ].join(" ")}
+              >
+                {view.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrevSlide}
+              aria-label="Previous result view"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleNextSlide}
+              aria-label="Next result view"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              <span aria-hidden="true">›</span>
+            </button>
+          </div>
+        </div>
 
-        <div
-          ref={cardRef}
-          className="flex flex-col gap-4 rounded-3xl bg-white/95 p-5 dark:bg-zinc-900/80"
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex flex-col gap-1">
-              <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-                {title}
-              </h2>
-              <MixLine positions={sanitizedPositions} />
-              <p className="text-xs text-zinc-600 dark:text-zinc-300">
-                Powered by WizardFolio
-              </p>
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-fuchsia-500 via-indigo-500 to-blue-600 p-px shadow-2xl shadow-pink-400/50">
+          <button
+            type="button"
+            onClick={handleShare}
+            disabled={isSharing}
+            aria-label="Share your ETF exposure"
+            title={
+              isSharing ? "Preparing your snapshot…" : "Share your exposure card"
+            }
+            className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur border border-white/50 shadow-sm hover:bg-white dark:bg-zinc-800/70 dark:hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-wait"
+          >
+            <AppleShareIcon className="h-4 w-4 text-zinc-700 dark:text-zinc-200" />
+          </button>
+
+          <div
+            ref={cardRef}
+            className="flex flex-col gap-4 rounded-3xl bg-white/95 p-5 dark:bg-zinc-900/80"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                  {title}
+                </h2>
+                <MixLine positions={sanitizedPositions} />
+                <p className="text-xs text-zinc-600 dark:text-zinc-300">
+                  Powered by WizardFolio
+                </p>
+              </div>
+            </div>
+
+            <div
+              className="rounded-2xl border border-zinc-100 bg-white/90 p-4 dark:border-zinc-800 dark:bg-zinc-900 min-h-[320px] flex flex-col justify-center"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              {isLoading && (
+                <div className="flex h-full items-center justify-center text-xs text-zinc-500 dark:text-zinc-400">
+                  Crunching your ETF mix…
+                </div>
+              )}
+
+              {!isLoading && error && (
+                <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-xs text-rose-500 dark:text-rose-400">
+                  <p>{error}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      router.refresh();
+                    }}
+                    className="rounded-full bg-zinc-900 px-3 py-1 text-[11px] font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900"
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+
+              {!isLoading && !error && (
+                <>
+                  {slide === 0 && (
+                    <ExposureSummary exposure={exposure} showHeader={false} />
+                  )}
+
+                  {slide === 1 && (
+                    <RegionExposureChart exposure={exposure} />
+                  )}
+
+                  {slide === 2 && (
+                    <SectorBreakdownCard exposure={exposure} />
+                  )}
+
+                  {slide === 3 && (
+                    <HoldingsTable exposure={top10} showHeader={false} />
+                  )}
+
+                  {slide === 4 && (
+                    <>
+                      {feedbackState === "success" ? (
+                        <div className="flex h-full flex-col justify-center rounded-2xl border border-zinc-200 bg-white/80 p-4 text-left text-xs shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70 sm:text-sm">
+                          <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-500">
+                            Thank you ✨
+                          </p>
+                          <h3 className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                            You’re officially helping design WizardFolio.
+                          </h3>
+                          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                            We’ll use this to decide what to build next. If
+                            you left an email, we’ll let you know as new
+                            features go live.
+                          </p>
+                        </div>
+                      ) : (
+                        <form
+                          onSubmit={handleFeedbackSubmit}
+                          className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white/80 p-4 text-left text-xs shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70 sm:text-sm"
+                        >
+                          <p className="text-[11px] font-medium uppercase tracking-wide text-indigo-500">
+                            Help shape WizardFolio
+                          </p>
+                          <h3 className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                            What would you love to see next?
+                          </h3>
+                          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                            Tap a few wishes below. Optional: add your email
+                            and we’ll let you know when new features land.
+                          </p>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {FEATURE_OPTIONS.map((feature) => {
+                              const selected =
+                                selectedFeatures.includes(feature);
+                              return (
+                                <button
+                                  key={feature}
+                                  type="button"
+                                  onClick={() => toggleFeature(feature)}
+                                  className={[
+                                    "rounded-full border px-3 py-1 text-[11px] transition",
+                                    selected
+                                      ? "border-indigo-500 bg-indigo-500 text-white shadow-sm"
+                                      : "border-zinc-200 bg-white/60 text-zinc-700 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-200",
+                                  ].join(" ")}
+                                >
+                                  {feature}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {hasSomethingElse && (
+                            <div className="mt-3">
+                              <label className="mb-1 block text-[11px] font-medium text-zinc-700 dark:text-zinc-200">
+                                Something else you wish WizardFolio could do?
+                              </label>
+                              <textarea
+                                value={message}
+                                onChange={(e) =>
+                                  setMessage(e.target.value)
+                                }
+                                rows={3}
+                                className="w-full rounded-xl border border-zinc-200 bg-white/80 p-2 text-xs text-zinc-900 outline-none ring-0 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100"
+                                placeholder="e.g., See all my accounts in one place, more credit card insights, etc."
+                              />
+                            </div>
+                          )}
+
+                          <div className="mt-3">
+                            <label className="mb-1 block text-[11px] font-medium text-zinc-700 dark:text-zinc-200">
+                              Email (optional)
+                            </label>
+                            <input
+                              type="email"
+                              inputMode="email"
+                              autoComplete="email"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              className="w-full rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-xs text-zinc-900 outline-none ring-0 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100"
+                              placeholder="you@example.com"
+                            />
+                            <p className="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                              Optional. We’ll only email you about WizardFolio
+                              updates.
+                            </p>
+                          </div>
+
+                          {feedbackError && (
+                            <p className="mt-2 text-[11px] text-rose-500">
+                              {feedbackError}
+                            </p>
+                          )}
+                          {feedbackState === "error" && !feedbackError && (
+                            <p className="mt-2 text-[11px] text-rose-500">
+                              Something went wrong. Please try again.
+                            </p>
+                          )}
+
+                          <div className="mt-4 flex items-center gap-2">
+                            <button
+                              type="submit"
+                              disabled={
+                                isSubmittingFeedback ||
+                                !selectedFeatures.length
+                              }
+                              className={[
+                                "inline-flex flex-1 items-center justify-center rounded-full px-3 py-2 text-xs font-semibold transition",
+                                isSubmittingFeedback ||
+                                !selectedFeatures.length
+                                  ? "bg-zinc-300 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                                  : "bg-indigo-600 text-white shadow-sm hover:bg-indigo-500",
+                              ].join(" ")}
+                            >
+                              {isSubmittingFeedback
+                                ? "Sending..."
+                                : "Send my wishlist"}
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
-          <div
-            className="rounded-2xl border border-zinc-100 bg-white/90 p-4 dark:border-zinc-800 dark:bg-zinc-900 min-h-[320px] flex flex-col justify-center"
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            {isLoading && (
-              <div className="flex h-full items-center justify-center text-xs text-zinc-500 dark:text-zinc-400">
-                Crunching your ETF mix…
-              </div>
-            )}
-
-            {!isLoading && error && (
-              <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-xs text-rose-500 dark:text-rose-400">
-                <p>{error}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    router.refresh();
-                  }}
-                  className="rounded-full bg-zinc-900 px-3 py-1 text-[11px] font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900"
-                >
-                  Try again
-                </button>
-              </div>
-            )}
-
-            {!isLoading && !error && (
-              <>
-                {slide === 0 && (
-                  <ExposureSummary exposure={exposure} showHeader={false} />
-                )}
-
-                {slide === 1 && (
-                  <RegionExposureChart exposure={exposure} />
-                )}
-
-                {slide === 2 && (
-                  <SectorBreakdownCard exposure={exposure} />
-                )}
-
-                {slide === 3 && (
-                  <HoldingsTable exposure={top10} showHeader={false} />
-                )}
-
-                {slide === 4 && (
-                  <>
-                    {feedbackState === "success" ? (
-                      <div className="flex h-full flex-col justify-center rounded-2xl border border-zinc-200 bg-white/80 p-4 text-left text-xs shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70 sm:text-sm">
-                        <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-500">
-                          Thank you ✨
-                        </p>
-                        <h3 className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                          You’re officially helping design WizardFolio.
-                        </h3>
-                        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                          We’ll use this to decide what to build next. If
-                          you left an email, we’ll let you know as new
-                          features go live.
-                        </p>
-                      </div>
-                    ) : (
-                      <form
-                        onSubmit={handleFeedbackSubmit}
-                        className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white/80 p-4 text-left text-xs shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70 sm:text-sm"
-                      >
-                        <p className="text-[11px] font-medium uppercase tracking-wide text-indigo-500">
-                          Help shape WizardFolio
-                        </p>
-                        <h3 className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                          What would you love to see next?
-                        </h3>
-                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                          Tap a few wishes below. Optional: add your email
-                          and we’ll let you know when new features land.
-                        </p>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {FEATURE_OPTIONS.map((feature) => {
-                            const selected =
-                              selectedFeatures.includes(feature);
-                            return (
-                              <button
-                                key={feature}
-                                type="button"
-                                onClick={() => toggleFeature(feature)}
-                                className={[
-                                  "rounded-full border px-3 py-1 text-[11px] transition",
-                                  selected
-                                    ? "border-indigo-500 bg-indigo-500 text-white shadow-sm"
-                                    : "border-zinc-200 bg-white/60 text-zinc-700 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-200",
-                                ].join(" ")}
-                              >
-                                {feature}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {hasSomethingElse && (
-                          <div className="mt-3">
-                            <label className="mb-1 block text-[11px] font-medium text-zinc-700 dark:text-zinc-200">
-                              Something else you wish WizardFolio could do?
-                            </label>
-                            <textarea
-                              value={message}
-                              onChange={(e) =>
-                                setMessage(e.target.value)
-                              }
-                              rows={3}
-                              className="w-full rounded-xl border border-zinc-200 bg-white/80 p-2 text-xs text-zinc-900 outline-none ring-0 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100"
-                              placeholder="e.g., See all my accounts in one place, more credit card insights, etc."
-                            />
-                          </div>
-                        )}
-
-                        <div className="mt-3">
-                          <label className="mb-1 block text-[11px] font-medium text-zinc-700 dark:text-zinc-200">
-                            Email (optional)
-                          </label>
-                          <input
-                            type="email"
-                            inputMode="email"
-                            autoComplete="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-xs text-zinc-900 outline-none ring-0 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100"
-                            placeholder="you@example.com"
-                          />
-                          <p className="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
-                            Optional. We’ll only email you about WizardFolio
-                            updates.
-                          </p>
-                        </div>
-
-                        {feedbackError && (
-                          <p className="mt-2 text-[11px] text-rose-500">
-                            {feedbackError}
-                          </p>
-                        )}
-                        {feedbackState === "error" && !feedbackError && (
-                          <p className="mt-2 text-[11px] text-rose-500">
-                            Something went wrong. Please try again.
-                          </p>
-                        )}
-
-                        <div className="mt-4 flex items-center gap-2">
-                          <button
-                            type="submit"
-                            disabled={
-                              isSubmittingFeedback ||
-                              !selectedFeatures.length
-                            }
-                            className={[
-                              "inline-flex flex-1 items-center justify-center rounded-full px-3 py-2 text-xs font-semibold transition",
-                              isSubmittingFeedback ||
-                              !selectedFeatures.length
-                                ? "bg-zinc-300 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                                : "bg-indigo-600 text-white shadow-sm hover:bg-indigo-500",
-                            ].join(" ")}
-                          >
-                            {isSubmittingFeedback
-                              ? "Sending..."
-                              : "Send my wishlist"}
-                          </button>
-                        </div>
-                      </form>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </div>
-
-          <div className="flex justify-center gap-2 pt-1">
+          <div className="flex justify-center gap-2 pt-1 md:hidden">
             {SLIDE_INDICES.map((idx) => (
               <button
                 key={idx}

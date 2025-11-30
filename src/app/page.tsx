@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import PortfolioInput from "@/components/PortfolioInput";
 import QuickStartTemplates from "@/components/QuickStartTemplates";
 import { DEFAULT_POSITIONS } from "@/data/defaultPositions";
@@ -25,6 +26,17 @@ export default function HomePage() {
   const handleAnalyze = (overridePositions?: UserPosition[]) => {
     const source = overridePositions ?? positions;
     setFeedbackMessage(null);
+
+    const totalWeightForEvent = source.reduce(
+      (sum, position) => sum + position.weightPct,
+      0
+    );
+
+    posthog.capture("click_analyze", {
+      positions_count: source.length,
+      total_weight: totalWeightForEvent,
+      source: overridePositions ? "template" : "manual",
+    });
 
     const cleanedPositions = normalizePositions(source);
     if (!cleanedPositions.length) {
@@ -64,9 +76,26 @@ export default function HomePage() {
           </div>
 
           <QuickStartTemplates
-            onTemplateSelect={(templatePositions) => {
+            onTemplateSelect={(templatePositions, template) => {
+              const templateName = template.name;
+              const isBuildYourOwn = templateName === "Build Your Own Mix";
+              const totalWeightForEvent = templatePositions.reduce(
+                (sum, position) => sum + (position.weightPct ?? 0),
+                0
+              );
+
+              posthog.capture("click_template", {
+                template_name: templateName,
+                is_build_your_own: isBuildYourOwn,
+                positions_count: templatePositions.length,
+                total_weight: totalWeightForEvent,
+                triggered_action: isBuildYourOwn
+                  ? "scroll_to_step_2"
+                  : "analyze",
+              });
+
               setPositions(templatePositions);
-              if (templatePositions.length === 0) {
+              if (isBuildYourOwn) {
                 if (step2Ref.current) {
                   step2Ref.current.scrollIntoView({ behavior: "smooth" });
                 }
@@ -80,6 +109,17 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => {
+              const previousTotalWeight = positions.reduce(
+                (sum, position) => sum + position.weightPct,
+                0
+              );
+
+              posthog.capture("click_start_from_scratch", {
+                previous_positions_count: positions.length,
+                previous_total_weight: previousTotalWeight,
+                reset_mode: "defaults",
+              });
+
               setPositions(DEFAULT_POSITIONS);
               setFeedbackMessage(null);
               if (step2Ref.current) {

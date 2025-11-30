@@ -6,7 +6,7 @@ import { DEFAULT_POSITIONS } from "@/data/defaultPositions";
 
 
 type QuickStartTemplatesProps = {
-  onTemplateSelect: (positions: UserPosition[]) => void;
+  onTemplateSelect: (positions: UserPosition[], template: Template) => void;
 };
 
 type Template = {
@@ -109,9 +109,12 @@ export default function QuickStartTemplates({
     };
   }, []);
 
-  const handleTryTemplate = (positions: UserPosition[], index: number) => {
+  const handleTryTemplate = (template: Template, index: number) => {
     setActiveIndex(index);
-    onTemplateSelect(positions);
+    const clonedPositions = template.positions.map((position) => ({
+      ...position,
+    }));
+    onTemplateSelect(clonedPositions, template);
   };
 
   return (
@@ -128,7 +131,9 @@ export default function QuickStartTemplates({
           <div
             key={template.name}
             data-index={index}
-            ref={(el) => (cardRefs.current[index] = el)}
+            ref={(el) => {
+              cardRefs.current[index] = el;
+            }}
             className="
               min-w-[80%] max-w-[85%] snap-center sm:min-w-[320px] sm:max-w-[360px]
               md:min-w-0 md:max-w-none md:snap-none
@@ -158,7 +163,7 @@ export default function QuickStartTemplates({
               </div>
               <button
                 type="button"
-                onClick={() => handleTryTemplate(template.positions, index)}
+                onClick={() => handleTryTemplate(template, index)}
                 className="mt-4 inline-flex items-center justify-center rounded-full border border-zinc-200 bg-white/80 px-4 py-2 text-xs font-semibold text-zinc-900 transition hover:border-zinc-300 hover:bg-white dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-50 dark:hover:border-zinc-500"
               >
                 Try this →

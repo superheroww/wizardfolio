@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import posthog from "posthog-js";
 import { ETF_UNIVERSE } from "@/data/etfUniverse";
 
 type UserPosition = {
@@ -17,12 +18,12 @@ type PortfolioInputProps = {
 
 type SymbolSelectorProps = {
   value: string;
-  onSelect: (symbol: string) => void;
+  onCommit: (symbol: string) => void;
 };
 
 const MAX_ASSETS = 5;
 
-function SymbolSelector({ value, onSelect }: SymbolSelectorProps) {
+function SymbolSelector({ value, onCommit }: SymbolSelectorProps) {
   const [query, setQuery] = useState(value);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -44,10 +45,14 @@ function SymbolSelector({ value, onSelect }: SymbolSelectorProps) {
     (symbol: string) => {
       setQuery(symbol);
       setIsFocused(false);
-      onSelect(symbol);
+      onCommit(symbol);
     },
-    [onSelect]
+    [onCommit]
   );
+
+  const handleCommit = useCallback(() => {
+    onCommit(query);
+  }, [onCommit, query]);
 
   const dropdownVisible = isFocused;
 
@@ -58,7 +63,17 @@ function SymbolSelector({ value, onSelect }: SymbolSelectorProps) {
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
+        onBlur={() => {
+          setIsFocused(false);
+          handleCommit();
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            handleCommit();
+            event.currentTarget.blur();
+          }
+        }}
         placeholder="Search symbol"
         className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-base sm:text-sm outline-none transition focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900"
       />
@@ -112,42 +127,113 @@ export default function PortfolioInput({
 
   const canAddMore = positions.length < MAX_ASSETS;
 
-const updatePosition = useCallback(
-  (index: number, patch: Partial<UserPosition>) => {
-    const next = positions.map((p, i) =>
-      i === index ? { ...p, ...patch } : p
-    );
+  const lastWeightByRow = useRef<Record<number, number>>({});
 
-    onChange(next);
+  useEffect(() => {
+    positions.forEach((position, index) => {
+      if (lastWeightByRow.current[index] === undefined) {
+        lastWeightByRow.current[index] = position.weightPct ?? 0;
+      }
+    });
 
-    // AUTO-ADD NEW ROW LOGIC
-    const row = next[index];
-    const rowIsComplete =
-      row.symbol.trim() !== "" && row.weightPct > 0;
+    Object.keys(lastWeightByRow.current).forEach((key) => {
+      const index = Number(key);
+      if (index >= positions.length) {
+        delete lastWeightByRow.current[index];
+      }
+    });
+  }, [positions]);
 
-    const lastRow = next[next.length - 1];
-    const lastRowIsEmpty =
-      lastRow.symbol.trim() === "" && lastRow.weightPct === 0;
+  const updatePosition = useCallback(
+    (index: number, patch: Partial<UserPosition>) => {
+      const next = positions.map((p, i) =>
+        i === index ? { ...p, ...patch } : p
+      );
 
-    const canAdd = next.length < MAX_ASSETS;
+      onChange(next);
 
-    // If this row is complete AND the form has no empty row at the bottom → add one
-    if (rowIsComplete && !lastRowIsEmpty && canAdd) {
-      onChange([...next, { symbol: "", weightPct: 0 }]);
-    }
-  },
-  [positions, onChange]
-);
+      // AUTO-ADD NEW ROW LOGIC
+      const row = next[index];
+      const rowIsComplete =
+        row.symbol.trim() !== "" && row.weightPct > 0;
 
+      const lastRow = next[next.length - 1];
+      const lastRowIsEmpty =
+        lastRow.symbol.trim() === "" && lastRow.weightPct === 0;
+
+      const canAdd = next.length < MAX_ASSETS;
+
+      // If this row is complete AND the form has no empty row at the bottom → add one
+      if (rowIsComplete && !lastRowIsEmpty && canAdd) {
+        onChange([...next, { symbol: "", weightPct: 0 }]);
+      }
+    },
+    [positions, onChange]
+  );
+
+  const handleSymbolCommit = useCallback(
+    (index: number, rawSymbol: string) => {
+      const trimmed = rawSymbol.trim();
+      const prevSymbol = positions[index]?.symbol ?? "";
+      if (prevSymbol === trimmed) {
+        return;
+      }
+
+      updatePosition(index, { symbol: trimmed });
+      posthog.capture("edit_position_symbol", {
+        symbol_length: trimmed.length,
+        had_previous_symbol: !!prevSymbol.trim(),
+      });
+    },
+    [positions, updatePosition]
+  );
+
+  const handleWeightCommit = useCallback(
+    (index: number, rawValue: number) => {
+      if (!Number.isFinite(rawValue)) {
+        return;
+      }
+
+      const normalized = rawValue;
+      const previousRecorded = lastWeightByRow.current[index];
+      if (previousRecorded === normalized) {
+        return;
+      }
+
+      lastWeightByRow.current[index] = normalized;
+
+      const nextPositions = positions.map((position, i) =>
+        i === index ? { ...position, weightPct: normalized } : position
+      );
+      const totalWeightAfter = nextPositions.reduce(
+        (sum, position) => sum + (position.weightPct ?? 0),
+        0
+      );
+
+      posthog.capture("change_weight", {
+        total_weight_after: totalWeightAfter,
+        positions_count: nextPositions.length,
+      });
+    },
+    [positions]
+  );
 
   const addRow = () => {
     if (!canAddMore) return;
-    onChange([...positions, { symbol: "", weightPct: 0 }]);
+    const next = [...positions, { symbol: "", weightPct: 0 }];
+    onChange(next);
+    posthog.capture("add_position", {
+      positions_count_after: next.length,
+      source: "manual",
+    });
   };
 
   const removeRow = (index: number) => {
     const next = positions.filter((_, i) => i !== index);
     onChange(next);
+    posthog.capture("remove_position", {
+      positions_count_after: next.length,
+    });
   };
 
   return (
@@ -171,7 +257,7 @@ const updatePosition = useCallback(
               </label>
               <SymbolSelector
                 value={pos.symbol}
-                onSelect={(symbol) => updatePosition(index, { symbol })}
+                onCommit={(symbol) => handleSymbolCommit(index, symbol)}
               />
             </div>
             <div className="flex flex-col gap-1 w-24 min-w-[80px]">
@@ -190,6 +276,19 @@ const updatePosition = useCallback(
                     weightPct: Number(e.target.value || 0),
                   })
                 }
+                onBlur={(event) =>
+                  handleWeightCommit(index, Number(event.currentTarget.value || 0))
+                }
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleWeightCommit(
+                      index,
+                      Number(event.currentTarget.value || 0)
+                    );
+                    event.currentTarget.blur();
+                  }
+                }}
               />
             </div>
             <button

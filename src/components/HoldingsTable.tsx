@@ -46,6 +46,7 @@ export default function HoldingsTable({
     0,
     normalized.length - visibleHoldings.length
   );
+  const shouldShowToggle = normalized.length > limit;
 
   if (!normalized || normalized.length === 0) return null;
 
@@ -111,12 +112,12 @@ export default function HoldingsTable({
         ))}
       </div>
 
-      {normalized.length > limit && (
-        <div className="mt-3 flex justify-end">
+      {shouldShowToggle && (
+        <div className="mt-3 flex justify-center border-t border-zinc-100/80 pt-2 dark:border-zinc-800 md:justify-end">
           <button
             type="button"
             onClick={() => setShowAll((prev) => !prev)}
-            className="text-xs font-semibold uppercase tracking-wide text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+            className="text-xs font-semibold text-zinc-700 underline underline-offset-2 dark:text-zinc-200"
           >
             {showAll
               ? "Show fewer"
