@@ -241,7 +241,7 @@ export default function PortfolioInput({
       <header className="mb-3">
         <h2 className="text-lg font-semibold">Your portfolio mix</h2>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Enter each asset and its percentage. Aim for a total of 100%.
+          Add ETFs and their weights until you reach 100%.
         </p>
       </header>
 

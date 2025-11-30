@@ -140,9 +140,6 @@ export default function HomePage() {
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Step 2 · Adjust your mix
             </p>
-            <p className="text-sm text-zinc-600 dark:text-zinc-300">
-              Add ETFs and their weights until you reach 100%.
-            </p>
           </div>
 
           <PortfolioInput
@@ -179,7 +176,7 @@ export default function HomePage() {
               Step 3 · Tap “See my breakdown →” to view your stocks, sectors, and regions.
             </p>
             <p>
-              For education only. This isn’t investment advice, and no data is stored.
+              For education only. This isn’t investment advice.
             </p>
           </div>
         </section>
