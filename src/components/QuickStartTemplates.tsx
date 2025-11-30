@@ -68,7 +68,7 @@ const QUICK_START_TEMPLATES: Template[] = [
     emoji: "✏️",
     name: "Build Your Own Mix",
     description: "Start fresh and customize everything.",
-    positions: DEFAULT_POSITIONS, // Empty position as a placeholder
+    positions: [],
   },
 ];
 
@@ -164,7 +164,7 @@ export default function QuickStartTemplates({
               <button
                 type="button"
                 onClick={() => handleTryTemplate(template, index)}
-                className="mt-4 inline-flex items-center justify-center rounded-full border border-zinc-200 bg-white/80 px-4 py-2 text-xs font-semibold text-zinc-900 transition hover:border-zinc-300 hover:bg-white dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-50 dark:hover:border-zinc-500"
+                className="mt-4 inline-flex items-center justify-center rounded-full border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
               >
                 Try this →
               </button>

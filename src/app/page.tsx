@@ -75,57 +75,56 @@ export default function HomePage() {
             </p>
           </div>
 
-          <QuickStartTemplates
-            onTemplateSelect={(templatePositions, template) => {
-              const templateName = template.name;
-              const isBuildYourOwn = templateName === "Build Your Own Mix";
-              const totalWeightForEvent = templatePositions.reduce(
-                (sum, position) => sum + (position.weightPct ?? 0),
-                0
-              );
+        <QuickStartTemplates
+          onTemplateSelect={(templatePositions, template) => {
+            const templateName = template.name;
+            const isBuildYourOwn = templateName === "Build Your Own Mix";
+            const totalWeightForEvent = templatePositions.reduce(
+              (sum, position) => sum + (position.weightPct ?? 0),
+              0
+            );
 
-              posthog.capture("click_template", {
-                template_name: templateName,
-                is_build_your_own: isBuildYourOwn,
-                positions_count: templatePositions.length,
-                total_weight: totalWeightForEvent,
-                triggered_action: isBuildYourOwn
-                  ? "scroll_to_step_2"
-                  : "analyze",
-              });
+            posthog.capture("click_template", {
+              template_name: templateName,
+              is_build_your_own: isBuildYourOwn,
+              positions_count: templatePositions.length,
+              total_weight: totalWeightForEvent,
+              triggered_action: isBuildYourOwn ? "scroll_to_step_2" : "analyze",
+            });
 
-              setPositions(templatePositions);
-              if (isBuildYourOwn) {
-                if (step2Ref.current) {
-                  step2Ref.current.scrollIntoView({ behavior: "smooth" });
-                }
-                return;
-              }
-
-              handleAnalyze(templatePositions);
-            }}
-          />
-
-          <button
-            type="button"
-            onClick={() => {
-              const previousTotalWeight = positions.reduce(
-                (sum, position) => sum + position.weightPct,
-                0
-              );
-
-              posthog.capture("click_start_from_scratch", {
-                previous_positions_count: positions.length,
-                previous_total_weight: previousTotalWeight,
-                reset_mode: "defaults",
-              });
-
+            if (isBuildYourOwn) {
               setPositions(DEFAULT_POSITIONS);
-              setFeedbackMessage(null);
               if (step2Ref.current) {
                 step2Ref.current.scrollIntoView({ behavior: "smooth" });
               }
-            }}
+              return;
+            }
+
+            setPositions(templatePositions);
+            handleAnalyze(templatePositions);
+          }}
+        />
+
+          <button
+            type="button"
+          onClick={() => {
+            const previousTotalWeight = positions.reduce(
+              (sum, position) => sum + position.weightPct,
+              0
+            );
+
+            posthog.capture("click_start_from_scratch", {
+              previous_positions_count: positions.length,
+              previous_total_weight: previousTotalWeight,
+              reset_mode: "defaults",
+            });
+
+            setPositions(DEFAULT_POSITIONS);
+            setFeedbackMessage(null);
+            if (step2Ref.current) {
+              step2Ref.current.scrollIntoView({ behavior: "smooth" });
+            }
+          }}
             className="mt-2 inline-flex items-center justify-center text-xs font-semibold text-zinc-600 underline underline-offset-2 dark:text-zinc-300"
           >
             Or start from scratch
