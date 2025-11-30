@@ -8,6 +8,7 @@ import {
   type FormEvent,
   type TouchEvent,
 } from "react";
+import BenchmarkComparisonCard from "@/components/BenchmarkComparisonCard";
 import ExposureSummary from "@/components/ExposureSummary";
 import HoldingsTable from "@/components/HoldingsTable";
 import MixLine from "@/components/MixLine";
@@ -19,6 +20,9 @@ import { usePostHogSafe } from "@/lib/usePostHogSafe";
 import { normalizePositions } from "@/lib/positionsQuery";
 import type { ApiExposureRow, UserPosition } from "@/lib/exposureEngine";
 import { useImageShare } from "@/hooks/useImageShare";
+import { BENCHMARK_MIXES } from "@/lib/benchmarkPresets";
+import { compareMixes, pickDefaultBenchmark } from "@/lib/benchmarkEngine";
+import type { MixComparisonResult } from "@/lib/benchmarkEngine";
 
 type SubmissionState = "idle" | "loading" | "success" | "error";
 
@@ -73,6 +77,14 @@ type ResultsPageClientProps = {
 const EMPTY_POSITIONS_ERROR =
   "At least one ETF with a non-empty symbol and positive weight is required";
 
+const mapExposureRowsToMix = (rows: ApiExposureRow[]) =>
+  rows
+    .map((row) => ({
+      ticker: row.holding_symbol,
+      weightPct: row.total_weight_pct ?? 0,
+    }))
+    .filter((entry) => entry.ticker && entry.weightPct > 0);
+
 export default function ResultsPageClient({
   initialPositions,
   positionsQueryString,
@@ -88,11 +100,40 @@ export default function ResultsPageClient({
   const hasValidPositions = sanitizedPositions.length > 0;
   const positions = hasValidPositions ? sanitizedPositions : initialPositions;
 
+  const defaultBenchmark = useMemo(
+    () => pickDefaultBenchmark(sanitizedPositions),
+    [sanitizedPositions],
+  );
+  const [selectedBenchmarkId, setSelectedBenchmarkId] = useState(
+    defaultBenchmark.id,
+  );
+
+  useEffect(() => {
+    setSelectedBenchmarkId(defaultBenchmark.id);
+  }, [defaultBenchmark.id]);
+
+  const selectedBenchmark = useMemo(
+    () =>
+      BENCHMARK_MIXES.find((mix) => mix.id === selectedBenchmarkId) ??
+      BENCHMARK_MIXES[0],
+    [selectedBenchmarkId],
+  );
+
   const [exposure, setExposure] = useState<ApiExposureRow[]>([]);
   const [slide, setSlide] = useState<SlideIndex>(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const userExposureMix = useMemo(
+    () => mapExposureRowsToMix(exposure),
+    [exposure],
+  );
+
+  const [benchmarkComparison, setBenchmarkComparison] =
+    useState<MixComparisonResult | null>(null);
+  const [benchmarkError, setBenchmarkError] = useState<string | null>(null);
+  const [isBenchmarkLoading, setIsBenchmarkLoading] = useState(false);
 
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [message, setMessage] = useState("");
@@ -184,6 +225,64 @@ export default function ResultsPageClient({
 
     fetchExposure();
   }, [sanitizedPositions, hasPositionsParam]);
+
+  useEffect(() => {
+    if (isLoading || !userExposureMix.length || !selectedBenchmark) {
+      setBenchmarkComparison(null);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const fetchBenchmarkExposure = async () => {
+      setIsBenchmarkLoading(true);
+      setBenchmarkError(null);
+
+      try {
+        const res = await fetch("/api/etf-exposure", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            positions: selectedBenchmark.positions,
+          }),
+          signal: controller.signal,
+        });
+
+        const body = (await res.json().catch(() => null)) as
+          | { exposure?: ApiExposureRow[]; error?: string }
+          | null;
+
+        if (!res.ok) {
+          throw new Error(body?.error || "Failed to analyze benchmark.");
+        }
+
+        const benchmarkRows = body?.exposure ?? [];
+        const benchmarkMix = mapExposureRowsToMix(benchmarkRows);
+        const comparison = compareMixes(userExposureMix, benchmarkMix);
+
+        if (controller.signal.aborted) return;
+        setBenchmarkComparison(comparison);
+      } catch (err: any) {
+        if (controller.signal.aborted) return;
+        console.error("Benchmark exposure error:", err);
+        setBenchmarkError(
+          err?.message ||
+            "Unable to compare with the selected benchmark.",
+        );
+        setBenchmarkComparison(null);
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsBenchmarkLoading(false);
+        }
+      }
+    };
+
+    fetchBenchmarkExposure();
+
+    return () => {
+      controller.abort();
+    };
+  }, [isLoading, selectedBenchmark, userExposureMix]);
 
   const handleEditInputs = () => {
     if (positionsQueryString) {
@@ -560,6 +659,18 @@ export default function ResultsPageClient({
           </div>
         </div>
       </div>
+
+      {hasValidPositions && (
+        <BenchmarkComparisonCard
+          userLabel="Your mix"
+          benchmark={selectedBenchmark}
+          comparison={benchmarkComparison}
+          benchmarks={BENCHMARK_MIXES}
+          onBenchmarkChange={(id) => setSelectedBenchmarkId(id)}
+          isLoading={isLoading || isBenchmarkLoading}
+          error={benchmarkError}
+        />
+      )}
 
       <section className="rounded-3xl border border-zinc-200 bg-white/90 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
         <div className="mb-2 flex items-center justify-between">

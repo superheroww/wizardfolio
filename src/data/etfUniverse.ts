@@ -1,12 +1,4 @@
 export const ETF_UNIVERSE: string[] = [
-  "BND",
-  "HHIS.TO",
-  "HXT.TO",
-  "IEMG",
-  "IJH",
-  "IJR",
-  "ITOT",
-  "IVV",
   "QQQ",
   "SCHB",
   "SCHD",
