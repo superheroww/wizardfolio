@@ -12,6 +12,7 @@ type PortfolioInputProps = {
   positions: UserPosition[];
   onChange: (positions: UserPosition[]) => void;
   onAnalyze: () => void; // parent will call the API
+  analyzeLabel?: string;
 };
 
 type SymbolSelectorProps = {
@@ -90,6 +91,7 @@ export default function PortfolioInput({
   positions,
   onChange,
   onAnalyze,
+  analyzeLabel = "See my breakdown →",
 }: PortfolioInputProps) {
   // 🚨 Ignore empty rows (symbol "" AND weight 0)
   const validRows = positions.filter(
@@ -202,23 +204,7 @@ const updatePosition = useCallback(
       </div>
 
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm">
-          <span className="font-medium">Total:</span>{" "}
-          <span
-            className={
-              isTotalValid
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-rose-600 dark:text-rose-400"
-            }
-          >
-            {totalWeight.toFixed(1)}%
-          </span>
-          {!isTotalValid && (
-            <span className="ml-1 text-xs text-rose-500 dark:text-rose-400">
-              (must be 100%)
-            </span>
-          )}
-        </div>
+    
 
         <div className="flex flex-wrap gap-2">
           <button
@@ -235,7 +221,7 @@ const updatePosition = useCallback(
             disabled={!canAnalyze}
             className="inline-flex items-center rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
           >
-            See Breakdown
+            {analyzeLabel}
           </button>
         </div>
       </div>

@@ -1,5 +1,14 @@
 import { etfHoldings } from "@/data/etfHoldings";
 
+export type ApiExposureRow = {
+  holding_symbol: string;
+  holding_name: string;
+  country?: string | null;
+  sector?: string | null;
+  asset_class?: string | null;
+  total_weight_pct: number;
+};
+
 export type UserPosition = {
   symbol: string;
   weightPct: number;

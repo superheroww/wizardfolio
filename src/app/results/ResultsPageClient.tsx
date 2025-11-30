@@ -12,21 +12,13 @@ import ExposureSummary from "@/components/ExposureSummary";
 import HoldingsTable from "@/components/HoldingsTable";
 import MixLine from "@/components/MixLine";
 import RegionExposureChart from "@/components/RegionExposureChart";
+import { SectorBreakdownCard } from "@/components/SectorBreakdownCard";
 import { useRouter } from "next/navigation";
 import { AppleShareIcon } from "@/components/icons/AppleShareIcon";
 import { usePostHogSafe } from "@/lib/usePostHogSafe";
 import { normalizePositions } from "@/lib/positionsQuery";
-import { UserPosition } from "@/lib/exposureEngine";
+import type { ApiExposureRow, UserPosition } from "@/lib/exposureEngine";
 import { useImageShare } from "@/hooks/useImageShare";
-
-type ApiExposureRow = {
-  holding_symbol: string;
-  holding_name: string;
-  country?: string | null;
-  sector?: string | null;
-  asset_class?: string | null;
-  total_weight_pct: number;
-};
 
 type SubmissionState = "idle" | "loading" | "success" | "error";
 
@@ -38,6 +30,34 @@ const FEATURE_OPTIONS = [
   "Multi-currency insights (CAD vs USD)",
   "Something else…",
 ];
+
+type SlideIndex = 0 | 1 | 2 | 3 | 4;
+
+const SLIDE_TITLES: Record<SlideIndex, string> = {
+  0: "Your true exposure",
+  1: "By region",
+  2: "By sector",
+  3: "Top holdings",
+  4: "Help shape WizardFolio",
+};
+
+const SLIDE_ANALYTICS: Record<SlideIndex, string> = {
+  0: "Exposure",
+  1: "Region",
+  2: "Sector",
+  3: "Holdings",
+  4: "Feedback",
+};
+
+const DOT_LABELS: Record<SlideIndex, string> = {
+  0: "Exposure",
+  1: "Region",
+  2: "Sector",
+  3: "Holdings",
+  4: "Feedback",
+};
+
+const SLIDE_INDICES: SlideIndex[] = [0, 1, 2, 3, 4];
 
 type ResultsPageClientProps = {
   initialPositions: UserPosition[];
@@ -64,7 +84,7 @@ export default function ResultsPageClient({
   const positions = hasValidPositions ? sanitizedPositions : initialPositions;
 
   const [exposure, setExposure] = useState<ApiExposureRow[]>([]);
-  const [slide, setSlide] = useState<0 | 1 | 2 | 3>(0);
+  const [slide, setSlide] = useState<SlideIndex>(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,14 +109,7 @@ export default function ResultsPageClient({
   );
 
   useEffect(() => {
-    const slideName =
-      slide === 0
-        ? "Exposure"
-        : slide === 1
-        ? "Region"
-        : slide === 2
-        ? "Holdings"
-        : "Feedback";
+    const slideName = SLIDE_ANALYTICS[slide];
 
     capture("results_slide_viewed", {
       slide_index: slide,
@@ -199,29 +212,16 @@ export default function ResultsPageClient({
 
     if (Math.abs(deltaX) > 40) {
       if (deltaX < 0) {
-        setSlide((prev) => (prev === 3 ? 3 : ((prev + 1) as 0 | 1 | 2 | 3)));
+        setSlide((prev) => (prev === 4 ? 4 : ((prev + 1) as SlideIndex)));
       } else {
-        setSlide((prev) => (prev === 0 ? 0 : ((prev - 1) as 0 | 1 | 2 | 3)));
+        setSlide((prev) => (prev === 0 ? 0 : ((prev - 1) as SlideIndex)));
       }
     }
 
     setTouchStartX(null);
   };
 
-  const title = (() => {
-    switch (slide) {
-      case 0:
-        return "Your true exposure";
-      case 1:
-        return "By region";
-      case 2:
-        return "Top holdings";
-      case 3:
-        return "Help shape WizardFolio";
-      default:
-        return "Your true exposure";
-    }
-  })();
+  const title = SLIDE_TITLES[slide];
 
   const toggleFeature = (feature: string) => {
     setSelectedFeatures((prev) =>
@@ -344,10 +344,14 @@ export default function ResultsPageClient({
                 )}
 
                 {slide === 2 && (
-                  <HoldingsTable exposure={top10} showHeader={false} />
+                  <SectorBreakdownCard exposure={exposure} />
                 )}
 
                 {slide === 3 && (
+                  <HoldingsTable exposure={top10} showHeader={false} />
+                )}
+
+                {slide === 4 && (
                   <>
                     {feedbackState === "success" ? (
                       <div className="flex h-full flex-col justify-center rounded-2xl border border-zinc-200 bg-white/80 p-4 text-left text-xs shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70 sm:text-sm">
@@ -477,21 +481,13 @@ export default function ResultsPageClient({
           </div>
 
           <div className="flex justify-center gap-2 pt-1">
-            {[0, 1, 2, 3].map((idx) => (
+            {SLIDE_INDICES.map((idx) => (
               <button
                 key={idx}
                 type="button"
-                onClick={() => setSlide(idx as 0 | 1 | 2 | 3)}
+                onClick={() => setSlide(idx)}
                 className="group"
-                aria-label={
-                  idx === 0
-                    ? "Exposure"
-                    : idx === 1
-                    ? "Region"
-                    : idx === 2
-                    ? "Holdings"
-                    : "Feedback"
-                }
+                aria-label={DOT_LABELS[idx]}
               >
                 <span
                   className={[
