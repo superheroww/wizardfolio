@@ -1,12 +1,15 @@
 "use client";
 
 import { ChangeEvent, useMemo, useState } from "react";
+import { usePostHogSafe } from "@/lib/usePostHogSafe";
 import type { ApiExposureRow } from "@/lib/exposureEngine";
 import type { BenchmarkMix } from "@/lib/benchmarkPresets";
+import { getBenchmarkLabel } from "@/lib/benchmarkUtils";
 import type { MixComparisonResult } from "@/lib/benchmarkEngine";
 import { aggregateByRegion, aggregateBySector } from "@/lib/exposureAggregations";
 import { useBenchmarkExposure } from "@/hooks/useBenchmarkExposure";
 import type { BenchmarkExposureRow } from "@/lib/benchmarkExposure";
+import ExposureComparisonRow from "@/components/ExposureComparisonRow";
 import type { GroupExposure } from "@/lib/benchmarkTilts";
 
 type ExposureTab = "stock" | "sector" | "region";
@@ -26,6 +29,10 @@ type BenchmarkComparisonCardProps = {
   exposure: ApiExposureRow[];
   userExposureMix: { ticker: string; weightPct: number }[];
   singleSymbol?: string | null;
+  mixName: string;
+  positionsCount: number;
+  benchmarkSymbol: string;
+  hasBenchmarkComparison: boolean;
 };
 
 const formatPercent = (value: number | null | undefined) => {
@@ -33,19 +40,9 @@ const formatPercent = (value: number | null | undefined) => {
   return `${value.toFixed(1)}%`;
 };
 
-const formatSignedPercent = (value: number) => {
-  const formatted = value.toFixed(1);
-  return value >= 0 ? `+${formatted}%` : `${formatted}%`;
-};
-
 const DIFF_THRESHOLD = 5;
 const STOCK_TILT_LIMIT = 5;
 const MIN_TILT_DELTA = 0.05;
-
-const getBenchmarkLabel = (benchmark: BenchmarkMix) =>
-  benchmark.label ||
-  benchmark.positions?.[0]?.symbol ||
-  benchmark.id;
 
 const normalizeKey = (value?: string) => value?.trim().toLowerCase() || "other";
 const friendlyLabel = (value?: string) => value?.trim() || "Other";
@@ -112,6 +109,10 @@ export default function BenchmarkComparisonCard({
   exposure,
   userExposureMix,
   singleSymbol,
+  mixName,
+  positionsCount,
+  benchmarkSymbol: benchmarkSymbolProp,
+  hasBenchmarkComparison,
 }: BenchmarkComparisonCardProps) {
   const overlapPct = comparison?.overlapPct ?? 0;
   const labelSlice =
@@ -127,10 +128,31 @@ export default function BenchmarkComparisonCard({
   const overlapWidth = Math.min(100, Math.max(0, overlapPct));
 
   const [activeTab, setActiveTab] = useState<ExposureTab>("stock");
+  const { capture } = usePostHogSafe();
   const benchmarkSymbol =
-    benchmark.positions?.[0]?.symbol ?? benchmark.id;
+    benchmarkSymbolProp ??
+    benchmark.positions?.[0]?.symbol ??
+    benchmark.id;
   const benchmarkLabel = getBenchmarkLabel(benchmark);
   const normalizedSingleSymbol = singleSymbol?.trim().toUpperCase() ?? null;
+
+  const handleTabChange = (tabId: ExposureTab) => {
+    if (tabId === activeTab) {
+      return;
+    }
+
+    capture("exposure_view_changed", {
+      view_type: tabId,
+      previous_view_type: activeTab,
+      source_card: "benchmark_comparison",
+      benchmark_symbol: benchmarkSymbol,
+      has_benchmark_enabled: hasBenchmarkComparison,
+      mix_name: mixName,
+      positions_count: positionsCount,
+    });
+
+    setActiveTab(tabId);
+  };
 
   const { data: stockRowsData, isLoading: loadingStocks, error: stockError } =
     useBenchmarkExposure(benchmarkSymbol, "stock");
@@ -260,32 +282,17 @@ export default function BenchmarkComparisonCard({
     </div>
   );
 
-  const badgeClassForDelta = (delta: number) =>
-    [
-      "mt-2 text-xs font-semibold px-2 py-0.5 rounded-full self-start sm:mt-0",
-      delta > 0.049
-        ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300"
-        : delta < -0.049
-          ? "bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300"
-          : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
-    ].join(" ");
-
   const renderTiltRow = (row: GroupDetailRow) => (
     <div
       key={row.label}
       className="rounded-2xl border border-zinc-100 bg-white/70 px-3 py-2 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70"
     >
-      <div className="flex flex-col gap-1 text-zinc-900 dark:text-zinc-50 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div className="flex-1">
-          <p className="text-sm font-semibold">{row.label}</p>
-          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-            Your mix {formatPercent(row.userPct)} · Benchmark {formatPercent(row.benchmarkPct)}
-          </p>
-        </div>
-        <span className={badgeClassForDelta(row.delta)}>
-          {formatSignedPercent(row.delta)}
-        </span>
-      </div>
+      <ExposureComparisonRow
+        label={row.label}
+        yourPct={row.userPct}
+        benchmarkPct={row.benchmarkPct}
+        diffPct={row.delta}
+      />
     </div>
   );
 
@@ -381,7 +388,7 @@ export default function BenchmarkComparisonCard({
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={[
                 "rounded-full px-3 py-1.5 text-xs font-semibold transition",
                 activeTab === tab.id

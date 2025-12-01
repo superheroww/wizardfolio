@@ -11,6 +11,7 @@ import {
   buildPositionsSearchParams,
   normalizePositions,
 } from "@/lib/positionsQuery";
+import { formatMixSummary } from "@/lib/mixFormatting";
 
 export default function HomePage() {
   const router = useRouter();
@@ -27,17 +28,6 @@ export default function HomePage() {
     const source = overridePositions ?? positions;
     setFeedbackMessage(null);
 
-    const totalWeightForEvent = source.reduce(
-      (sum, position) => sum + position.weightPct,
-      0
-    );
-
-    posthog.capture("click_analyze", {
-      positions_count: source.length,
-      total_weight: totalWeightForEvent,
-      source: overridePositions ? "template" : "manual",
-    });
-
     const cleanedPositions = normalizePositions(source);
     if (!cleanedPositions.length) {
       setFeedbackMessage("Please add some ETFs and try again.");
@@ -49,6 +39,17 @@ export default function HomePage() {
       setFeedbackMessage("Please add some ETFs and try again.");
       return;
     }
+
+    const mixName = formatMixSummary(cleanedPositions);
+    posthog.capture("analyze_clicked", {
+      positions: cleanedPositions.map((position) => ({
+        symbol: position.symbol.trim(),
+        weightPct: position.weightPct,
+      })),
+      mix_name: mixName,
+      positions_count: cleanedPositions.length,
+      source_page: "home",
+    });
 
     router.push(`/results?${params}`);
   };
@@ -77,20 +78,7 @@ export default function HomePage() {
 
         <QuickStartTemplates
           onTemplateSelect={(templatePositions, template) => {
-            const templateName = template.name;
-            const isBuildYourOwn = templateName === "Build Your Own Mix";
-            const totalWeightForEvent = templatePositions.reduce(
-              (sum, position) => sum + (position.weightPct ?? 0),
-              0
-            );
-
-            posthog.capture("click_template", {
-              template_name: templateName,
-              is_build_your_own: isBuildYourOwn,
-              positions_count: templatePositions.length,
-              total_weight: totalWeightForEvent,
-              triggered_action: isBuildYourOwn ? "scroll_to_step_2" : "analyze",
-            });
+            const isBuildYourOwn = template.name === "Build Your Own Mix";
 
             if (isBuildYourOwn) {
               setPositions(DEFAULT_POSITIONS);

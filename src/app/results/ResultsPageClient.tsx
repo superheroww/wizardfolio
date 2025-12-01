@@ -28,6 +28,8 @@ import {
   findBenchmarkBySymbol,
 } from "@/lib/benchmarkEngine";
 import type { MixComparisonResult } from "@/lib/benchmarkEngine";
+import { formatMixSummary } from "@/lib/mixFormatting";
+import { getBenchmarkLabel } from "@/lib/benchmarkUtils";
 
 type SubmissionState = "idle" | "loading" | "success" | "error";
 
@@ -36,7 +38,6 @@ const FEATURE_OPTIONS = [
   "Support individual stocks",
   "Connect my real portfolio",
   "More ETF insights & charts",
-  "Multi-currency insights (CAD vs USD)",
   "Something else…",
 ];
 
@@ -104,6 +105,11 @@ export default function ResultsPageClient({
   );
   const hasValidPositions = sanitizedPositions.length > 0;
   const positions = hasValidPositions ? sanitizedPositions : initialPositions;
+  const positionsCount = sanitizedPositions.length;
+  const mixName = useMemo(
+    () => formatMixSummary(sanitizedPositions),
+    [sanitizedPositions]
+  );
 
   const singleETFSymbol = useMemo(() => {
     if (sanitizedPositions.length !== 1) {
@@ -161,6 +167,29 @@ export default function ResultsPageClient({
     selectedBenchmark.label ??
     selectedBenchmark.id;
 
+  const handleBenchmarkChange = (newBenchmarkId: string) => {
+    const nextBenchmark =
+      BENCHMARK_MIXES.find((mix) => mix.id === newBenchmarkId) ??
+      selectedBenchmark;
+    const nextSymbol =
+      nextBenchmark.positions?.[0]?.symbol ?? nextBenchmark.id;
+    const nextName = getBenchmarkLabel(nextBenchmark);
+    const isDefaultBenchmark = nextBenchmark.id === defaultBenchmark.id;
+
+    capture("benchmark_changed", {
+      from_benchmark_symbol: benchmarkSymbol,
+      to_benchmark_symbol: nextSymbol,
+      from_benchmark_name: benchmarkLabel,
+      to_benchmark_name: nextName,
+      is_default_benchmark: isDefaultBenchmark,
+      source_page: "results",
+      mix_name: mixName,
+      positions_count: positionsCount,
+    });
+
+    setSelectedBenchmarkId(newBenchmarkId);
+  };
+
   const [exposure, setExposure] = useState<ApiExposureRow[]>([]);
   const [slide, setSlide] = useState<SlideIndex>(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -183,6 +212,7 @@ export default function ResultsPageClient({
   const [feedbackState, setFeedbackState] = useState<SubmissionState>("idle");
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const resultsLoadedRef = useRef(false);
   const { shareElementAsImage, isSharing } = useImageShare();
 
   const top10 = useMemo(
@@ -239,13 +269,6 @@ export default function ResultsPageClient({
         const holdings = body?.exposure ?? [];
 
         setExposure(holdings);
-        capture("results_viewed", {
-          num_holdings: holdings.length,
-          num_etfs: sanitizedPositions.length,
-          top_symbols: sanitizedPositions
-            .map((p) => p.symbol)
-            .slice(0, 5),
-        });
       } catch (err: any) {
         console.error("Exposure API error:", err);
         setExposure([]);
@@ -267,6 +290,25 @@ export default function ResultsPageClient({
 
     fetchExposure();
   }, [sanitizedPositions, hasPositionsParam]);
+
+  useEffect(() => {
+    if (resultsLoadedRef.current) {
+      return;
+    }
+
+    if (isLoading || !exposure.length) {
+      return;
+    }
+
+    resultsLoadedRef.current = true;
+    capture("results_loaded", {
+      holdings_count: exposure.length,
+      positions_count: positionsCount,
+      benchmark_symbol: benchmarkSymbol,
+      mix_name: mixName,
+      source_page: "results",
+    });
+  }, [capture, exposure.length, isLoading, positionsCount, benchmarkSymbol, mixName]);
 
   useEffect(() => {
     if (isLoading || !userExposureMix.length || !selectedBenchmark) {
@@ -343,9 +385,11 @@ export default function ResultsPageClient({
       text: "ETF look-through powered by WizardFolio (wizardfolio.com)",
     });
 
-    capture("results_shared", {
-      method: "image_share",
-      has_exposure: exposure.length > 0,
+    capture("share_clicked", {
+      mix_name: mixName,
+      positions_count: positionsCount,
+      share_target: "image_share",
+      source_card: "true_exposure_card",
     });
   };
 
@@ -703,18 +747,20 @@ export default function ResultsPageClient({
       </div>
 
       {hasValidPositions && (
-        <>
         <BenchmarkComparisonCard
           userLabel="Your mix"
           benchmark={selectedBenchmark}
           comparison={benchmarkComparison}
           benchmarks={BENCHMARK_MIXES}
-          onBenchmarkChange={(id) => setSelectedBenchmarkId(id)}
+          onBenchmarkChange={handleBenchmarkChange}
           exposure={exposure}
           userExposureMix={userExposureMix}
           singleSymbol={singleETFSymbol}
+          mixName={mixName}
+          positionsCount={positionsCount}
+          benchmarkSymbol={benchmarkSymbol}
+          hasBenchmarkComparison={Boolean(benchmarkComparison)}
         />
-        </>
       )}
 
       <section className="rounded-3xl border border-zinc-200 bg-white/90 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">

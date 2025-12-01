@@ -1,51 +1,63 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePostHogSafe } from "@/lib/usePostHogSafe";
 import { UserPosition } from "@/lib/exposureEngine";
-import { DEFAULT_POSITIONS } from "@/data/defaultPositions";
-
 
 type QuickStartTemplatesProps = {
   onTemplateSelect: (positions: UserPosition[], template: Template) => void;
 };
 
 type Template = {
+  id: string;
   emoji: string;
   name: string;
   description: string;
   positions: UserPosition[];
+  type: "template" | "custom";
+  isDefaultTemplate: boolean;
 };
 
 const QUICK_START_TEMPLATES: Template[] = [
   {
+    id: "core-us-intl",
     emoji: "🏛️",
-    name: "Classic 60/40",
-    description: "Simple balanced mix of stocks and bonds.",
+    name: "Core US & Intl",
+    description: "Simple mix of US and international stocks.",
     positions: [
-      { symbol: "VOO", weightPct: 60 },
-      { symbol: "BND", weightPct: 40 },
+      { symbol: "VTI", weightPct: 60 },
+      { symbol: "VXUS", weightPct: 40 },
     ],
+    type: "template",
+    isDefaultTemplate: true,
   },
   {
+    id: "global-three-fund",
     emoji: "🌍",
-    name: "Three-Fund Portfolio",
-    description: "Broad US, international, and bonds.",
+    name: "Global Three-Fund",
+    description: "Broad US and international equity exposure.",
     positions: [
       { symbol: "VTI", weightPct: 40 },
       { symbol: "VXUS", weightPct: 30 },
-      { symbol: "BND", weightPct: 30 },
+      { symbol: "VT", weightPct: 30 },
     ],
+    type: "template",
+    isDefaultTemplate: false,
   },
   {
+    id: "couch-potato",
     emoji: "🇨🇦",
     name: "Couch Potato",
-    description: "Lazy Canadian portfolio style.",
+    description: "Lazy Canadian portfolio style (all-equity version).",
     positions: [
       { symbol: "XEQT.TO", weightPct: 80 },
-      { symbol: "ZAG.TO", weightPct: 20 },
+      { symbol: "VCN.TO", weightPct: 20 }, // replaced ZAG.TO (bond ETF)
     ],
+    type: "template",
+    isDefaultTemplate: false,
   },
   {
+    id: "growth-focus",
     emoji: "🚀",
     name: "Growth Focus",
     description: "More tilted to growth stocks.",
@@ -53,8 +65,11 @@ const QUICK_START_TEMPLATES: Template[] = [
       { symbol: "QQQ", weightPct: 60 },
       { symbol: "VUG", weightPct: 40 },
     ],
+    type: "template",
+    isDefaultTemplate: false,
   },
   {
+    id: "dividends-tilt",
     emoji: "💸",
     name: "Dividends Tilt",
     description: "Leans into dividend ETFs.",
@@ -63,12 +78,17 @@ const QUICK_START_TEMPLATES: Template[] = [
       { symbol: "VDY.TO", weightPct: 30 },
       { symbol: "ZDV.TO", weightPct: 30 },
     ],
+    type: "template",
+    isDefaultTemplate: false,
   },
   {
+    id: "build-your-own",
     emoji: "✏️",
     name: "Build Your Own Mix",
     description: "Start fresh and customize everything.",
     positions: [],
+    type: "custom",
+    isDefaultTemplate: false,
   },
 ];
 
@@ -78,6 +98,7 @@ export default function QuickStartTemplates({
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const { capture } = usePostHogSafe();
 
   useEffect(() => {
     const container = containerRef.current;
@@ -111,6 +132,14 @@ export default function QuickStartTemplates({
 
   const handleTryTemplate = (template: Template, index: number) => {
     setActiveIndex(index);
+    capture("starting_point_selected", {
+      starting_point_id: template.id,
+      starting_point_label: template.name,
+      starting_point_type: template.type,
+      source_page: "home",
+      positions_count: template.positions.length,
+      is_default_template: template.isDefaultTemplate,
+    });
     const clonedPositions = template.positions.map((position) => ({
       ...position,
     }));

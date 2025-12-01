@@ -29,6 +29,5 @@ export const ETF_UNIVERSE: string[] = [
   "XIC.TO",
   "XTOT.TO",
   "XUU.TO",
-  "ZAG.TO",
   "ZSP.TO"
 ];
