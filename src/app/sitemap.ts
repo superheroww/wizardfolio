@@ -73,13 +73,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
       changeFrequency: "monthly",
     },
-    ...holdings.map((symbol) => ({
+    ...holdings.map((symbol): MetadataRoute.Sitemap[number] => ({
       url: `${baseUrl}/holdings/${symbol}`,
       lastModified: now,
       priority: 0.7,
       changeFrequency: "weekly",
     })),
-    ...comparisons.map((slug) => ({
+    ...comparisons.map((slug): MetadataRoute.Sitemap[number] => ({
       url: `${baseUrl}/compare/${slug}`,
       lastModified: now,
       priority: 0.6,
