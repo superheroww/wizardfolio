@@ -30,7 +30,15 @@ export default function RootLayout({
             </header>
             <main className="flex-1 space-y-4">{children}</main>
             <footer className="mt-6 border-t border-zinc-200 pt-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-              Built as a simple ETF look-through visualizer. For educational purposes only.
+              <div className="flex flex-wrap items-center gap-3">
+                <span>Built as a simple ETF look-through visualizer. For educational purposes only.</span>
+                <a
+                  href="/faq"
+                  className="text-xs text-muted-foreground hover:text-zinc-900 dark:hover:text-zinc-50"
+                >
+                  FAQ
+                </a>
+              </div>
             </footer>
           </div>
         </PostHogProvider>
