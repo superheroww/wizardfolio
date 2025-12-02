@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { createServerSupabaseClient } from "../../../../../lib/supabaseServer";
+import { createServerSupabaseClient } from "@/lib/supabaseServer";
 
 const STATIC_ETF_SYMBOLS = [
   "ZSP.TO",
@@ -201,6 +201,37 @@ export default async function HoldingsPage({ params }: HoldingsPageProps) {
             </a>
           </div>
         </div>
+      </section>
+      <section className="rounded-2xl border bg-card/50 p-4 shadow-sm">
+        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide">
+          Related ETF Pages
+        </h2>
+        <ul className="space-y-2 text-sm">
+          <li>
+            <a
+              href="/compare/voo-vs-qqq"
+              className="text-primary underline-offset-4 hover:underline"
+            >
+              VOO vs QQQ comparison
+            </a>
+          </li>
+          <li>
+            <a
+              href="/compare/spy-vs-qqq"
+              className="text-primary underline-offset-4 hover:underline"
+            >
+              SPY vs QQQ comparison
+            </a>
+          </li>
+          <li>
+            <a
+              href="/holdings/QQQ"
+              className="text-primary underline-offset-4 hover:underline"
+            >
+              QQQ holdings
+            </a>
+          </li>
+        </ul>
       </section>
     </main>
   );
