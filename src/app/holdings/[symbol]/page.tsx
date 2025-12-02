@@ -44,7 +44,7 @@ const STATIC_ETF_SYMBOLS = [
   "IJR",
 ] as const;
 
-export const revalidate = 60 * 60 * 24;
+export const revalidate = 86400;
 
 type HoldingRow = {
   holding_symbol: string;
@@ -65,7 +65,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: HoldingsPageProps): Promise<Metadata> {
-  const symbol = params.symbol ? params.symbol.toUpperCase() : "ETF";
+  const resolvedParams = await params;
+  const symbol = resolvedParams.symbol ? resolvedParams.symbol.toUpperCase() : "ETF";
   return {
     title: `${symbol} Holdings | ETF Look-Through | WizardFolio`,
     description: `See the latest holdings for ${symbol}: top stocks, sectors, and country exposure. Powered by WizardFolio's ETF look-through engine.`,
@@ -73,7 +74,8 @@ export async function generateMetadata({ params }: HoldingsPageProps): Promise<M
 }
 
 export default async function HoldingsPage({ params }: HoldingsPageProps) {
-  const rawSymbol = params.symbol ?? "";
+  const resolvedParams = await params;
+  const rawSymbol = resolvedParams.symbol ?? "";
   const symbol = rawSymbol.toUpperCase();
 
   if (!symbol) {
@@ -89,11 +91,19 @@ export default async function HoldingsPage({ params }: HoldingsPageProps) {
 
   if (error) {
     console.error("Error loading holdings", error);
-    notFound();
+    return (
+      <main className="p-6">
+        <pre>Error: {JSON.stringify(error, null, 2)}</pre>
+      </main>
+    );
   }
 
   if (!data || data.length === 0) {
-    notFound();
+    return (
+      <main className="p-6">
+        <p>No holdings found for {symbol}.</p>
+      </main>
+    );
   }
 
   const holdings = data.map((row) => ({
@@ -115,7 +125,7 @@ export default async function HoldingsPage({ params }: HoldingsPageProps) {
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
           {symbol} Holdings (Top {topHoldings.length})
         </h1>
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-zinc-600 leading-relaxed">
           This page shows the latest holdings for {symbol} from the WizardFolio ETF
           look-through engine. Use it to understand the underlying stocks, sectors,
           and countries in this ETF.
@@ -177,40 +187,40 @@ export default async function HoldingsPage({ params }: HoldingsPageProps) {
         </div>
       </section>
 
-      <section className="rounded-2xl border bg-muted/40 p-4 text-sm">
+      <section className="rounded-2xl border bg-muted/40 p-4 md:p-5 text-sm text-zinc-600">
         <div className="space-y-3">
           <p className="text-sm font-semibold text-zinc-900">
             Compare {symbol} or mix it with other ETFs
           </p>
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm leading-relaxed">
             Use WizardFolio to mix {symbol} with ETFs such as QQQ, XEQT, and VEQT
             and see the true stock-level exposure of your blend.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <a
               href="/"
-              className="rounded-full bg-white px-4 py-2 text-sm font-medium shadow-sm ring-1 ring-border hover:bg-accent"
+              className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm ring-1 ring-border hover:bg-accent"
             >
               Try your own mix →
             </a>
             <a
               href="/compare/voo-vs-qqq"
-              className="text-sm text-primary underline-offset-4 hover:underline"
+              className="text-sm text-primary/80 underline-offset-4 hover:text-primary hover:underline"
             >
               VOO vs QQQ comparison
             </a>
           </div>
         </div>
       </section>
-      <section className="rounded-2xl border bg-card/50 p-4 shadow-sm">
-        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide">
-          Related ETF Pages
+      <section className="rounded-2xl border bg-muted/40 p-4 md:p-5 text-sm text-zinc-600 leading-relaxed">
+        <h2 className="mb-3 text-sm font-semibold text-zinc-900">
+          Related ETF pages
         </h2>
-        <ul className="space-y-2 text-sm">
+        <ul className="space-y-2 text-sm text-zinc-600">
           <li>
             <a
               href="/compare/voo-vs-qqq"
-              className="text-primary underline-offset-4 hover:underline"
+              className="text-sm text-primary/80 underline-offset-4 hover:text-primary hover:underline"
             >
               VOO vs QQQ comparison
             </a>
@@ -218,7 +228,7 @@ export default async function HoldingsPage({ params }: HoldingsPageProps) {
           <li>
             <a
               href="/compare/spy-vs-qqq"
-              className="text-primary underline-offset-4 hover:underline"
+              className="text-sm text-primary/80 underline-offset-4 hover:text-primary hover:underline"
             >
               SPY vs QQQ comparison
             </a>
@@ -226,7 +236,7 @@ export default async function HoldingsPage({ params }: HoldingsPageProps) {
           <li>
             <a
               href="/holdings/QQQ"
-              className="text-primary underline-offset-4 hover:underline"
+              className="text-sm text-primary/80 underline-offset-4 hover:text-primary hover:underline"
             >
               QQQ holdings
             </a>

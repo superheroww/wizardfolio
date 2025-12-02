@@ -10,13 +10,13 @@ export default function XeqtVsVeqtPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-10">
       <section className="space-y-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
           ETF comparison
         </p>
         <h1 className="text-2xl font-semibold text-zinc-900">
           XEQT vs VEQT: What’s the difference?
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-600 leading-relaxed">
           XEQT and VEQT are Canadian-listed, 100% equity ETFs that give investors exposure to a global mix of stocks. XEQT comes from iShares while VEQT is built by Vanguard, so their issuer mixes and underlying ETFs differ slightly even though they share a similar goal.
         </p>
       </section>
@@ -27,29 +27,29 @@ export default function XeqtVsVeqtPage() {
           <table className="min-w-full text-left text-sm">
             <thead>
               <tr>
-                <th className="border-b px-2 pb-2 text-xs text-muted-foreground"> </th>
-                <th className="border-b px-2 pb-2 text-xs font-semibold text-muted-foreground">XEQT</th>
-                <th className="border-b px-2 pb-2 text-xs font-semibold text-muted-foreground">VEQT</th>
+                <th className="border-b px-2 pb-2 text-xs text-zinc-500"> </th>
+                <th className="border-b px-2 pb-2 text-xs font-semibold text-zinc-900">XEQT</th>
+                <th className="border-b px-2 pb-2 text-xs font-semibold text-zinc-900">VEQT</th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b">
-                <td className="py-2 pr-4 text-xs text-muted-foreground">Index / exposure</td>
+                <td className="py-2 pr-4 text-xs text-zinc-500">Index / exposure</td>
                 <td className="py-2 pr-4 text-sm">Global equities with a slight tilt toward developed markets.</td>
                 <td className="py-2 pr-4 text-sm">Global equities that combine Vanguard’s international and U.S. building blocks.</td>
               </tr>
               <tr className="border-b">
-                <td className="py-2 pr-4 text-xs text-muted-foreground">Equity allocation</td>
+                <td className="py-2 pr-4 text-xs text-zinc-500">Equity allocation</td>
                 <td className="py-2 pr-4 text-sm">~100% equities.</td>
                 <td className="py-2 pr-4 text-sm">~100% equities.</td>
               </tr>
               <tr className="border-b">
-                <td className="py-2 pr-4 text-xs text-muted-foreground">Underlying structure</td>
+                <td className="py-2 pr-4 text-xs text-zinc-500">Underlying structure</td>
                 <td className="py-2 pr-4 text-sm">iShares building blocks and regional ETFs.</td>
                 <td className="py-2 pr-4 text-sm">Vanguard’s U.S., international, and emerging market ETF combo.</td>
               </tr>
               <tr>
-                <td className="py-2 pr-4 text-xs text-muted-foreground">Typical use</td>
+                <td className="py-2 pr-4 text-xs text-zinc-500">Typical use</td>
                 <td className="py-2 pr-4 text-sm">One ticket global equity exposure for Canadian investors.</td>
                 <td className="py-2 pr-4 text-sm">A similar all-in-one choice that leans on Vanguard’s ETF lineup.</td>
               </tr>
@@ -61,44 +61,44 @@ export default function XeqtVsVeqtPage() {
       <section className="grid gap-4 rounded-2xl border bg-muted/40 p-4 text-sm md:grid-cols-2">
         <div>
           <p className="text-sm font-medium text-zinc-900">How investors often use XEQT</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-zinc-600 leading-relaxed">
             Many investors use XEQT as a single security that captures a wide global equity pool via iShares ETFs, making it easy to own an international blend without managing multiple holdings.
           </p>
         </div>
         <div>
           <p className="text-sm font-medium text-zinc-900">How investors often use VEQT</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-zinc-600 leading-relaxed">
             Some investors choose VEQT when they prefer Vanguard’s mix of U.S., international, and emerging market ETFs, then rely on it as their core global equity sleeve.
           </p>
         </div>
       </section>
 
-      <section className="rounded-2xl border bg-card/40 p-4 text-sm">
+      <section className="rounded-2xl border bg-muted/40 p-4 md:p-5 text-sm text-zinc-600 leading-relaxed">
         <p className="mb-2 text-sm font-medium text-zinc-900">Mix XEQT and VEQT and see your true exposure</p>
-        <p className="mb-3 text-sm text-muted-foreground">
+        <p className="mb-3 text-sm text-zinc-600 leading-relaxed">
           Mix XEQT, VEQT, and other ETFs through WizardFolio to see the actual stock-, sector-, and region-level exposure you end up with instead of guessing from the label.
         </p>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <a
             href="/"
-            className="rounded-full px-4 py-2 text-sm font-medium shadow-sm ring-1 ring-border hover:bg-accent"
+            className="rounded-full px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm ring-1 ring-border hover:bg-accent"
           >
             Try your own mix →
           </a>
           <a
             href="/holdings/XEQT.TO"
-            className="text-sm text-primary underline-offset-4 hover:underline"
+            className="text-sm text-primary/80 underline-offset-4 hover:text-primary hover:underline"
           >
             View XEQT.TO holdings
           </a>
           <a
             href="/holdings/VEQT.TO"
-            className="text-sm text-primary underline-offset-4 hover:underline"
+            className="text-sm text-primary/80 underline-offset-4 hover:text-primary hover:underline"
           >
             View VEQT.TO holdings
           </a>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">
+        <p className="mt-3 text-xs text-zinc-500 leading-relaxed">
           This page is for general information only and isn&apos;t a recommendation to buy or sell any investment.
         </p>
       </section>

@@ -65,15 +65,15 @@ export default function FaqPage() {
         suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
-      <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
+      <div className="max-w-3xl mx-auto px-4 py-10 space-y-6">
         <section className="space-y-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
             Help &amp; support
           </p>
           <h1 className="text-2xl font-semibold text-zinc-900">
             Frequently asked questions
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-zinc-600">
             Here are some common questions about how WizardFolio works, which ETFs
             we support, and what you can expect from the ETF look-through analysis.
           </p>
@@ -83,19 +83,23 @@ export default function FaqPage() {
           {faqEntries.map((entry) => (
             <article
               key={entry.question}
-              className="rounded-2xl border bg-card/50 p-4"
+              className="rounded-2xl border bg-card/50 p-4 md:p-5 shadow-sm"
             >
-              <h2 className="text-sm font-medium text-zinc-900">{entry.question}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{entry.answer}</p>
+              <h2 className="text-sm md:text-base font-semibold text-zinc-900">
+                {entry.question}
+              </h2>
+              <p className="mt-2 text-sm md:text-[0.95rem] leading-relaxed text-zinc-700">
+                {entry.answer}
+              </p>
             </article>
           ))}
         </section>
 
-        <section className="rounded-2xl border bg-card/40 p-4 text-sm">
+        <section className="rounded-2xl border bg-card/40 p-4 md:p-5 text-sm text-zinc-600">
           <h2 className="mb-2 text-sm font-medium text-zinc-900">
             Ready to see what you actually own?
           </h2>
-          <p className="mb-3 text-sm text-muted-foreground">
+          <p className="mb-3 text-sm leading-relaxed">
             Mix ETFs like VOO, QQQ, XEQT, and VEQT and instantly see your true
             stock, sector, and region exposure. No signup required for the basic
             look-through.

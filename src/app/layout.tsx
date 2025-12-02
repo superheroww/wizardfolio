@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ThemeToggle from "@/components/ThemeToggle";
 import { PostHogProvider } from "@/providers/PostHogProvider";
 
 export const metadata: Metadata = {
@@ -17,7 +18,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-50 font-sans">
         <PostHogProvider>
           <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-            <header className="mb-4 flex items-center justify-between">
+            <header className="mb-4 flex items-center justify-between gap-4">
               <div>
                 <h1 className="text-xl font-semibold tracking-tight">
                   WizardFolio Portfolio Look-Through
@@ -27,6 +28,7 @@ export default function RootLayout({
                   exposure.
                 </p>
               </div>
+              <ThemeToggle />
             </header>
             <main className="flex-1 space-y-4">{children}</main>
             <footer className="mt-6 border-t border-zinc-200 pt-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
