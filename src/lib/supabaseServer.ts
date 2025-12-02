@@ -8,7 +8,7 @@ export function createServerSupabaseClient() {
     throw new Error("Missing Supabase configuration for server client.");
   }
 
-  return createClient(supabaseUrl, serviceRoleKey, {
+  return createClient(supabaseUrl!, serviceRoleKey!, {
     auth: { persistSession: false },
   });
 }
