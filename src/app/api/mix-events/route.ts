@@ -9,6 +9,7 @@ type MixEventPayload = {
   source?: string | null;
   templateKey?: string | null;
   referrer?: string | null;
+  anonId?: string | null;
 };
 
 export const runtime = "nodejs";
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
       source: body.source ?? null,
       template_key: body.templateKey ?? null,
       referrer: body.referrer ?? null,
+      anon_id: body.anonId ?? null,
     });
 
     if (error) {

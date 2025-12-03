@@ -12,6 +12,7 @@ import {
   normalizePositions,
 } from "@/lib/positionsQuery";
 import { formatMixSummary } from "@/lib/mixFormatting";
+import { getAnonId } from "@/lib/analytics/anonId";
 
 type MixEventSource = "scratch" | "template" | "url";
 
@@ -37,6 +38,7 @@ const sendMixAnalyzeEvent = (
       typeof document !== "undefined" && document.referrer
         ? document.referrer
         : "$direct",
+    anonId: getAnonId(),
   };
 
   if (!navigator.sendBeacon) {
