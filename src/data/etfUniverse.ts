@@ -1,5 +1,5 @@
 export const ETF_UNIVERSE: string[] = [
-  "SPY",  
+  "SPY",
   "QQQ",
   "SCHB",
   "SCHD",
@@ -33,5 +33,16 @@ export const ETF_UNIVERSE: string[] = [
   "XTOT.TO",
   "XUU.TO",
   "ZSP.TO",
-  "QQQM"
+  "QQQM",
+];
+
+export const POPULAR_ETFS: string[] = [
+
+  "VOO",
+  "VTI",
+  "VXUS",
+  "QQQ",
+  "XEQ.TO",
+  "SCHD",
+  "VDY.TO",
 ];

@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import posthog from "posthog-js";
-import { ETF_UNIVERSE } from "@/data/etfUniverse";
+import EtfBottomSheetSelect from "@/components/EtfBottomSheetSelect";
 
 type UserPosition = {
   symbol: string;
@@ -16,91 +16,7 @@ type PortfolioInputProps = {
   analyzeLabel?: string;
 };
 
-type SymbolSelectorProps = {
-  value: string;
-  onCommit: (symbol: string) => void;
-};
-
 const MAX_ASSETS = 5;
-
-function SymbolSelector({ value, onCommit }: SymbolSelectorProps) {
-  const [query, setQuery] = useState(value);
-  const [isFocused, setIsFocused] = useState(false);
-
-  useEffect(() => {
-    setQuery(value);
-  }, [value]);
-
-  const filteredSymbols = useMemo(() => {
-    const search = query.trim().toLowerCase();
-    if (!search) {
-      return ETF_UNIVERSE;
-    }
-    return ETF_UNIVERSE.filter((symbol) =>
-      symbol.toLowerCase().includes(search)
-    );
-  }, [query]);
-
-  const handleSelect = useCallback(
-    (symbol: string) => {
-      setQuery(symbol);
-      setIsFocused(false);
-      onCommit(symbol);
-    },
-    [onCommit]
-  );
-
-  const handleCommit = useCallback(() => {
-    onCommit(query);
-  }, [onCommit, query]);
-
-  const dropdownVisible = isFocused;
-
-  return (
-    <div className="relative">
-      <input
-        type="text"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => {
-          setIsFocused(false);
-          handleCommit();
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            handleCommit();
-            event.currentTarget.blur();
-          }
-        }}
-        placeholder="Search symbol"
-        className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-base sm:text-sm outline-none transition focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900"
-      />
-      {dropdownVisible && (
-        <div className="absolute left-0 right-0 z-10 mt-1 max-h-40 overflow-auto rounded-lg border border-zinc-200 bg-white text-sm shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-          {filteredSymbols.length > 0 ? (
-            filteredSymbols.map((symbol) => (
-              <button
-                key={symbol}
-                type="button"
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => handleSelect(symbol)}
-                className="w-full cursor-pointer px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              >
-                {symbol}
-              </button>
-            ))
-          ) : (
-            <p className="px-3 py-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-              No matches found
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function PortfolioInput({
   positions,
@@ -255,9 +171,9 @@ export default function PortfolioInput({
               <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
                 Symbol
               </label>
-              <SymbolSelector
-                value={pos.symbol}
-                onCommit={(symbol) => handleSymbolCommit(index, symbol)}
+              <EtfBottomSheetSelect
+                value={pos.symbol.trim() ? pos.symbol : null}
+                onChange={(symbol) => handleSymbolCommit(index, symbol)}
               />
             </div>
             <div className="flex flex-col gap-1 w-24 min-w-[80px]">
