@@ -230,7 +230,7 @@ export default function EtfBottomSheetSelect({
         aria-expanded={isOpen}
         className="mt-1 flex w-full items-center justify-between rounded-lg border border-zinc-200 bg-white px-3 py-2 text-base text-left text-zinc-900 transition hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
       >
-        <span>{value || "Pick ETF"}</span>
+        <span>{value || "ETF"}</span>
         <svg
           className="h-4 w-4 text-zinc-500"
           viewBox="0 0 20 20"
