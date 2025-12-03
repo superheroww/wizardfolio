@@ -1,25 +1,55 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Base page colors */
+  --background: #ffffff;          /* page background */
+  --foreground: #111827;          /* darker text */
+
+  /* Surfaces & cards */
+  --muted: #f5f6f7;               /* light grey for cards */
+  --muted-strong: #eef0f2;        /* stronger grey for sections */
+
+  /* Borders */
+  --border-subtle: #d1d5db;       /* visible border grey */
+
+  /* Accent color */
+  --accent: #2563eb;              /* primary blue for CTAs */
+  --accent-hover: #1e4ed8;        /* darker blue on hover */
+  --accent-soft: #e0e8ff;         /* light blue background highlight */
+
+  /* Text variants */
+  --text-primary: var(--foreground);
+  --text-secondary: #6b7280;      /* neutral-500 */
+  --text-muted: var(--text-secondary);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-strong: var(--muted-strong);
+  --color-border-subtle: var(--border-subtle);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-text-muted: var(--text-secondary);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+a {
+  color: var(--accent);
+}
+
+a:hover {
+  text-decoration: underline;
 }

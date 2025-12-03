@@ -95,12 +95,12 @@ export default function RegionExposureChart({
   const hasData = regions.some((r) => r.value > 0.5);
 
   return (
-    <section className="rounded-3xl border border-zinc-200 bg-white/90 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
+    <section className="rounded-3xl border border-[--color-border-subtle] bg-[--color-muted] p-4 shadow-sm">
       <div className="mb-3 flex flex-col gap-1">
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+        <h3 className="text-sm font-semibold text-[--color-foreground]">
           Where in the world you’re invested
         </h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-xs text-[--color-text-muted]">
           Split between U.S., Canada, and the rest of the world based on your
           underlying holdings.
         </p>
@@ -109,7 +109,7 @@ export default function RegionExposureChart({
       {hasData ? (
         <>
           {/* Stacked bar */}
-          <div className="mt-1 mb-3 h-3 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+          <div className="mt-1 mb-3 h-3 w-full overflow-hidden rounded-full bg-[--color-muted-strong]">
             {regions.map((r) => (
               <div
                 key={r.key}
@@ -131,24 +131,24 @@ export default function RegionExposureChart({
                     className="h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: REGION_COLORS[r.key] }}
                   />
-                  <span className="font-medium text-zinc-800 dark:text-zinc-100">
+                  <span className="font-medium text-[--color-foreground]">
                     {r.label}
                   </span>
                 </div>
-                <span className="tabular-nums text-zinc-600 dark:text-zinc-300">
+                <span className="tabular-nums text-[--color-text-muted]">
                   {r.value.toFixed(1).replace(/\.0$/, "")}%
                 </span>
               </li>
             ))}
           </ul>
 
-          <p className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+          <p className="mt-2 text-[11px] text-[--color-text-muted]">
             Based on the countries tagged in the ETF holdings data. For more
             detail, connect your real accounts in WizardFolio.
           </p>
         </>
       ) : (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-xs text-[--color-text-muted]">
           Add some ETFs above to see your regional split.
         </p>
       )}

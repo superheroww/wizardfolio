@@ -25,16 +25,16 @@ export function SectorBreakdownCard({ exposure }: SectorBreakdownCardProps) {
 
   if (!topSectors.length) {
     return (
-      <section className="rounded-2xl border border-zinc-200 bg-white/80 p-4 text-xs text-zinc-500 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-400">
+      <section className="rounded-2xl border border-[--color-border-subtle] bg-[--color-muted] p-4 text-xs text-[--color-text-muted] shadow-sm">
         <p>No sector data available for this mix.</p>
       </section>
     );
   }
 
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white/80 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
+    <section className="rounded-2xl border border-[--color-border-subtle] bg-[--color-muted] p-4 shadow-sm">
       <div className="mb-3 flex flex-col gap-1">
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+        <h3 className="text-sm font-semibold text-[--color-foreground]">
           The industries you are most exposed to
         </h3>
       </div>
@@ -45,14 +45,14 @@ export function SectorBreakdownCard({ exposure }: SectorBreakdownCardProps) {
           return (
             <div key={sector.sector} className="space-y-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-zinc-800 dark:text-zinc-100">
+                <span className="font-medium text-[--color-foreground]">
                   {sector.sector}
                 </span>
-                <span className="tabular-nums text-zinc-600 dark:text-zinc-300">
+                <span className="tabular-nums text-[--color-text-muted]">
                   {sector.weightPct.toFixed(1)}%
                 </span>
               </div>
-              <div className="h-1.5 rounded-full bg-zinc-100/60 dark:bg-zinc-800/60">
+              <div className="h-1.5 rounded-full bg-[--color-muted-strong]">
                 <div
                   className={`h-1.5 rounded-full bg-gradient-to-r ${gradient} shadow-sm`}
                   style={{
@@ -66,7 +66,7 @@ export function SectorBreakdownCard({ exposure }: SectorBreakdownCardProps) {
           );
         })}
         {othersCount > 0 && (
-          <p className="pt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="pt-1 text-xs text-[--color-text-muted]">
             +{othersCount} smaller sectors
           </p>
         )}

@@ -21,12 +21,12 @@ const formatSignedPercent = (value: number) => {
 
 const deltaTextColor = (value: number) => {
   if (value > 0.049) {
-    return "text-emerald-600 dark:text-emerald-300";
+    return "text-emerald-600";
   }
   if (value < -0.049) {
-    return "text-rose-600 dark:text-rose-300";
+    return "text-rose-600";
   }
-  return "text-zinc-600 dark:text-zinc-300";
+  return "text-[--color-text-muted]";
 };
 
 export default function ExposureComparisonRow({
@@ -42,10 +42,10 @@ export default function ExposureComparisonRow({
 
   return (
     <div className={rowClasses}>
-      <p className="text-sm font-semibold leading-tight text-zinc-900 dark:text-zinc-50 truncate">
+      <p className="text-sm font-semibold leading-tight text-[--color-foreground] truncate">
         {label}
       </p>
-      <div className="inline-flex items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+      <div className="inline-flex items-center gap-2 text-[11px] text-[--color-text-muted] whitespace-nowrap">
         <span>Your mix {formatPercent(yourPct)}</span>
         <span aria-hidden="true">·</span>
         <span>Benchmark {formatPercent(benchmarkPct)}</span>

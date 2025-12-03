@@ -489,10 +489,10 @@ export default function ResultsPageClient({
                 type="button"
                 onClick={() => setSlide(view.id)}
                 className={[
-                  "px-3 py-1.5 rounded-full text-xs font-medium transition",
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition border",
                   view.id === slide
-                    ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
-                    : "bg-transparent text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800",
+                    ? "border-[--color-accent] bg-[--color-accent] text-white shadow-sm"
+                    : "border-[--color-border-subtle] bg-[--color-background] text-[--color-text-muted] hover:bg-[--color-muted]",
                 ].join(" ")}
               >
                 {view.label}
@@ -504,7 +504,7 @@ export default function ResultsPageClient({
               type="button"
               onClick={handlePrevSlide}
               aria-label="Previous result view"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-[--color-border-subtle] bg-[--color-background] text-[--color-text-muted] shadow-sm transition hover:bg-[--color-muted]"
             >
               <span aria-hidden="true">‹</span>
             </button>
@@ -512,7 +512,7 @@ export default function ResultsPageClient({
               type="button"
               onClick={handleNextSlide}
               aria-label="Next result view"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-[--color-border-subtle] bg-[--color-background] text-[--color-text-muted] shadow-sm transition hover:bg-[--color-muted]"
             >
               <span aria-hidden="true">›</span>
             </button>
@@ -528,47 +528,47 @@ export default function ResultsPageClient({
             title={
               isSharing ? "Preparing your snapshot…" : "Share your exposure card"
             }
-            className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur border border-white/50 shadow-sm hover:bg-white dark:bg-zinc-800/70 dark:hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-wait"
+            className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-[--color-border-subtle] bg-[--color-background] text-[--color-foreground] shadow-sm hover:bg-[--color-muted] disabled:cursor-wait disabled:opacity-60"
           >
-            <AppleShareIcon className="h-4 w-4 text-zinc-700 dark:text-zinc-200" />
+            <AppleShareIcon className="h-4 w-4 text-[--color-foreground]" />
           </button>
 
           <div
             ref={cardRef}
-            className="flex flex-col gap-4 rounded-3xl bg-white/95 p-5 dark:bg-zinc-900/80"
+            className="flex flex-col gap-4 rounded-3xl bg-[--color-muted] p-5"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex flex-col gap-1">
-                <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                <h2 className="text-base font-semibold text-[--color-foreground]">
                   {title}
                 </h2>
                 <MixLine positions={sanitizedPositions} />
-                <p className="text-xs text-zinc-600 dark:text-zinc-300">
+                <p className="text-xs text-[--color-text-muted]">
                   Powered by WizardFolio
                 </p>
               </div>
             </div>
 
             <div
-              className="rounded-2xl border border-zinc-100 bg-white/90 p-4 dark:border-zinc-800 dark:bg-zinc-900 min-h-[320px] flex flex-col justify-center"
+              className="flex min-h-[320px] flex-col justify-center rounded-2xl border border-[--color-border-subtle] bg-[--color-background] p-4"
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
               {isLoading && (
-                <div className="flex h-full items-center justify-center text-xs text-zinc-500 dark:text-zinc-400">
+                <div className="flex h-full items-center justify-center text-xs text-[--color-text-muted]">
                   Crunching your ETF mix…
                 </div>
               )}
 
               {!isLoading && error && (
-                <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-xs text-rose-500 dark:text-rose-400">
+                <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-xs text-rose-500">
                   <p>{error}</p>
                   <button
                     type="button"
                     onClick={() => {
                       router.refresh();
                     }}
-                    className="rounded-full bg-zinc-900 px-3 py-1 text-[11px] font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900"
+                    className="rounded-full bg-[--color-accent] px-3 py-1 text-[11px] font-semibold text-white"
                   >
                     Try again
                   </button>
@@ -596,14 +596,14 @@ export default function ResultsPageClient({
                   {slide === 4 && (
                     <>
                       {feedbackState === "success" ? (
-                        <div className="flex h-full flex-col justify-center rounded-2xl border border-zinc-200 bg-white/80 p-4 text-left text-xs shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70 sm:text-sm">
+                        <div className="flex h-full flex-col justify-center rounded-2xl border border-[--color-border-subtle] bg-[--color-muted] p-4 text-left text-xs shadow-sm sm:text-sm">
                           <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-500">
                             Thank you ✨
                           </p>
-                          <h3 className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                          <h3 className="mt-1 text-sm font-semibold text-[--color-foreground]">
                             You’re officially helping design WizardFolio.
                           </h3>
-                          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                          <p className="mt-2 text-xs text-[--color-text-muted]">
                             We’ll use this to decide what to build next. If
                             you left an email, we’ll let you know as new
                             features go live.
@@ -612,15 +612,15 @@ export default function ResultsPageClient({
                       ) : (
                         <form
                           onSubmit={handleFeedbackSubmit}
-                          className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white/80 p-4 text-left text-xs shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70 sm:text-sm"
+                          className="flex h-full flex-col rounded-2xl border border-[--color-border-subtle] bg-[--color-muted] p-4 text-left text-xs shadow-sm sm:text-sm"
                         >
                           <p className="text-[11px] font-medium uppercase tracking-wide text-indigo-500">
                             Help shape WizardFolio
                           </p>
-                          <h3 className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                          <h3 className="mt-1 text-sm font-semibold text-[--color-foreground]">
                             What would you love to see next?
                           </h3>
-                          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                          <p className="mt-1 text-xs text-[--color-text-muted]">
                             Tap a few wishes below. Optional: add your email
                             and we’ll let you know when new features land.
                           </p>
@@ -637,8 +637,8 @@ export default function ResultsPageClient({
                                   className={[
                                     "rounded-full border px-3 py-1 text-[11px] transition",
                                     selected
-                                      ? "border-indigo-500 bg-indigo-500 text-white shadow-sm"
-                                      : "border-zinc-200 bg-white/60 text-zinc-700 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-200",
+                                      ? "border-[--color-accent] bg-[--color-accent] text-white shadow-sm"
+                                      : "border-[--color-border-subtle] bg-[--color-background] text-[--color-foreground] hover:bg-[--color-muted]",
                                   ].join(" ")}
                                 >
                                   {feature}
@@ -649,7 +649,7 @@ export default function ResultsPageClient({
 
                           {hasSomethingElse && (
                             <div className="mt-3">
-                              <label className="mb-1 block text-[11px] font-medium text-zinc-700 dark:text-zinc-200">
+                              <label className="mb-1 block text-[11px] font-medium text-[--color-foreground]">
                                 Something else you wish WizardFolio could do?
                               </label>
                               <textarea
@@ -658,14 +658,14 @@ export default function ResultsPageClient({
                                   setMessage(e.target.value)
                                 }
                                 rows={3}
-                                className="w-full rounded-xl border border-zinc-200 bg-white/80 p-2 text-xs text-zinc-900 outline-none ring-0 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100"
+                                className="w-full rounded-xl border border-[--color-border-subtle] bg-[--color-background] p-2 text-xs text-[--color-foreground] outline-none ring-0 focus:border-[--color-accent] focus:ring-1 focus:ring-[--color-accent]"
                                 placeholder="e.g., See all my accounts in one place, more credit card insights, etc."
                               />
                             </div>
                           )}
 
                           <div className="mt-3">
-                            <label className="mb-1 block text-[11px] font-medium text-zinc-700 dark:text-zinc-200">
+                            <label className="mb-1 block text-[11px] font-medium text-[--color-foreground]">
                               Email (optional)
                             </label>
                             <input
@@ -674,10 +674,10 @@ export default function ResultsPageClient({
                               autoComplete="email"
                               value={email}
                               onChange={(e) => setEmail(e.target.value)}
-                              className="w-full rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-xs text-zinc-900 outline-none ring-0 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100"
+                              className="w-full rounded-xl border border-[--color-border-subtle] bg-[--color-background] px-3 py-2 text-xs text-[--color-foreground] outline-none ring-0 focus:border-[--color-accent] focus:ring-1 focus:ring-[--color-accent]"
                               placeholder="you@example.com"
                             />
-                            <p className="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                            <p className="mt-1 text-[10px] text-[--color-text-muted]">
                               Optional. We’ll only email you about WizardFolio
                               updates.
                             </p>
@@ -705,8 +705,8 @@ export default function ResultsPageClient({
                                 "inline-flex flex-1 items-center justify-center rounded-full px-3 py-2 text-xs font-semibold transition",
                                 isSubmittingFeedback ||
                                 !selectedFeatures.length
-                                  ? "bg-zinc-300 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                                  : "bg-indigo-600 text-white shadow-sm hover:bg-indigo-500",
+                                  ? "bg-[--color-muted-strong] text-[--color-text-muted]"
+                                  : "bg-[--color-accent] text-white shadow-sm hover:opacity-90",
                               ].join(" ")}
                             >
                               {isSubmittingFeedback
@@ -736,8 +736,8 @@ export default function ResultsPageClient({
                   className={[
                     "block h-1.5 w-1.5 rounded-full transition-all",
                     slide === idx
-                      ? "w-4 bg-zinc-900 dark:bg-zinc-100"
-                      : "bg-zinc-300 dark:bg-zinc-600",
+                      ? "w-4 bg-[--color-accent]"
+                      : "bg-[--color-muted-strong]",
                   ].join(" ")}
                 />
               </button>
@@ -763,37 +763,37 @@ export default function ResultsPageClient({
         />
       )}
 
-      <section className="rounded-3xl border border-zinc-200 bg-white/90 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
+      <section className="rounded-3xl border border-[--color-border-subtle] bg-[--color-muted] p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+          <h3 className="text-sm font-semibold text-[--color-foreground]">
             Your mix
           </h3>
           <button
             type="button"
             onClick={handleEditInputs}
-            className="text-[11px] font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+            className="text-[11px] font-medium text-[--color-text-muted] underline-offset-2 hover:underline"
           >
             Edit inputs
           </button>
         </div>
 
-        <ul className="divide-y divide-zinc-100 text-xs dark:divide-zinc-800 sm:text-sm">
+        <ul className="divide-y divide-[--color-border-subtle] text-xs sm:text-sm">
           {positions.map((pos, idx) => (
             <li
               key={`${pos.symbol}-${idx}`}
               className="flex items-center justify-between py-1.5"
             >
-              <span className="font-medium text-zinc-800 dark:text-zinc-100">
+              <span className="font-medium text-[--color-foreground]">
                 {pos.symbol || "—"}
               </span>
-              <span className="tabular-nums text-zinc-600 dark:text-zinc-300">
+              <span className="tabular-nums text-[--color-text-muted]">
                 {(pos.weightPct ?? 0).toFixed(1).replace(/\.0$/, "")}%
               </span>
             </li>
           ))}
         </ul>
 
-        <p className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+        <p className="mt-2 text-[11px] text-[--color-text-muted]">
           Based on the mix you entered on the previous step.
         </p>
       </section>

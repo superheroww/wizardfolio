@@ -168,18 +168,18 @@ export default function QuickStartTemplates({
               md:min-w-0 md:max-w-none md:snap-none
             "
           >
-            <div className="flex h-full flex-col justify-between rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 shadow-sm shadow-zinc-200 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70 dark:shadow-black/30">
+            <div className="flex h-full flex-col justify-between rounded-2xl border border-[--color-border-subtle] bg-[--color-muted] p-4 shadow-sm">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{template.emoji}</span>
-                  <p className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                  <p className="text-base font-semibold text-[--color-foreground]">
                     {template.name}
                   </p>
                 </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs text-[--color-text-muted]">
                   {template.description}
                 </p>
-                <p className="text-xs font-medium tracking-tight text-zinc-700 dark:text-zinc-200 sm:text-sm">
+                <p className="text-xs font-medium tracking-tight text-[--color-foreground] sm:text-sm">
                   {template.positions.length
                     ? template.positions
                         .map(
@@ -193,9 +193,9 @@ export default function QuickStartTemplates({
               <button
                 type="button"
                 onClick={() => handleTryTemplate(template, index)}
-                className="mt-4 inline-flex items-center justify-center rounded-full border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                className="mt-4 inline-flex items-center justify-center rounded-full border border-[--color-border-subtle] bg-[--color-background] px-3 py-1 text-xs font-medium text-[--color-foreground] hover:bg-[--color-muted]"
               >
-                Try this →
+                Load this mix
               </button>
             </div>
           </div>
@@ -211,8 +211,8 @@ export default function QuickStartTemplates({
             key={index}
             className={`h-1.5 rounded-full transition-all duration-200 ${
               index === activeIndex
-                ? "w-3.5 bg-zinc-900 dark:bg-zinc-50"
-                : "w-2 bg-zinc-400 dark:bg-zinc-600"
+                ? "w-3.5 bg-[--color-accent]"
+                : "w-2 bg-[--color-muted-strong]"
             }`}
           />
         ))}
