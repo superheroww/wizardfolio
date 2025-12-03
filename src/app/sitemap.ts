@@ -6,7 +6,9 @@ const now = new Date().toISOString();
 const holdings = [
   "ZSP.TO",
   "XUU.TO",
+  "SCHG",
   "SCHD",
+  "SCHB",
   "VXUS",
   "SCHX",
   "VO",

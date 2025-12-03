@@ -17,6 +17,7 @@ const STATIC_ETF_SYMBOLS = [
   "IJH",
   "IEMG",
   "SCHB",
+  "SCHG",
   "IVV",
   "ITOT",
   "VEA",
