@@ -32,6 +32,11 @@ const faqEntries = [
       "The core look-through tool is free during the beta. We may introduce a paid tier later with additional features, but the basic analysis will remain free.",
   },
   {
+    question: "Do you record analytics?",
+    answer:
+      "We use privacy-focused analytics to understand how people use WizardFolio and to improve the product. We do not sell data or use it for advertising.",
+  },
+  {
     question: "Do you give investment advice or recommendations?",
     answer:
       "No. WizardFolio is educational and informational only. You should do your own research or speak with a professional before making investment decisions.",
@@ -86,7 +91,9 @@ export default function FaqPage() {
               className="rounded-2xl border bg-card/50 p-4"
             >
               <h2 className="text-sm font-medium">{entry.question}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{entry.answer}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {entry.answer}
+              </p>
             </article>
           ))}
         </section>
