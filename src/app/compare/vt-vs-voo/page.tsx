@@ -13,7 +13,7 @@ export default function VtVsVooPage() {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           ETF comparison
         </p>
-        <h1 className="text-2xl font-semibold text-zinc-900">
+        <h1 className="text-2xl font-semibold ">
           VT vs VOO: What’s the difference?
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -60,13 +60,13 @@ export default function VtVsVooPage() {
 
       <section className="grid gap-4 rounded-2xl border bg-muted/40 p-4 text-sm md:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use VT</p>
+          <p className="text-sm font-medium ">How investors often use VT</p>
           <p className="text-sm text-muted-foreground">
             Many investors use VT as a single ETF that covers the entire global equity market.
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use VOO</p>
+          <p className="text-sm font-medium ">How investors often use VOO</p>
           <p className="text-sm text-muted-foreground">
             Some investors use VOO when they want a dedicated U.S. large-cap sleeve to complement international exposure elsewhere.
           </p>
@@ -74,7 +74,7 @@ export default function VtVsVooPage() {
       </section>
 
       <section className="rounded-2xl border bg-card/40 p-4 text-sm">
-        <p className="mb-2 text-sm font-medium text-zinc-900">Mix VT and VOO and see your true exposure</p>
+        <p className="mb-2 text-sm font-medium ">Mix VT and VOO and see your true exposure</p>
         <p className="mb-3 text-sm text-muted-foreground">
           Mix VT, VOO, and other ETFs inside WizardFolio so you can inspect the underlying stocks, sectors, and regions instead of relying on broad labels.
         </p>

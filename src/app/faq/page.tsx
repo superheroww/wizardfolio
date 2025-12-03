@@ -70,7 +70,7 @@ export default function FaqPage() {
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Help &amp; support
           </p>
-          <h1 className="text-2xl font-semibold text-zinc-900">
+          <h1 className="text-2xl font-semibold">
             Frequently asked questions
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -85,14 +85,14 @@ export default function FaqPage() {
               key={entry.question}
               className="rounded-2xl border bg-card/50 p-4"
             >
-              <h2 className="text-sm font-medium text-zinc-900">{entry.question}</h2>
+              <h2 className="text-sm font-medium">{entry.question}</h2>
               <p className="mt-2 text-sm text-muted-foreground">{entry.answer}</p>
             </article>
           ))}
         </section>
 
         <section className="rounded-2xl border bg-card/40 p-4 text-sm">
-          <h2 className="mb-2 text-sm font-medium text-zinc-900">
+          <h2 className="mb-2 text-sm font-large">
             Ready to see what you actually own?
           </h2>
           <p className="mb-3 text-sm text-muted-foreground">

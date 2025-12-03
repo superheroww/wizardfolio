@@ -13,7 +13,7 @@ export default function SpyVsQqqPage() {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           ETF comparison
         </p>
-        <h1 className="text-2xl font-semibold text-zinc-900">
+        <h1 className="text-2xl font-semibold ">
           SPY vs QQQ: What’s the difference?
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -60,13 +60,13 @@ export default function SpyVsQqqPage() {
 
       <section className="grid gap-4 rounded-2xl border bg-muted/40 p-4 text-sm md:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use SPY</p>
+          <p className="text-sm font-medium ">How investors often use SPY</p>
           <p className="text-sm text-muted-foreground">
             Many investors use SPY as a proxy for the U.S. market, especially when building diversified portfolios where SPY acts as the foundation.
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use QQQ</p>
+          <p className="text-sm font-medium ">How investors often use QQQ</p>
           <p className="text-sm text-muted-foreground">
             Some investors add QQQ when they want more concentration in large-cap technology and growth leaders alongside broader exposure.
           </p>
@@ -74,7 +74,7 @@ export default function SpyVsQqqPage() {
       </section>
 
       <section className="rounded-2xl border bg-card/40 p-4 text-sm">
-        <p className="mb-2 text-sm font-medium text-zinc-900">Mix SPY and QQQ and see your true exposure</p>
+        <p className="mb-2 text-sm font-medium ">Mix SPY and QQQ and see your true exposure</p>
         <p className="mb-3 text-sm text-muted-foreground">
           Use WizardFolio to blend SPY, QQQ, and other ETFs so you can inspect the actual weight of each company, sector, and region in your mix.
         </p>

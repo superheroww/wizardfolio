@@ -13,7 +13,7 @@ export default function VtiVsVxusPage() {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           ETF comparison
         </p>
-        <h1 className="text-2xl font-semibold text-zinc-900">
+        <h1 className="text-2xl font-semibold">
           VTI vs VXUS: What’s the difference?
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -61,13 +61,13 @@ export default function VtiVsVxusPage() {
 
       <section className="grid gap-4 rounded-2xl border bg-muted/40 p-4 text-sm md:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use VTI</p>
+          <p className="text-sm font-medium ">How investors often use VTI</p>
           <p className="text-sm text-muted-foreground">
             Many investors use VTI as the U.S. equity foundation because it covers large, mid, and small caps in one ETF.
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use VXUS</p>
+          <p className="text-sm font-medium ">How investors often use VXUS</p>
           <p className="text-sm text-muted-foreground">
             Some investors use VXUS to gain international exposure, combining it with a U.S. ETF such as VTI to approach a market-weighted global portfolio.
           </p>
@@ -75,7 +75,7 @@ export default function VtiVsVxusPage() {
       </section>
 
       <section className="rounded-2xl border bg-card/40 p-4 text-sm">
-        <p className="mb-2 text-sm font-medium text-zinc-900">Mix VTI and VXUS and see your true exposure</p>
+        <p className="mb-2 text-sm font-medium ">Mix VTI and VXUS and see your true exposure</p>
         <p className="mb-3 text-sm text-muted-foreground">
           WizardFolio lets you blend VTI, VXUS, and other ETFs to reveal the real stock-, sector-, and country-level weights instead of guessing from each fund’s label.
         </p>

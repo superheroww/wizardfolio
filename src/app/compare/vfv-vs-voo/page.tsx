@@ -13,7 +13,7 @@ export default function VfvVsVooPage() {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           ETF comparison
         </p>
-        <h1 className="text-2xl font-semibold text-zinc-900">
+        <h1 className="text-2xl font-semibold ">
           VFV vs VOO: What’s the difference?
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -60,13 +60,13 @@ export default function VfvVsVooPage() {
 
       <section className="grid gap-4 rounded-2xl border bg-muted/40 p-4 text-sm md:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use VFV</p>
+          <p className="text-sm font-medium ">How investors often use VFV</p>
           <p className="text-sm text-muted-foreground">
             Many investors pick VFV when they want S&P 500 exposure inside a Canadian dollar account.
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use VOO</p>
+          <p className="text-sm font-medium ">How investors often use VOO</p>
           <p className="text-sm text-muted-foreground">
             Some investors prefer VOO when they are already using USD or want the lowest possible MER for S&P 500 coverage.
           </p>
@@ -74,7 +74,7 @@ export default function VfvVsVooPage() {
       </section>
 
       <section className="rounded-2xl border bg-card/40 p-4 text-sm">
-        <p className="mb-2 text-sm font-medium text-zinc-900">Mix VFV and VOO and see your true exposure</p>
+        <p className="mb-2 text-sm font-medium ">Mix VFV and VOO and see your true exposure</p>
         <p className="mb-3 text-sm text-muted-foreground">
           WizardFolio can mix VFV, VOO, and other ETFs to expose the actual stock-, sector-, and region-level weights instead of relying solely on the ticker labels.
         </p>

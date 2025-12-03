@@ -13,7 +13,7 @@ export default function VbalVsXbalPage() {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           ETF comparison
         </p>
-        <h1 className="text-2xl font-semibold text-zinc-900">
+        <h1 className="text-2xl font-semibold ">
           VBAL vs XBAL: What’s the difference?
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -60,13 +60,13 @@ export default function VbalVsXbalPage() {
 
       <section className="grid gap-4 rounded-2xl border bg-muted/40 p-4 text-sm md:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use VBAL</p>
+          <p className="text-sm font-medium ">How investors often use VBAL</p>
           <p className="text-sm text-muted-foreground">
             Many investors lean on VBAL when they want a balanced portfolio built on Vanguard ETFs, enjoying the automatic mix of equities and bonds.
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use XBAL</p>
+          <p className="text-sm font-medium ">How investors often use XBAL</p>
           <p className="text-sm text-muted-foreground">
             Some investors prefer XBAL because it mirrors VBAL’s risk profile but keeps their assets inside the iShares ecosystem.
           </p>
@@ -74,7 +74,7 @@ export default function VbalVsXbalPage() {
       </section>
 
       <section className="rounded-2xl border bg-card/40 p-4 text-sm">
-        <p className="mb-2 text-sm font-medium text-zinc-900">Mix VBAL and XBAL and see your true exposure</p>
+        <p className="mb-2 text-sm font-medium ">Mix VBAL and XBAL and see your true exposure</p>
         <p className="mb-3 text-sm text-muted-foreground">
           Use WizardFolio to combine VBAL, XBAL, and other ETFs so you can see the actual company-, sector-, and country-level exposures aligned with your balanced allocation.
         </p>

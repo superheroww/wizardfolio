@@ -13,7 +13,7 @@ export default function SchdVsVooPage() {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           ETF comparison
         </p>
-        <h1 className="text-2xl font-semibold text-zinc-900">
+        <h1 className="text-2xl font-semibold ">
           SCHD vs VOO: What’s the difference?
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -60,13 +60,13 @@ export default function SchdVsVooPage() {
 
       <section className="grid gap-4 rounded-2xl border bg-muted/40 p-4 text-sm md:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use SCHD</p>
+          <p className="text-sm font-medium ">How investors often use SCHD</p>
           <p className="text-sm text-muted-foreground">
             Many investors pair SCHD with broader U.S. exposure when they want a dividend tilt plus quality screens.
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use VOO</p>
+          <p className="text-sm font-medium ">How investors often use VOO</p>
           <p className="text-sm text-muted-foreground">
             Some investors use VOO as their go-to core S&P 500 sleeve and then layer other ETFs for tilts or diversifications.
           </p>
@@ -74,7 +74,7 @@ export default function SchdVsVooPage() {
       </section>
 
       <section className="rounded-2xl border bg-card/40 p-4 text-sm">
-        <p className="mb-2 text-sm font-medium text-zinc-900">Mix SCHD and VOO and see your true exposure</p>
+        <p className="mb-2 text-sm font-medium ">Mix SCHD and VOO and see your true exposure</p>
         <p className="mb-3 text-sm text-muted-foreground">
           Combine SCHD, VOO, and other ETFs in WizardFolio to reveal the actual weights at the company, sector, and country level.
         </p>

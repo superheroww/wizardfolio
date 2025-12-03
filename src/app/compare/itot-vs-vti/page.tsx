@@ -13,7 +13,7 @@ export default function ItotVsVtiPage() {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           ETF comparison
         </p>
-        <h1 className="text-2xl font-semibold text-zinc-900">
+        <h1 className="text-2xl font-semibold">
           ITOT vs VTI: What’s the difference?
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -61,13 +61,13 @@ export default function ItotVsVtiPage() {
 
       <section className="grid gap-4 rounded-2xl border bg-muted/40 p-4 text-sm md:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use ITOT</p>
+          <p className="text-sm font-medium ">How investors often use ITOT</p>
           <p className="text-sm text-muted-foreground">
             Many investors pick ITOT when consolidating their iShares holdings and targeting the U.S. total market.
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use VTI</p>
+          <p className="text-sm font-medium ">How investors often use VTI</p>
           <p className="text-sm text-muted-foreground">
             Some investors keep VTI as the backbone of their U.S. equity allocation because of Vanguard’s reputation and structure.
           </p>
@@ -75,7 +75,7 @@ export default function ItotVsVtiPage() {
       </section>
 
       <section className="rounded-2xl border bg-card/40 p-4 text-sm">
-        <p className="mb-2 text-sm font-medium text-zinc-900">Mix ITOT and VTI and see your true exposure</p>
+        <p className="mb-2 text-sm font-medium ">Mix ITOT and VTI and see your true exposure</p>
         <p className="mb-3 text-sm text-muted-foreground">
           Mix ITOT, VTI, and other ETFs inside WizardFolio to inspect all of the underlying companies, sectors, and regions that make up your allocation.
         </p>

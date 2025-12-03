@@ -13,7 +13,7 @@ export default function VgroVsXgroPage() {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           ETF comparison
         </p>
-        <h1 className="text-2xl font-semibold text-zinc-900">
+        <h1 className="text-2xl font-semibold ">
           VGRO vs XGRO: What’s the difference?
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -60,13 +60,13 @@ export default function VgroVsXgroPage() {
 
       <section className="grid gap-4 rounded-2xl border bg-muted/40 p-4 text-sm md:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use VGRO</p>
+          <p className="text-sm font-medium ">How investors often use VGRO</p>
           <p className="text-sm text-muted-foreground">
             Many investors use VGRO when they want a mostly equity portfolio with a little fixed income, leaning on Vanguard’s ETFs for global diversification without rebalancing.
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use XGRO</p>
+          <p className="text-sm font-medium ">How investors often use XGRO</p>
           <p className="text-sm text-muted-foreground">
             Some investors pick XGRO for a similar growth tilt but prefer iShares’ lineup and how it combines with other iShares holdings they already own.
           </p>
@@ -74,7 +74,7 @@ export default function VgroVsXgroPage() {
       </section>
 
       <section className="rounded-2xl border bg-card/40 p-4 text-sm">
-        <p className="mb-2 text-sm font-medium text-zinc-900">Mix VGRO and XGRO and see your true exposure</p>
+        <p className="mb-2 text-sm font-medium ">Mix VGRO and XGRO and see your true exposure</p>
         <p className="mb-3 text-sm text-muted-foreground">
           Combine VGRO, XGRO, and other ETFs in WizardFolio to understand the exact sector, country, and stock exposures inside each bunded allocation.
         </p>

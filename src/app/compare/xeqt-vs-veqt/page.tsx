@@ -13,7 +13,7 @@ export default function XeqtVsVeqtPage() {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           ETF comparison
         </p>
-        <h1 className="text-2xl font-semibold text-zinc-900">
+        <h1 className="text-2xl font-semibold ">
           XEQT vs VEQT: What’s the difference?
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -60,13 +60,13 @@ export default function XeqtVsVeqtPage() {
 
       <section className="grid gap-4 rounded-2xl border bg-muted/40 p-4 text-sm md:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use XEQT</p>
+          <p className="text-sm font-medium">How investors often use XEQT</p>
           <p className="text-sm text-muted-foreground">
             Many investors use XEQT as a single security that captures a wide global equity pool via iShares ETFs, making it easy to own an international blend without managing multiple holdings.
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use VEQT</p>
+          <p className="text-sm font-medium ">How investors often use VEQT</p>
           <p className="text-sm text-muted-foreground">
             Some investors choose VEQT when they prefer Vanguard’s mix of U.S., international, and emerging market ETFs, then rely on it as their core global equity sleeve.
           </p>
@@ -74,7 +74,7 @@ export default function XeqtVsVeqtPage() {
       </section>
 
       <section className="rounded-2xl border bg-card/40 p-4 text-sm">
-        <p className="mb-2 text-sm font-medium text-zinc-900">Mix XEQT and VEQT and see your true exposure</p>
+        <p className="mb-2 text-sm font-medium ">Mix XEQT and VEQT and see your true exposure</p>
         <p className="mb-3 text-sm text-muted-foreground">
           Mix XEQT, VEQT, and other ETFs through WizardFolio to see the actual stock-, sector-, and region-level exposure you end up with instead of guessing from the label.
         </p>

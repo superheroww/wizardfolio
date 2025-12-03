@@ -13,7 +13,7 @@ export default function VooVsQqqPage() {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           ETF comparison
         </p>
-        <h1 className="text-2xl font-semibold text-zinc-900">
+        <h1 className="text-2xl font-semibold ">
           VOO vs QQQ: What’s the difference?
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -60,13 +60,13 @@ export default function VooVsQqqPage() {
 
       <section className="grid gap-4 rounded-2xl border bg-muted/40 p-4 text-sm md:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use VOO</p>
+          <p className="text-sm font-medium ">How investors often use VOO</p>
           <p className="text-sm text-muted-foreground">
             Many investors use VOO as a simple way to hold the S&P 500: a broad mix of U.S. large-cap companies across sectors like technology, health care, financials, and industrials.
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use QQQ</p>
+          <p className="text-sm font-medium ">How investors often use QQQ</p>
           <p className="text-sm text-muted-foreground">
             Some investors use QQQ when they want more exposure to tech and growth. It is more concentrated in a smaller set of large-cap companies, especially technology-related sectors.
           </p>
@@ -74,7 +74,7 @@ export default function VooVsQqqPage() {
       </section>
 
       <section className="rounded-2xl border bg-card/40 p-4 text-sm">
-        <p className="mb-2 text-sm font-medium text-zinc-900">Mix VOO and QQQ and see your true exposure</p>
+        <p className="mb-2 text-sm font-medium ">Mix VOO and QQQ and see your true exposure</p>
         <p className="mb-3 text-sm text-muted-foreground">
           Instead of guessing how much tech or broad market exposure you&apos;re getting, you can mix VOO, QQQ, and other ETFs and see the actual stock-level breakdown by company, sector, and region.
         </p>

@@ -13,7 +13,7 @@ export default function XawVsVtPage() {
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           ETF comparison
         </p>
-        <h1 className="text-2xl font-semibold text-zinc-900">
+        <h1 className="text-2xl font-semibold">
           XAW vs VT: What’s the difference?
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -61,13 +61,13 @@ export default function XawVsVtPage() {
 
       <section className="grid gap-4 rounded-2xl border bg-muted/40 p-4 text-sm md:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use XAW</p>
+          <p className="text-sm font-medium ">How investors often use XAW</p>
           <p className="text-sm text-muted-foreground">
             Many Canadian investors layer XAW with a domestic ETF to cover global markets while keeping Canadian exposure separate.
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-zinc-900">How investors often use VT</p>
+          <p className="text-sm font-medium ">How investors often use VT</p>
           <p className="text-sm text-muted-foreground">
             Some investors reach for VT when they want a single ETF that includes every region, including Canada.
           </p>
@@ -75,7 +75,7 @@ export default function XawVsVtPage() {
       </section>
 
       <section className="rounded-2xl border bg-card/40 p-4 text-sm">
-        <p className="mb-2 text-sm font-medium text-zinc-900">Mix XAW and VT and see your true exposure</p>
+        <p className="mb-2 text-sm font-medium ">Mix XAW and VT and see your true exposure</p>
         <p className="mb-3 text-sm text-muted-foreground">
           Combine XAW, VT, and other ETFs inside WizardFolio to reveal the actual stock-, sector-, and country-level contributions from each fund.
         </p>
