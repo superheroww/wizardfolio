@@ -143,8 +143,7 @@ export default function RegionExposureChart({
           </ul>
 
           <p className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-500">
-            Based on the countries tagged in the ETF holdings data. For more
-            detail, connect your real accounts in WizardFolio.
+            Based on the countries tagged in the ETF holdings data.
           </p>
         </>
       ) : (

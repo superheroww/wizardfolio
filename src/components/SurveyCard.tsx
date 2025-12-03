@@ -130,7 +130,7 @@ export default function SurveyCard() {
             onChange={(e) => setMessage(e.target.value)}
             rows={3}
             className="w-full rounded-xl border border-zinc-200 bg-white/80 p-2 text-xs text-zinc-900 outline-none ring-0 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100"
-            placeholder="e.g., See all my accounts in one place, more credit card insights, etc."
+            placeholder="e.g., See all my accounts in one place etc."
           />
         </div>
       )}
