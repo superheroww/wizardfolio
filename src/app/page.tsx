@@ -52,7 +52,7 @@ const sendMixAnalyzeEvent = (
 
     navigator.sendBeacon("/api/mix-events", blob);
   } catch (error) {
-    console.error("[mix_events] sendBeacon error", error);
+    console.error("error: ", error);
   }
 };
 

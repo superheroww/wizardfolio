@@ -370,7 +370,7 @@ export default function ResultsPageClient({
 
   const handleEditInputs = () => {
     if (positionsQueryString) {
-      router.push(`/?${positionsQueryString}`);
+      router.push(`/?positions=${encodeURIComponent(positionsQueryString)}`);
     } else {
       router.push("/");
     }
