@@ -1,9 +1,10 @@
 export const ETF_UNIVERSE: string[] = [
+  "SPY",  
   "QQQ",
   "SCHB",
   "SCHD",
+  "SCHG",
   "SCHX",
-  "SPY",
   "VB",
   "VBAL.TO",
   "VCN.TO",
