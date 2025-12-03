@@ -5,6 +5,8 @@ export const ETF_UNIVERSE: string[] = [
   "SCHD",
   "SCHG",
   "SCHX",
+  "JEPQ",
+  "JEPI",
   "VB",
   "VBAL.TO",
   "VCN.TO",
@@ -30,5 +32,6 @@ export const ETF_UNIVERSE: string[] = [
   "XIC.TO",
   "XTOT.TO",
   "XUU.TO",
-  "ZSP.TO"
+  "ZSP.TO",
+  "QQQM"
 ];
