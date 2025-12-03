@@ -13,6 +13,47 @@ import {
 } from "@/lib/positionsQuery";
 import { formatMixSummary } from "@/lib/mixFormatting";
 
+type MixEventSource = "scratch" | "template" | "url";
+
+type AnalyzeEventOptions = {
+  source?: MixEventSource;
+  templateKey?: string | null;
+};
+
+const sendMixAnalyzeEvent = (
+  positions: UserPosition[],
+  options?: AnalyzeEventOptions,
+) => {
+  if (typeof navigator === "undefined" || typeof window === "undefined") {
+    return;
+  }
+
+  const payload = {
+    positions,
+    benchmarkSymbol: null,
+    source: options?.source ?? "scratch",
+    templateKey: options?.templateKey ?? null,
+    referrer:
+      typeof document !== "undefined" && document.referrer
+        ? document.referrer
+        : "$direct",
+  };
+
+  if (!navigator.sendBeacon) {
+    return;
+  }
+
+  try {
+    const blob = new Blob([JSON.stringify(payload)], {
+      type: "application/json",
+    });
+
+    navigator.sendBeacon("/api/mix-events", blob);
+  } catch (error) {
+    console.error("[mix_events] sendBeacon error", error);
+  }
+};
+
 export default function HomePage() {
   const router = useRouter();
   const step2Ref = useRef<HTMLDivElement | null>(null);
@@ -24,11 +65,14 @@ export default function HomePage() {
   const totalWeight = positions.reduce((sum, position) => sum + position.weightPct, 0);
   const totalClamped = Math.max(0, Math.min(100, totalWeight));
 
-  const handleAnalyze = (overridePositions?: UserPosition[]) => {
-    const source = overridePositions ?? positions;
+  const handleAnalyze = (
+    overridePositions?: UserPosition[],
+    eventOptions?: AnalyzeEventOptions,
+  ) => {
+    const sourcePositions = overridePositions ?? positions;
     setFeedbackMessage(null);
 
-    const cleanedPositions = normalizePositions(source);
+    const cleanedPositions = normalizePositions(sourcePositions);
     if (!cleanedPositions.length) {
       setFeedbackMessage("Please add some ETFs and try again.");
       return;
@@ -50,6 +94,8 @@ export default function HomePage() {
       positions_count: cleanedPositions.length,
       source_page: "home",
     });
+
+    sendMixAnalyzeEvent(cleanedPositions, eventOptions);
 
     router.push(`/results?${params}`);
   };
@@ -89,7 +135,10 @@ export default function HomePage() {
             }
 
             setPositions(templatePositions);
-            handleAnalyze(templatePositions);
+            handleAnalyze(templatePositions, {
+              source: "template",
+              templateKey: template.id,
+            });
           }}
         />
 
