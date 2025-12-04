@@ -101,14 +101,14 @@ export default function ResultsPageClient({
 
   const sanitizedPositions = useMemo(
     () => normalizePositions(initialPositions),
-    [initialPositions]
+    [initialPositions],
   );
   const hasValidPositions = sanitizedPositions.length > 0;
   const positions = hasValidPositions ? sanitizedPositions : initialPositions;
   const positionsCount = sanitizedPositions.length;
   const mixName = useMemo(
     () => formatMixSummary(sanitizedPositions),
-    [sanitizedPositions]
+    [sanitizedPositions],
   );
 
   const singleETFSymbol = useMemo(() => {
@@ -220,28 +220,29 @@ export default function ResultsPageClient({
       [...exposure]
         .sort(
           (a, b) =>
-            (b.total_weight_pct ?? 0) - (a.total_weight_pct ?? 0)
+            (b.total_weight_pct ?? 0) - (a.total_weight_pct ?? 0),
         )
         .slice(0, 10),
-    [exposure]
+    [exposure],
   );
 
-  useEffect(() => {
-    const slideName = SLIDE_ANALYTICS[slide];
+  // Track slide views only when the user actually changes slides
+  const trackSlideView = (nextSlide: SlideIndex) => {
+    if (!exposure.length) return; // only log once data is ready
+
+    const slideName = SLIDE_ANALYTICS[nextSlide];
 
     capture("results_slide_viewed", {
-      slide_index: slide,
+      slide_index: nextSlide,
       slide_name: slideName,
-      has_exposure: exposure.length > 0,
+      has_exposure: true,
     });
-  }, [slide, exposure.length, capture]);
+  };
 
   useEffect(() => {
     if (!sanitizedPositions.length) {
       setExposure([]);
-      setError(
-        hasPositionsParam ? EMPTY_POSITIONS_ERROR : null
-      );
+      setError(hasPositionsParam ? EMPTY_POSITIONS_ERROR : null);
       setIsLoading(false);
       setSlide(0);
       return;
@@ -273,8 +274,7 @@ export default function ResultsPageClient({
         console.error("Exposure API error:", err);
         setExposure([]);
         const message =
-          err?.message ||
-          "Something went wrong while analyzing your mix.";
+          err?.message || "Something went wrong while analyzing your mix.";
 
         setError(message);
 
@@ -289,7 +289,7 @@ export default function ResultsPageClient({
     };
 
     fetchExposure();
-  }, [sanitizedPositions, hasPositionsParam]);
+  }, [sanitizedPositions, hasPositionsParam, capture]);
 
   useEffect(() => {
     if (resultsLoadedRef.current) {
@@ -308,7 +308,14 @@ export default function ResultsPageClient({
       mix_name: mixName,
       source_page: "results",
     });
-  }, [capture, exposure.length, isLoading, positionsCount, benchmarkSymbol, mixName]);
+  }, [
+    capture,
+    exposure.length,
+    isLoading,
+    positionsCount,
+    benchmarkSymbol,
+    mixName,
+  ]);
 
   useEffect(() => {
     if (isLoading || !userExposureMix.length || !selectedBenchmark) {
@@ -350,8 +357,7 @@ export default function ResultsPageClient({
         if (controller.signal.aborted) return;
         console.error("Benchmark exposure error:", err);
         setBenchmarkError(
-          err?.message ||
-            "Unable to compare with the selected benchmark.",
+          err?.message || "Unable to compare with the selected benchmark.",
         );
         setBenchmarkComparison(null);
       } finally {
@@ -402,9 +408,21 @@ export default function ResultsPageClient({
 
     if (Math.abs(deltaX) > 40) {
       if (deltaX < 0) {
-        setSlide((prev) => (prev === 4 ? 4 : ((prev + 1) as SlideIndex)));
+        setSlide((prev) => {
+          const next = prev === 4 ? 4 : ((prev + 1) as SlideIndex);
+          if (next !== prev) {
+            trackSlideView(next);
+          }
+          return next;
+        });
       } else {
-        setSlide((prev) => (prev === 0 ? 0 : ((prev - 1) as SlideIndex)));
+        setSlide((prev) => {
+          const next = prev === 0 ? 0 : ((prev - 1) as SlideIndex);
+          if (next !== prev) {
+            trackSlideView(next);
+          }
+          return next;
+        });
       }
     }
 
@@ -417,7 +435,13 @@ export default function ResultsPageClient({
       const nextIndex =
         (currentIndex + direction + SLIDE_INDICES.length) %
         SLIDE_INDICES.length;
-      return SLIDE_INDICES[nextIndex];
+      const nextSlide = SLIDE_INDICES[nextIndex];
+
+      if (nextSlide !== prev) {
+        trackSlideView(nextSlide);
+      }
+
+      return nextSlide;
     });
   };
 
@@ -430,7 +454,7 @@ export default function ResultsPageClient({
     setSelectedFeatures((prev) =>
       prev.includes(feature)
         ? prev.filter((f) => f !== feature)
-        : [...prev, feature]
+        : [...prev, feature],
     );
   };
 
@@ -487,7 +511,11 @@ export default function ResultsPageClient({
               <button
                 key={view.id}
                 type="button"
-                onClick={() => setSlide(view.id)}
+                onClick={() => {
+                  if (view.id === slide) return;
+                  setSlide(view.id);
+                  trackSlideView(view.id);
+                }}
                 className={[
                   "px-3 py-1.5 rounded-full text-xs font-medium transition",
                   view.id === slide
@@ -581,13 +609,9 @@ export default function ResultsPageClient({
                     <ExposureSummary exposure={exposure} showHeader={false} />
                   )}
 
-                  {slide === 1 && (
-                    <RegionExposureChart exposure={exposure} />
-                  )}
+                  {slide === 1 && <RegionExposureChart exposure={exposure} />}
 
-                  {slide === 2 && (
-                    <SectorBreakdownCard exposure={exposure} />
-                  )}
+                  {slide === 2 && <SectorBreakdownCard exposure={exposure} />}
 
                   {slide === 3 && (
                     <HoldingsTable exposure={top10} showHeader={false} />
@@ -604,9 +628,9 @@ export default function ResultsPageClient({
                             You’re officially helping design WizardFolio.
                           </h3>
                           <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                            We’ll use this to decide what to build next. If
-                            you left an email, we’ll let you know as new
-                            features go live.
+                            We’ll use this to decide what to build next. If you
+                            left an email, we’ll let you know as new features go
+                            live.
                           </p>
                         </div>
                       ) : (
@@ -621,8 +645,8 @@ export default function ResultsPageClient({
                             What would you love to see next?
                           </h3>
                           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                            Tap a few wishes below. Optional: add your email
-                            and we’ll let you know when new features land.
+                            Tap a few wishes below. Optional: add your email and
+                            we’ll let you know when new features land.
                           </p>
 
                           <div className="mt-3 flex flex-wrap gap-2">
@@ -728,7 +752,11 @@ export default function ResultsPageClient({
               <button
                 key={idx}
                 type="button"
-                onClick={() => setSlide(idx)}
+                onClick={() => {
+                  if (idx === slide) return;
+                  setSlide(idx);
+                  trackSlideView(idx);
+                }}
                 className="group"
                 aria-label={DOT_LABELS[idx]}
               >
