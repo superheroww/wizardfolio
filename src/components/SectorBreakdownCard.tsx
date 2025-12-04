@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import type { ApiExposureRow } from "@/lib/exposureEngine";
 import { aggregateBySector } from "@/lib/exposureAggregations";
 
@@ -7,6 +9,7 @@ type SectorBreakdownCardProps = {
   exposure: ApiExposureRow[];
 };
 
+const VISIBLE_SECTORS_COUNT = 5;
 const SECTOR_GRADIENTS = [
   "from-emerald-500 via-emerald-400 to-emerald-300",
   "from-blue-500 via-blue-400 to-blue-300",
@@ -18,12 +21,19 @@ const SECTOR_GRADIENTS = [
 ];
 
 export function SectorBreakdownCard({ exposure }: SectorBreakdownCardProps) {
+  const [showAllSectors, setShowAllSectors] = useState(false);
   const sectors = aggregateBySector(exposure);
-  const topSectors = sectors.slice(0, 5);
-  const othersCount = Math.max(sectors.length - topSectors.length, 0);
-  const maxWeight = topSectors[0]?.weightPct ?? 0;
+  const visibleSectors = showAllSectors
+    ? sectors
+    : sectors.slice(0, VISIBLE_SECTORS_COUNT);
+  const hiddenSectorsCount = Math.max(
+    sectors.length - VISIBLE_SECTORS_COUNT,
+    0
+  );
+  const shouldShowToggle = hiddenSectorsCount > 0;
+  const maxWeight = sectors[0]?.weightPct ?? 0;
 
-  if (!topSectors.length) {
+  if (!sectors.length) {
     return (
       <section className="rounded-2xl border border-zinc-200 bg-white/80 p-4 text-xs text-zinc-500 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-400">
         <p>No sector data available for this mix.</p>
@@ -39,7 +49,7 @@ export function SectorBreakdownCard({ exposure }: SectorBreakdownCardProps) {
         </h3>
       </div>
       <div className="space-y-3">
-        {topSectors.map((sector, index) => {
+        {visibleSectors.map((sector, index) => {
           const gradient = SECTOR_GRADIENTS[index % SECTOR_GRADIENTS.length];
 
           return (
@@ -65,12 +75,20 @@ export function SectorBreakdownCard({ exposure }: SectorBreakdownCardProps) {
             </div>
           );
         })}
-        {othersCount > 0 && (
-          <p className="pt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            +{othersCount} smaller sectors
-          </p>
-        )}
       </div>
+      {shouldShowToggle && (
+        <div className="mt-3 flex justify-center border-t border-zinc-100/80 pt-2 dark:border-zinc-800 md:justify-end">
+          <button
+            type="button"
+            onClick={() => setShowAllSectors((prev) => !prev)}
+            className="text-xs font-semibold text-zinc-700 underline underline-offset-2 dark:text-zinc-200"
+          >
+            {showAllSectors
+              ? "Show fewer"
+              : `+ Show ${hiddenSectorsCount} more`}
+          </button>
+        </div>
+      )}
     </section>
   );
 }

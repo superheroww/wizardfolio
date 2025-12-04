@@ -20,13 +20,13 @@ type Template = {
 
 const QUICK_START_TEMPLATES: Template[] = [
   {
-    id: "core-us-intl",
-    emoji: "🏛️",
-    name: "Core US & Intl",
-    description: "Simple mix of US and international stocks.",
+    id: "us_core_tech_boost",
+    emoji: "🎯",
+    name: "S&P 500 + Nasdaq (80/20)",
+    description: "S&P 500 exposure paired with a modest allocation to the Nasdaq index.",
     positions: [
-      { symbol: "VTI", weightPct: 60 },
-      { symbol: "VXUS", weightPct: 40 },
+      { symbol: "VOO", weightPct: 80 },
+      { symbol: "QQQ", weightPct: 20 },
     ],
     type: "template",
     isDefaultTemplate: true,

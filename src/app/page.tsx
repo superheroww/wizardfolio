@@ -63,6 +63,8 @@ export default function HomePage() {
     DEFAULT_POSITIONS as UserPosition[]
   );
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [mixEventContext, setMixEventContext] =
+    useState<AnalyzeEventOptions | null>(null);
 
   const totalWeight = positions.reduce((sum, position) => sum + position.weightPct, 0);
   const totalClamped = Math.max(0, Math.min(100, totalWeight));
@@ -73,6 +75,12 @@ export default function HomePage() {
   ) => {
     const sourcePositions = overridePositions ?? positions;
     setFeedbackMessage(null);
+
+    const resolvedOptions: AnalyzeEventOptions = {
+      source: eventOptions?.source ?? mixEventContext?.source ?? "scratch",
+      templateKey:
+        eventOptions?.templateKey ?? mixEventContext?.templateKey ?? null,
+    };
 
     const cleanedPositions = normalizePositions(sourcePositions);
     if (!cleanedPositions.length) {
@@ -97,7 +105,8 @@ export default function HomePage() {
       source_page: "home",
     });
 
-    sendMixAnalyzeEvent(cleanedPositions, eventOptions);
+    setMixEventContext(resolvedOptions);
+    sendMixAnalyzeEvent(cleanedPositions, resolvedOptions);
 
     router.push(`/results?${params}`);
   };
@@ -130,6 +139,7 @@ export default function HomePage() {
 
             if (isBuildYourOwn) {
               setPositions(DEFAULT_POSITIONS);
+              setMixEventContext(null);
               if (step2Ref.current) {
                 step2Ref.current.scrollIntoView({ behavior: "smooth" });
               }
@@ -137,10 +147,12 @@ export default function HomePage() {
             }
 
             setPositions(templatePositions);
-            handleAnalyze(templatePositions, {
+            const templateOptions: AnalyzeEventOptions = {
               source: "template",
               templateKey: template.id,
-            });
+            };
+            setMixEventContext(templateOptions);
+            handleAnalyze(templatePositions, templateOptions);
           }}
         />
 
@@ -160,6 +172,7 @@ export default function HomePage() {
 
             setPositions(DEFAULT_POSITIONS);
             setFeedbackMessage(null);
+            setMixEventContext(null);
             if (step2Ref.current) {
               step2Ref.current.scrollIntoView({ behavior: "smooth" });
             }

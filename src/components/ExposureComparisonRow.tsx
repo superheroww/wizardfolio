@@ -45,7 +45,7 @@ export default function ExposureComparisonRow({
       <p className="text-sm font-semibold leading-tight text-zinc-900 dark:text-zinc-50 truncate">
         {label}
       </p>
-      <div className="inline-flex items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+      <div className="inline-flex flex-wrap items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
         <span>Your mix {formatPercent(yourPct)}</span>
         <span aria-hidden="true">·</span>
         <span>Benchmark {formatPercent(benchmarkPct)}</span>
