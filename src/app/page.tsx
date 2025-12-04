@@ -60,13 +60,16 @@ export default function HomePage() {
   const router = useRouter();
   const step2Ref = useRef<HTMLDivElement | null>(null);
   const [positions, setPositions] = useState<UserPosition[]>(
-    DEFAULT_POSITIONS as UserPosition[]
+    DEFAULT_POSITIONS as UserPosition[],
   );
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [mixEventContext, setMixEventContext] =
     useState<AnalyzeEventOptions | null>(null);
 
-  const totalWeight = positions.reduce((sum, position) => sum + position.weightPct, 0);
+  const totalWeight = positions.reduce(
+    (sum, position) => sum + position.weightPct,
+    0,
+  );
   const totalClamped = Math.max(0, Math.min(100, totalWeight));
 
   const handleAnalyze = (
@@ -84,17 +87,34 @@ export default function HomePage() {
 
     const cleanedPositions = normalizePositions(sourcePositions);
     if (!cleanedPositions.length) {
+      posthog.capture("analyze_failed", {
+        reason: "no_positions",
+        source_page: "home",
+        source: resolvedOptions.source ?? "scratch",
+        template_key: resolvedOptions.templateKey ?? null,
+        anon_id: getAnonId(),
+      });
+
       setFeedbackMessage("Please add some ETFs and try again.");
       return;
     }
 
     const params = buildPositionsSearchParams(cleanedPositions);
     if (!params) {
+      posthog.capture("analyze_failed", {
+        reason: "param_build_failed",
+        source_page: "home",
+        source: resolvedOptions.source ?? "scratch",
+        template_key: resolvedOptions.templateKey ?? null,
+        anon_id: getAnonId(),
+      });
+
       setFeedbackMessage("Please add some ETFs and try again.");
       return;
     }
 
     const mixName = formatMixSummary(cleanedPositions);
+
     posthog.capture("analyze_clicked", {
       positions: cleanedPositions.map((position) => ({
         symbol: position.symbol.trim(),
@@ -103,6 +123,9 @@ export default function HomePage() {
       mix_name: mixName,
       positions_count: cleanedPositions.length,
       source_page: "home",
+      source: resolvedOptions.source ?? "scratch",
+      template_key: resolvedOptions.templateKey ?? null,
+      anon_id: getAnonId(),
     });
 
     setMixEventContext(resolvedOptions);
@@ -119,7 +142,8 @@ export default function HomePage() {
             ETF Look-Through
           </h1>
           <p className="text-sm text-zinc-600 dark:text-zinc-300">
-            Mix a few ETFs and we’ll show you the real stocks, sectors, and regions underneath.
+            Mix a few ETFs and we’ll show you the real stocks, sectors, and
+            regions underneath.
           </p>
         </section>
 
@@ -129,57 +153,81 @@ export default function HomePage() {
               Step 1 · Pick a starting point
             </p>
             <p className="text-sm text-zinc-600 dark:text-zinc-300">
-              Tap a preset or start from scratch.
+              Tap a preset or start from a fresh mix.
             </p>
           </div>
 
-        <QuickStartTemplates
-          onTemplateSelect={(templatePositions, template) => {
-            const isBuildYourOwn = template.name === "Build Your Own Mix";
+          <QuickStartTemplates
+            onTemplateSelect={(templatePositions, template) => {
+              const isBuildYourOwn =
+                template.name === "Build Your Own Mix" ||
+                template.id === "build-your-own";
 
-            if (isBuildYourOwn) {
-              setPositions(DEFAULT_POSITIONS);
-              setMixEventContext(null);
-              if (step2Ref.current) {
-                step2Ref.current.scrollIntoView({ behavior: "smooth" });
+              // Track template selection (even if it doesn't auto-analyze)
+              posthog.capture("template_selected", {
+                template_key: template.id,
+                template_name: template.name,
+                source_page: "home",
+                anon_id: getAnonId(),
+              });
+
+              if (isBuildYourOwn) {
+                setPositions(DEFAULT_POSITIONS);
+                setMixEventContext(null);
+                setFeedbackMessage(null);
+
+                if (step2Ref.current) {
+                  step2Ref.current.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }
+
+                return;
               }
-              return;
-            }
 
-            setPositions(templatePositions);
-            const templateOptions: AnalyzeEventOptions = {
-              source: "template",
-              templateKey: template.id,
-            };
-            setMixEventContext(templateOptions);
-            handleAnalyze(templatePositions, templateOptions);
-          }}
-        />
+              setPositions(templatePositions);
+
+              const templateOptions: AnalyzeEventOptions = {
+                source: "template",
+                templateKey: template.id,
+              };
+
+              setMixEventContext(templateOptions);
+              handleAnalyze(templatePositions, templateOptions);
+            }}
+          />
 
           <button
             type="button"
-          onClick={() => {
-            const previousTotalWeight = positions.reduce(
-              (sum, position) => sum + position.weightPct,
-              0
-            );
+            onClick={() => {
+              const previousTotalWeight = positions.reduce(
+                (sum, position) => sum + position.weightPct,
+                0,
+              );
 
-            posthog.capture("click_start_from_scratch", {
-              previous_positions_count: positions.length,
-              previous_total_weight: previousTotalWeight,
-              reset_mode: "defaults",
-            });
+              posthog.capture("click_start_from_scratch", {
+                previous_positions_count: positions.length,
+                previous_total_weight: previousTotalWeight,
+                reset_mode: "defaults",
+                source_page: "home",
+                anon_id: getAnonId(),
+              });
 
-            setPositions(DEFAULT_POSITIONS);
-            setFeedbackMessage(null);
-            setMixEventContext(null);
-            if (step2Ref.current) {
-              step2Ref.current.scrollIntoView({ behavior: "smooth" });
-            }
-          }}
-            className="mt-2 inline-flex items-center justify-center text-xs font-semibold text-zinc-600 underline underline-offset-2 dark:text-zinc-300"
+              setPositions(DEFAULT_POSITIONS);
+              setFeedbackMessage(null);
+              setMixEventContext(null);
+
+              if (step2Ref.current) {
+                step2Ref.current.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              }
+            }}
+            className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-800 shadow-sm transition active:scale-[0.98] hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
           >
-            Or start from scratch
+            <span>Start from a fresh mix</span>
           </button>
         </section>
 
@@ -224,11 +272,10 @@ export default function HomePage() {
 
           <div className="mt-3 space-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
             <p>
-              Step 3 · Tap “See my breakdown →” to view your stocks, sectors, and regions.
+              Step 3 · Tap “See my breakdown →” to view your stocks, sectors,
+              and regions.
             </p>
-            <p>
-              For education only. This isn’t investment advice.
-            </p>
+            <p>For education only. This isn’t investment advice.</p>
           </div>
         </section>
       </div>
