@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Suspense } from "react";
 import "./globals.css";
 import { PostHogProvider } from "@/providers/PostHogProvider";
@@ -39,6 +40,18 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="min-h-screen bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-50 font-sans">
+        <Script
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+        />
+        <Script id="ga-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
+          `}
+        </Script>
         <Suspense fallback={null}>
           <PostHogProvider>
             <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-6 sm:px-6 lg:px-8">
