@@ -72,13 +72,13 @@ export default function FaqPage() {
       />
       <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
         <section className="space-y-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-zinc-400">
             Help &amp; support
           </p>
-          <h1 className="text-2xl font-semibold">
+          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-zinc-50">
             Frequently asked questions
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-neutral-600 dark:text-zinc-300">
             Here are some common questions about how WizardFolio works, which ETFs
             we support, and what you can expect from the ETF look-through analysis.
           </p>
@@ -90,8 +90,10 @@ export default function FaqPage() {
               key={entry.question}
               className="rounded-2xl border bg-card/50 p-4"
             >
-              <h2 className="text-sm font-medium">{entry.question}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <h2 className="text-sm font-medium text-neutral-900 dark:text-zinc-50">
+                {entry.question}
+              </h2>
+              <p className="mt-2 text-sm text-neutral-600 dark:text-zinc-300">
                 {entry.answer}
               </p>
             </article>
@@ -99,17 +101,17 @@ export default function FaqPage() {
         </section>
 
         <section className="rounded-2xl border bg-card/40 p-4 text-sm">
-          <h2 className="mb-2 text-sm font-large">
+          <h2 className="mb-2 text-sm font-large text-neutral-900 dark:text-zinc-50">
             Ready to see what you actually own?
           </h2>
-          <p className="mb-3 text-sm text-muted-foreground">
+          <p className="mb-3 text-sm text-neutral-600 dark:text-zinc-300">
             Mix ETFs like VOO, QQQ, XEQT, and VEQT and instantly see your true
             stock, sector, and region exposure. No signup required for the basic
             look-through.
           </p>
           <a
             href="/"
-            className="inline-flex rounded-full px-4 py-2 text-sm font-medium shadow-sm ring-1 ring-border hover:bg-accent"
+            className="inline-flex rounded-full px-4 py-2 text-sm font-medium text-neutral-900 dark:text-zinc-50 shadow-sm ring-1 ring-border hover:bg-accent"
           >
             Try the ETF look-through →
           </a>
