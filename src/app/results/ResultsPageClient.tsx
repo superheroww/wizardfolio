@@ -5,7 +5,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type FormEvent,
   type TouchEvent,
 } from "react";
 import BenchmarkComparisonCard from "@/components/BenchmarkComparisonCard";
@@ -18,7 +17,10 @@ import { aggregateHoldingsBySymbol } from "@/lib/exposureAggregations";
 import { useRouter } from "next/navigation";
 import { AppleShareIcon } from "@/components/icons/AppleShareIcon";
 import { usePostHogSafe } from "@/lib/usePostHogSafe";
-import { normalizePositions } from "@/lib/positionsQuery";
+import {
+  normalizePositions,
+  buildPositionsSearchParams,
+} from "@/lib/positionsQuery";
 import type { ApiExposureRow, UserPosition } from "@/lib/exposureEngine";
 import { useImageShare } from "@/hooks/useImageShare";
 import { BENCHMARK_MIXES } from "@/lib/benchmarkPresets";
@@ -32,16 +34,6 @@ import type { MixComparisonResult } from "@/lib/benchmarkEngine";
 import { formatMixSummary } from "@/lib/mixFormatting";
 import { getBenchmarkLabel } from "@/lib/benchmarkUtils";
 
-type SubmissionState = "idle" | "loading" | "success" | "error";
-
-const FEATURE_OPTIONS = [
-  "More ETF coverage",
-  "Support individual stocks",
-  "Connect my real portfolio",
-  "More ETF insights & charts",
-  "Something else…",
-];
-
 type SlideIndex = 0 | 1 | 2 | 3 | 4;
 
 const SLIDE_TITLES: Record<SlideIndex, string> = {
@@ -49,7 +41,7 @@ const SLIDE_TITLES: Record<SlideIndex, string> = {
   1: "By region",
   2: "By sector",
   3: "Top holdings",
-  4: "Help shape WizardFolio",
+  4: "Top loved mixes",
 };
 
 const SLIDE_ANALYTICS: Record<SlideIndex, string> = {
@@ -57,7 +49,7 @@ const SLIDE_ANALYTICS: Record<SlideIndex, string> = {
   1: "Region",
   2: "Sector",
   3: "Holdings",
-  4: "Feedback",
+  4: "Top mixes",
 };
 
 const TAB_VIEWS: { id: SlideIndex; label: string }[] = [
@@ -65,7 +57,7 @@ const TAB_VIEWS: { id: SlideIndex; label: string }[] = [
   { id: 1, label: "Regions" },
   { id: 2, label: "Sectors" },
   { id: 3, label: "Holdings" },
-  { id: 4, label: "Survey" },
+  { id: 4, label: "Top mixes" },
 ];
 
 const DOT_LABELS = TAB_VIEWS.reduce<Record<SlideIndex, string>>((acc, view) => {
@@ -74,6 +66,54 @@ const DOT_LABELS = TAB_VIEWS.reduce<Record<SlideIndex, string>>((acc, view) => {
 }, {} as Record<SlideIndex, string>);
 
 const SLIDE_INDICES: SlideIndex[] = [0, 1, 2, 3, 4];
+
+type TopLovedMix = {
+  id: string;
+  label: string;
+  description: string;
+  positions: UserPosition[];
+};
+
+const TOP_LOVED_MIXES: TopLovedMix[] = [
+  {
+    id: "us_core_tech_boost",
+    label: "🎯 U.S. Core Tech Boost",
+    description: "Core U.S. exposure with a tech tilt.",
+    positions: [
+      { symbol: "VOO", weightPct: 80 },
+      { symbol: "QQQ", weightPct: 20 },
+    ],
+  },
+  {
+    id: "couch-potato",
+    label: "🥔 Couch Potato",
+    description: "Simple, balanced Canadian-friendly mix.",
+    positions: [
+      { symbol: "XEQT.TO", weightPct: 80 },
+      { symbol: "VCN.TO", weightPct: 20 },
+    ],
+  },
+  {
+    id: "maple-growth-mix",
+    label: "🍁 Maple Growth Mix",
+    description: "Canada, U.S., and global in 3 ETFs.",
+    positions: [
+      { symbol: "XEQT.TO", weightPct: 60 },
+      { symbol: "VCN.TO", weightPct: 20 },
+      { symbol: "VFV.TO", weightPct: 20 },
+    ],
+  },
+  {
+    id: "global-three-fund",
+    label: "🌍 Global Three-Fund",
+    description: "Simple global diversification in one glance.",
+    positions: [
+      { symbol: "VTI", weightPct: 40 },
+      { symbol: "VXUS", weightPct: 30 },
+      { symbol: "VT", weightPct: 30 },
+    ],
+  },
+];
 
 type ResultsPageClientProps = {
   initialPositions: UserPosition[];
@@ -146,6 +186,7 @@ export default function ResultsPageClient({
 
     return base;
   }, [sanitizedPositions, singleETFSymbol]);
+
   const [selectedBenchmarkId, setSelectedBenchmarkId] = useState(
     defaultBenchmark.id,
   );
@@ -206,12 +247,6 @@ export default function ResultsPageClient({
     useState<MixComparisonResult | null>(null);
   const [benchmarkError, setBenchmarkError] = useState<string | null>(null);
   const [isBenchmarkLoading, setIsBenchmarkLoading] = useState(false);
-
-  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
-  const [message, setMessage] = useState("");
-  const [email, setEmail] = useState("");
-  const [feedbackState, setFeedbackState] = useState<SubmissionState>("idle");
-  const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const resultsLoadedRef = useRef(false);
   const { shareElementAsImage, isSharing } = useImageShare();
@@ -382,6 +417,25 @@ export default function ResultsPageClient({
     }
   };
 
+const handleTryTopMix = (mixId: string) => {
+  const mix = TOP_LOVED_MIXES.find((m) => m.id === mixId);
+  if (!mix) return;
+
+  // This already returns something like: "positions=%5B{...}%5D"
+  const positionsParam = buildPositionsSearchParams(mix.positions);
+
+  capture("top_mix_try_clicked", {
+    template_key: mix.id,
+    source_page: "results",
+    source_slide: "top_mixes",
+    mix_name: mixName,
+    positions_count: positionsCount,
+  });
+
+  // ✅ Don't re-wrap in `positions=` and don't re-encode
+  router.push(`/results?${positionsParam}`);
+};
+
   const handleShare = async () => {
     if (!cardRef.current || isSharing) return;
 
@@ -449,58 +503,6 @@ export default function ResultsPageClient({
   const handleNextSlide = () => cycleSlide(1);
 
   const title = SLIDE_TITLES[slide];
-
-  const toggleFeature = (feature: string) => {
-    setSelectedFeatures((prev) =>
-      prev.includes(feature)
-        ? prev.filter((f) => f !== feature)
-        : [...prev, feature],
-    );
-  };
-
-  const hasSomethingElse = selectedFeatures.includes("Something else…");
-  const isSubmittingFeedback = feedbackState === "loading";
-
-  const handleFeedbackSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setFeedbackError(null);
-
-    if (!selectedFeatures.length) {
-      setFeedbackError("Pick at least one option.");
-      return;
-    }
-
-    setFeedbackState("loading");
-    try {
-      const res = await fetch("/api/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          selectedFeatures,
-          message: message.trim() || undefined,
-          email: email.trim() || undefined,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Request failed");
-      }
-
-      setFeedbackState("success");
-      capture("feedback_submitted", {
-        selected_features: selectedFeatures,
-        has_message: Boolean(message.trim()),
-        has_email: Boolean(email.trim()),
-      });
-    } catch (err) {
-      console.error(err);
-      setFeedbackState("error");
-      setFeedbackError("Something went wrong. Please try again.");
-      capture("feedback_submit_error", {
-        selected_features_count: selectedFeatures.length,
-      });
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -618,129 +620,40 @@ export default function ResultsPageClient({
                   )}
 
                   {slide === 4 && (
-                    <>
-                      {feedbackState === "success" ? (
-                        <div className="flex h-full flex-col justify-center rounded-2xl border border-zinc-200 bg-white/80 p-4 text-left text-xs shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70 sm:text-sm">
-                          <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-500">
-                            Thank you ✨
-                          </p>
-                          <h3 className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                            You’re officially helping design WizardFolio.
-                          </h3>
-                          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                            We’ll use this to decide what to build next. If you
-                            left an email, we’ll let you know as new features go
-                            live.
-                          </p>
-                        </div>
-                      ) : (
-                        <form
-                          onSubmit={handleFeedbackSubmit}
-                          className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white/80 p-4 text-left text-xs shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70 sm:text-sm"
-                        >
-                          <p className="text-[11px] font-medium uppercase tracking-wide text-indigo-500">
-                            Help shape WizardFolio
-                          </p>
-                          <h3 className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                            What would you love to see next?
-                          </h3>
-                          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                            Tap a few wishes below. Optional: add your email and
-                            we’ll let you know when new features land.
-                          </p>
+                    <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white/85 p-4 text-left text-xs shadow-sm dark:border-zinc-800 dark:bg-zinc-900/75 sm:text-sm">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-indigo-500">
+                        Top loved mixes
+                      </p>
+                      <h3 className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                        Tap a mix below to load it into WizardFolio.
+                      </h3>
 
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {FEATURE_OPTIONS.map((feature) => {
-                              const selected =
-                                selectedFeatures.includes(feature);
-                              return (
-                                <button
-                                  key={feature}
-                                  type="button"
-                                  onClick={() => toggleFeature(feature)}
-                                  className={[
-                                    "rounded-full border px-3 py-1 text-[11px] transition",
-                                    selected
-                                      ? "border-indigo-500 bg-indigo-500 text-white shadow-sm"
-                                      : "border-zinc-200 bg-white/60 text-zinc-700 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-200",
-                                  ].join(" ")}
-                                >
-                                  {feature}
-                                </button>
-                              );
-                            })}
-                          </div>
+                      <div className="mt-3 space-y-2">
+                        {TOP_LOVED_MIXES.map((mix) => (
+                          <button
+                            key={mix.id}
+                            type="button"
+                            onClick={() => handleTryTopMix(mix.id)}
+                            className="group flex w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white/90 px-3 py-2 text-left transition hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80 dark:hover:bg-zinc-800"
+                          >
+                            <span className="flex items-center gap-1 text-xs font-semibold text-zinc-900 dark:text-zinc-50">
+                              {mix.label}
+                              <span className="text-[11px] text-zinc-400 transition-transform group-hover:translate-x-0.5">
+                                ›
+                              </span>
+                            </span>
+                            <span className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                              {mix.description}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
 
-                          {hasSomethingElse && (
-                            <div className="mt-3">
-                              <label className="mb-1 block text-[11px] font-medium text-zinc-700 dark:text-zinc-200">
-                                Something else you wish WizardFolio could do?
-                              </label>
-                              <textarea
-                                value={message}
-                                onChange={(e) =>
-                                  setMessage(e.target.value)
-                                }
-                                rows={3}
-                                className="w-full rounded-xl border border-zinc-200 bg-white/80 p-2 text-xs text-zinc-900 outline-none ring-0 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100"
-                                placeholder="e.g., See all my accounts in one place, more credit card insights, etc."
-                              />
-                            </div>
-                          )}
-
-                          <div className="mt-3">
-                            <label className="mb-1 block text-[11px] font-medium text-zinc-700 dark:text-zinc-200">
-                              Email (optional)
-                            </label>
-                            <input
-                              type="email"
-                              inputMode="email"
-                              autoComplete="email"
-                              value={email}
-                              onChange={(e) => setEmail(e.target.value)}
-                              className="w-full rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-xs text-zinc-900 outline-none ring-0 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100"
-                              placeholder="you@example.com"
-                            />
-                            <p className="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
-                              Optional. We’ll only email you about WizardFolio
-                              updates.
-                            </p>
-                          </div>
-
-                          {feedbackError && (
-                            <p className="mt-2 text-[11px] text-rose-500">
-                              {feedbackError}
-                            </p>
-                          )}
-                          {feedbackState === "error" && !feedbackError && (
-                            <p className="mt-2 text-[11px] text-rose-500">
-                              Something went wrong. Please try again.
-                            </p>
-                          )}
-
-                          <div className="mt-4 flex items-center gap-2">
-                            <button
-                              type="submit"
-                              disabled={
-                                isSubmittingFeedback ||
-                                !selectedFeatures.length
-                              }
-                              className={[
-                                "inline-flex flex-1 items-center justify-center rounded-full px-3 py-2 text-xs font-semibold transition",
-                                isSubmittingFeedback ||
-                                !selectedFeatures.length
-                                  ? "bg-zinc-300 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                                  : "bg-indigo-600 text-white shadow-sm hover:bg-indigo-500",
-                              ].join(" ")}
-                            >
-                              {isSubmittingFeedback
-                                ? "Sending..."
-                                : "Send my wishlist"}
-                            </button>
-                          </div>
-                        </form>
-                      )}
-                    </>
+                      <p className="mt-3 text-[10px] text-zinc-500 dark:text-zinc-400">
+                        We’ll reload WizardFolio with your chosen mix prefilled so you can see its
+                        true exposure in one tap.
+                      </p>
+                    </div>
                   )}
                 </>
               )}
