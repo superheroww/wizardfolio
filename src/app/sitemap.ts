@@ -70,24 +70,57 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
     },
     {
+      url: `${baseUrl}/results`,
+      lastModified: now,
+      priority: 0.8,
+      changeFrequency: "weekly",
+    },
+    {
       url: `${baseUrl}/faq`,
       lastModified: now,
       priority: 0.6,
       changeFrequency: "monthly",
     },
-    ...holdings.map((symbol): MetadataRoute.Sitemap[number] => ({
-      url: `${baseUrl}/holdings/${symbol}`,
+    {
+      url: `${baseUrl}/about`,
       lastModified: now,
-      priority: 0.7,
-      changeFrequency: "weekly",
-    })),
-    ...comparisons.map((slug): MetadataRoute.Sitemap[number] => ({
-      url: `${baseUrl}/compare/${slug}`,
+      priority: 0.5,
+      changeFrequency: "yearly",
+    },
+    {
+      url: `${baseUrl}/privacy`,
       lastModified: now,
-      priority: 0.6,
-      changeFrequency: "monthly",
-    })),
+      priority: 0.4,
+      changeFrequency: "yearly",
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: now,
+      priority: 0.4,
+      changeFrequency: "yearly",
+    },
+
+    // Holdings pages
+    ...holdings.map(
+      (symbol): MetadataRoute.Sitemap[number] => ({
+        url: `${baseUrl}/holdings/${symbol}`,
+        lastModified: now,
+        priority: 0.7,
+        changeFrequency: "weekly",
+      })
+    ),
+
+    // Compare pages
+    ...comparisons.map(
+      (slug): MetadataRoute.Sitemap[number] => ({
+        url: `${baseUrl}/compare/${slug}`,
+        lastModified: now,
+        priority: 0.6,
+        changeFrequency: "monthly",
+      })
+    ),
   ];
 
   return pages;
 }
+
