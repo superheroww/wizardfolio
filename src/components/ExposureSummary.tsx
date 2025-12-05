@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { aggregateHoldingsBySymbol } from "@/lib/exposureAggregations";
 
 export type ApiExposureRow = {
   holding_symbol: string;
@@ -143,14 +144,19 @@ export default function ExposureSummary({
   exposure,
   showHeader = true,
 }: ExposureSummaryProps) {
+  const aggregatedExposure = React.useMemo(
+    () => aggregateHoldingsBySymbol(exposure),
+    [exposure],
+  );
+
   // 1) Normalize API rows into the shape the donut expects
   const normalized = React.useMemo<NormalizedExposure[]>(
     () =>
-      exposure.map((row) => ({
+      aggregatedExposure.map((row) => ({
         symbol: row.holding_symbol,
         weightPct: row.total_weight_pct,
       })),
-    [exposure]
+    [aggregatedExposure],
   );
 
   // 2) Use normalized data for slices
@@ -166,7 +172,7 @@ export default function ExposureSummary({
 
   const classification = React.useMemo(
     () => classifyExposure(exposure),
-    [exposure]
+    [exposure],
   );
 
   const slices: Slice[] = React.useMemo(() => {

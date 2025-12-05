@@ -14,6 +14,7 @@ import HoldingsTable from "@/components/HoldingsTable";
 import MixLine from "@/components/MixLine";
 import RegionExposureChart from "@/components/RegionExposureChart";
 import { SectorBreakdownCard } from "@/components/SectorBreakdownCard";
+import { aggregateHoldingsBySymbol } from "@/lib/exposureAggregations";
 import { useRouter } from "next/navigation";
 import { AppleShareIcon } from "@/components/icons/AppleShareIcon";
 import { usePostHogSafe } from "@/lib/usePostHogSafe";
@@ -215,16 +216,15 @@ export default function ResultsPageClient({
   const resultsLoadedRef = useRef(false);
   const { shareElementAsImage, isSharing } = useImageShare();
 
-  const top10 = useMemo(
-    () =>
-      [...exposure]
-        .sort(
-          (a, b) =>
-            (b.total_weight_pct ?? 0) - (a.total_weight_pct ?? 0),
-        )
-        .slice(0, 10),
-    [exposure],
-  );
+  const top10 = useMemo(() => {
+    const aggregated = aggregateHoldingsBySymbol(exposure);
+    return aggregated
+      .sort(
+        (a, b) =>
+          (b.total_weight_pct ?? 0) - (a.total_weight_pct ?? 0),
+      )
+      .slice(0, 10);
+  }, [exposure]);
 
   // Track slide views only when the user actually changes slides
   const trackSlideView = (nextSlide: SlideIndex) => {

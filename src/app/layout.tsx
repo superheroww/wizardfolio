@@ -6,6 +6,29 @@ import { PostHogProvider } from "@/providers/PostHogProvider";
 export const metadata: Metadata = {
   title: "WizardFolio. Portfolio Look-Through",
   description: "See what you really own inside your ETFs.",
+  icons: {
+    icon: "/favicon.ico",
+  },
+  openGraph: {
+    title: "WizardFolio. Portfolio Look-Through",
+    description: "See what you really own inside your ETFs.",
+    url: "https://wizardfolio.com",
+    siteName: "WizardFolio",
+    images: [
+      {
+        url: "/og-default.png",
+        width: 1200,
+        height: 630,
+        alt: "WizardFolio portfolio preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "WizardFolio. Portfolio Look-Through",
+    description: "See what you really own inside your ETFs.",
+    images: ["/og-default.png"],
+  },
 };
 
 export default function RootLayout({
