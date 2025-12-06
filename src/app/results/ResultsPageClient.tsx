@@ -37,6 +37,11 @@ import type { MixComparisonResult } from "@/lib/benchmarkEngine";
 import { formatMixSummary } from "@/lib/mixFormatting";
 import { getBenchmarkLabel } from "@/lib/benchmarkUtils";
 import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
+import {
+  DEFAULT_SAVED_MIX_NAME,
+  SAVED_MIX_NAME_ERROR_MESSAGE,
+  SAVED_MIX_NAME_MAX_LENGTH,
+} from "@/lib/savedMixes";
 
 type SlideIndex = 0 | 1 | 2 | 3 | 4;
 
@@ -195,7 +200,9 @@ export default function ResultsPageClient({
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [pendingSave, setPendingSave] = useState(false);
   const [showSaveForm, setShowSaveForm] = useState(false);
-  const [saveName, setSaveName] = useState(mixName || "My saved mix");
+  const [saveName, setSaveName] = useState(
+    mixName || DEFAULT_SAVED_MIX_NAME,
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<
     { type: "success" | "error"; message: string } | null
@@ -203,7 +210,7 @@ export default function ResultsPageClient({
 
   useEffect(() => {
     if (!showSaveForm) {
-      setSaveName(mixName || "My saved mix");
+      setSaveName(mixName || DEFAULT_SAVED_MIX_NAME);
     }
   }, [mixName, showSaveForm]);
 
@@ -288,9 +295,17 @@ export default function ResultsPageClient({
       return;
     }
 
-    const payloadName = saveName.trim() || "My saved mix";
-    setIsSaving(true);
     setStatusMessage(null);
+    const trimmedName = saveName.trim();
+    if (trimmedName.length > SAVED_MIX_NAME_MAX_LENGTH) {
+      setStatusMessage({
+        type: "error",
+        message: SAVED_MIX_NAME_ERROR_MESSAGE,
+      });
+      return;
+    }
+    const payloadName = trimmedName || DEFAULT_SAVED_MIX_NAME;
+    setIsSaving(true);
 
     try {
       const { data: sessionData } =
@@ -834,6 +849,7 @@ const handleTryTopMix = (mixId: string) => {
                 value={saveName}
                 onChange={(event) => setSaveName(event.target.value)}
                 placeholder="My saved mix"
+                maxLength={SAVED_MIX_NAME_MAX_LENGTH}
                 className="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-neutral-900 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
               />
             </label>

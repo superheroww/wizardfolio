@@ -1,11 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import type { SavedMix } from "@/lib/savedMixes";
+import {
+  DEFAULT_SAVED_MIX_NAME,
+  SAVED_MIX_NAME_ERROR_MESSAGE,
+  SAVED_MIX_NAME_MAX_LENGTH,
+  type SavedMix,
+} from "@/lib/savedMixes";
 import type { UserPosition } from "@/lib/exposureEngine";
 
 type SaveMixPayload = {
   name?: string;
   positions?: UserPosition[];
+};
+
+type PatchSavedMixPayload = {
+  id?: string;
+  name?: string;
+};
+
+type DeleteSavedMixPayload = {
+  id?: string;
 };
 
 function requireEnv(key: "SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY") {
@@ -42,6 +56,19 @@ function createSupabaseClientWithToken(token: string) {
       },
     },
   });
+}
+
+function validateMixName(name?: string | null) {
+  const trimmed = typeof name === "string" ? name.trim() : "";
+  if (!trimmed) {
+    return { value: DEFAULT_SAVED_MIX_NAME };
+  }
+
+  if (trimmed.length > SAVED_MIX_NAME_MAX_LENGTH) {
+    return { error: SAVED_MIX_NAME_ERROR_MESSAGE };
+  }
+
+  return { value: trimmed };
 }
 
 export const runtime = "nodejs";
@@ -95,7 +122,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const mixName = payload.name?.trim() || "My saved mix";
+  const nameValidation = validateMixName(payload.name ?? null);
+  if (nameValidation.error) {
+    return NextResponse.json(
+      { ok: false, error: nameValidation.error },
+      { status: 400 },
+    );
+  }
+
+  const mixName = nameValidation.value;
 
   const { data: savedMix, error: insertError } = await supabase
     .from("saved_mixes")
@@ -146,4 +181,110 @@ export async function GET(req: NextRequest) {
   const mixes = (mixesData ?? []) as SavedMix[];
 
   return NextResponse.json({ ok: true, mixes });
+}
+
+export async function PATCH(req: NextRequest) {
+  const authenticated = await getAuthenticatedSupabaseClient(req);
+  if (!authenticated) {
+    return NextResponse.json(
+      { ok: false, error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+
+  const { supabase, user } = authenticated;
+
+  let payload: PatchSavedMixPayload = {};
+  try {
+    payload = (await req.json()) as PatchSavedMixPayload;
+  } catch {
+    payload = {};
+  }
+
+  const mixId = payload.id?.trim();
+  if (!mixId) {
+    return NextResponse.json(
+      { ok: false, error: "Invalid mix id" },
+      { status: 400 },
+    );
+  }
+
+  if (typeof payload.name !== "string") {
+    return NextResponse.json(
+      { ok: false, error: "A name is required" },
+      { status: 400 },
+    );
+  }
+
+  const nameValidation = validateMixName(payload.name);
+  if (nameValidation.error) {
+    return NextResponse.json(
+      { ok: false, error: nameValidation.error },
+      { status: 400 },
+    );
+  }
+
+  const { data: updatedMix, error: updateError } = await supabase
+    .from("saved_mixes")
+    .update({ name: nameValidation.value })
+    .eq("id", mixId)
+    .eq("user_id", user.id)
+    .select("id,name,positions,created_at,updated_at")
+    .single();
+
+  if (updateError || !updatedMix) {
+    console.error("[saved-mixes] update error", updateError);
+    return NextResponse.json(
+      {
+        ok: false,
+        error: (updateError ?? new Error("Unable to rename mix")).message,
+      },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({ ok: true, mix: updatedMix });
+}
+
+export async function DELETE(req: NextRequest) {
+  const authenticated = await getAuthenticatedSupabaseClient(req);
+  if (!authenticated) {
+    return NextResponse.json(
+      { ok: false, error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+
+  const { supabase, user } = authenticated;
+
+  let payload: DeleteSavedMixPayload = {};
+  try {
+    payload = (await req.json()) as DeleteSavedMixPayload;
+  } catch {
+    payload = {};
+  }
+
+  const mixId = payload.id?.trim();
+  if (!mixId) {
+    return NextResponse.json(
+      { ok: false, error: "Invalid mix id" },
+      { status: 400 },
+    );
+  }
+
+  const { error: deleteError } = await supabase
+    .from("saved_mixes")
+    .delete()
+    .eq("id", mixId)
+    .eq("user_id", user.id);
+
+  if (deleteError) {
+    console.error("[saved-mixes] delete error", deleteError);
+    return NextResponse.json(
+      { ok: false, error: deleteError.message },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({ ok: true });
 }
