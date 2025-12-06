@@ -70,7 +70,7 @@ export default function FaqPage() {
         suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
-      <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
+      <div className="mx-auto max-w-5xl space-y-8 px-4 py-10">
         <section className="space-y-3">
           <p className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-zinc-400">
             Help &amp; support

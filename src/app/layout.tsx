@@ -73,10 +73,12 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <PostHogProvider>
             <div className="flex min-h-screen flex-col">
-              <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
-                <Header />
-                <main className="flex-1 space-y-4">{children}</main>
-              </div>
+              <Header />
+              <main className="flex-1">
+                <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-6">
+                  {children}
+                </div>
+              </main>
               <Footer />
             </div>
           </PostHogProvider>

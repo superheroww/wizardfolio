@@ -6,8 +6,8 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-neutral-200 bg-white/80 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 text-xs text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
+    <footer className="mt-12 border-t border-neutral-200 bg-white">
+      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4 text-xs text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <span className="font-medium text-neutral-700">WizardFolio</span>
           <span className="text-[11px] text-neutral-400">

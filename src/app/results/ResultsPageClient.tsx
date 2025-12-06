@@ -662,8 +662,8 @@ const handleTryTopMix = (mixId: string) => {
                 className={[
                   "px-3 py-1.5 rounded-full text-xs font-medium transition",
                   view.id === slide
-                    ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
-                    : "bg-transparent text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800",
+                    ? "bg-neutral-900 text-white"
+                    : "bg-transparent text-neutral-600 hover:bg-neutral-100",
                 ].join(" ")}
               >
                 {view.label}
@@ -675,7 +675,7 @@ const handleTryTopMix = (mixId: string) => {
               type="button"
               onClick={handlePrevSlide}
               aria-label="Previous result view"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-sm transition hover:bg-neutral-50"
             >
               <span aria-hidden="true">‹</span>
             </button>
@@ -683,14 +683,14 @@ const handleTryTopMix = (mixId: string) => {
               type="button"
               onClick={handleNextSlide}
               aria-label="Next result view"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-sm transition hover:bg-neutral-50"
             >
               <span aria-hidden="true">›</span>
             </button>
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-fuchsia-500 via-indigo-500 to-blue-600 p-px">
+        <div className="relative rounded-3xl border border-neutral-200 bg-white shadow-sm">
           <button
             type="button"
             onClick={handleShare}
@@ -699,47 +699,47 @@ const handleTryTopMix = (mixId: string) => {
             title={
               isSharing ? "Preparing your snapshot…" : "Share your exposure card"
             }
-            className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur border border-white/50 shadow-sm hover:bg-white dark:bg-zinc-800/70 dark:hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-wait"
+            className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white shadow-sm hover:bg-neutral-50 disabled:opacity-60 disabled:cursor-wait"
           >
-            <AppleShareIcon className="h-4 w-4 text-zinc-700 dark:text-zinc-200" />
+            <AppleShareIcon className="h-4 w-4 text-neutral-700" />
           </button>
 
           <div
             ref={cardRef}
-            className="flex flex-col gap-4 rounded-3xl bg-white/95 p-5 dark:bg-zinc-900/80"
+            className="flex flex-col gap-4 rounded-3xl bg-white p-5"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex flex-col gap-1">
-                <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                <h2 className="text-base font-semibold text-neutral-900">
                   {title}
                 </h2>
                 <MixLine positions={sanitizedPositions} />
-                <p className="text-xs text-zinc-600 dark:text-zinc-300">
+                <p className="text-xs text-neutral-600">
                   Powered by WizardFolio
                 </p>
               </div>
             </div>
 
             <div
-              className="rounded-2xl border border-zinc-100 bg-white/90 p-4 dark:border-zinc-800 dark:bg-zinc-900 min-h-[320px] flex flex-col justify-center"
+              className="flex min-h-[320px] flex-col justify-center rounded-2xl border border-neutral-200 bg-neutral-50 p-4"
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
               {isLoading && (
-                <div className="flex h-full items-center justify-center text-xs text-zinc-500 dark:text-zinc-400">
+                <div className="flex h-full items-center justify-center text-xs text-neutral-500">
                   Crunching your ETF mix…
                 </div>
               )}
 
               {!isLoading && error && (
-                <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-xs text-rose-500 dark:text-rose-400">
+                <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-xs text-rose-500">
                   <p>{error}</p>
                   <button
                     type="button"
                     onClick={() => {
                       router.refresh();
                     }}
-                    className="rounded-full bg-zinc-900 px-3 py-1 text-[11px] font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900"
+                    className="rounded-full bg-neutral-900 px-3 py-1 text-[11px] font-semibold text-white"
                   >
                     Try again
                   </button>
@@ -761,11 +761,11 @@ const handleTryTopMix = (mixId: string) => {
                   )}
 
                   {slide === 4 && (
-                    <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white/85 p-4 text-left text-xs shadow-sm dark:border-zinc-800 dark:bg-zinc-900/75 sm:text-sm">
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-indigo-500">
+                    <div className="flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-4 text-left text-xs shadow-sm sm:text-sm">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
                         Top loved mixes
                       </p>
-                      <h3 className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                      <h3 className="mt-1 text-sm font-semibold text-neutral-900">
                         Tap a mix below to load it into WizardFolio.
                       </h3>
 
@@ -775,22 +775,22 @@ const handleTryTopMix = (mixId: string) => {
                             key={mix.id}
                             type="button"
                             onClick={() => handleTryTopMix(mix.id)}
-                            className="group flex w-full flex-col items-start rounded-2xl border border-zinc-200 bg-white/90 px-3 py-2 text-left transition hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80 dark:hover:bg-zinc-800"
+                            className="group flex w-full flex-col items-start rounded-2xl border border-neutral-200 bg-white px-3 py-2 text-left transition hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-sm"
                           >
-                            <span className="flex items-center gap-1 text-xs font-semibold text-zinc-900 dark:text-zinc-50">
+                            <span className="flex items-center gap-1 text-xs font-semibold text-neutral-900">
                               {mix.label}
-                              <span className="text-[11px] text-zinc-400 transition-transform group-hover:translate-x-0.5">
+                              <span className="text-[11px] text-neutral-400 transition-transform group-hover:translate-x-0.5">
                                 ›
                               </span>
                             </span>
-                            <span className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                            <span className="mt-0.5 text-[11px] text-neutral-500">
                               {mix.description}
                             </span>
                           </button>
                         ))}
                       </div>
 
-                      <p className="mt-3 text-[10px] text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-3 text-[10px] text-neutral-500">
                         We’ll reload WizardFolio with your chosen mix prefilled so you can see its
                         true exposure in one tap.
                       </p>
@@ -818,8 +818,8 @@ const handleTryTopMix = (mixId: string) => {
                   className={[
                     "block h-1.5 w-1.5 rounded-full transition-all",
                     slide === idx
-                      ? "w-4 bg-zinc-900 dark:bg-zinc-100"
-                      : "bg-zinc-300 dark:bg-zinc-600",
+                      ? "w-4 bg-neutral-900"
+                      : "bg-neutral-300",
                   ].join(" ")}
                 />
               </button>

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function VbalVsXbalPage() {
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-10">
+    <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-10">
       <section className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           ETF comparison

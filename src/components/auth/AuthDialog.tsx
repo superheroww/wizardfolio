@@ -189,7 +189,7 @@ export function AuthDialog({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-zinc-400">
-              Personalize
+              Wizardfolio
             </p>
             <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">
               {title}

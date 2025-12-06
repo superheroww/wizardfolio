@@ -10,7 +10,7 @@ const LAST_UPDATED = "December 5, 2025";
 
 export default function TermsPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
+    <div className="mx-auto max-w-5xl px-4 py-12 sm:py-16">
       <div className="space-y-6">
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-zinc-400">
