@@ -38,3 +38,25 @@ export function signUpWithEmail(email: string, password: string) {
 export function signOut() {
   return supabaseBrowserClient.auth.signOut();
 }
+
+export async function sendMagicLink(email: string) {
+  const supabase = getSupabaseBrowserClient();
+
+  if (typeof window === "undefined") {
+    return {
+      data: null,
+      error: new Error("Magic link can only be sent from the browser."),
+    };
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const redirectTo =
+    process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+
+  return supabase.auth.signInWithOtp({
+    email: normalizedEmail,
+    options: {
+      emailRedirectTo: `${redirectTo}/`,
+    },
+  });
+}

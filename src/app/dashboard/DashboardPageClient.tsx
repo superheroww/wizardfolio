@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import type { FormEvent, ReactNode } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { buildPositionsSearchParams } from "@/lib/positionsQuery";
@@ -15,6 +16,7 @@ import {
 import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
 import { AuthPrompt } from "@/components/auth/AuthPrompt";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
+import { MoreHorizontal } from "lucide-react";
 
 type SavedMixesResponse = {
   ok?: boolean;
@@ -96,11 +98,17 @@ export default function DashboardPageClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [actionStatus, setActionStatus] = useState<ActionStatus | null>(null);
-  const [activeRenameId, setActiveRenameId] = useState<string | null>(null);
-  const [renameName, setRenameName] = useState("");
+  const [renameTarget, setRenameTarget] = useState<SavedMix | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SavedMix | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const menuContentRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 
   const handleNewMix = () => {
@@ -149,10 +157,14 @@ export default function DashboardPageClient() {
       setIsLoading(false);
       setErrorMessage(null);
       setActionStatus(null);
-      setActiveRenameId(null);
+      setRenameTarget(null);
+      setRenameValue("");
+      setIsRenaming(false);
       setRenameError(null);
-      setDeleteConfirmId(null);
-      setRenameName("");
+      setDeleteTarget(null);
+      setDeleteError(null);
+      setIsDeleting(false);
+      setOpenMenuId(null);
       setActionLoadingId(null);
       return;
     }
@@ -188,31 +200,71 @@ export default function DashboardPageClient() {
     };
   }, [loadMixes, user]);
 
-  const startRename = (mix: SavedMix) => {
-    setActiveRenameId(mix.id);
-    setRenameName(mix.name);
+  useEffect(() => {
+    if (!openMenuId) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (
+        menuContentRef.current?.contains(target) ||
+        menuButtonRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setOpenMenuId(null);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpenMenuId(null);
+      }
+    };
+
+    window.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openMenuId]);
+
+  const openRenameDialog = (mix: SavedMix) => {
+    setRenameTarget(mix);
+    setRenameValue(mix.name);
     setRenameError(null);
-    setDeleteConfirmId(null);
     setActionStatus(null);
+    setDeleteTarget(null);
+    setDeleteError(null);
+    setIsDeleting(false);
+    setOpenMenuId(null);
   };
 
-  const toggleDeleteConfirm = (mixId: string) => {
-    setDeleteConfirmId((current) => (current === mixId ? null : mixId));
-    setActiveRenameId(null);
+  const closeRenameDialog = () => {
+    setRenameTarget(null);
+    setRenameValue("");
+    setIsRenaming(false);
     setRenameError(null);
-    setActionStatus(null);
+    setOpenMenuId(null);
   };
 
-  const handleRenameSubmit = async (mix: SavedMix) => {
+  const handleRenameSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!renameTarget) {
+      return;
+    }
+
     setRenameError(null);
-    const trimmed = renameName.trim();
+    const trimmed = renameValue.trim();
     if (trimmed.length > SAVED_MIX_NAME_MAX_LENGTH) {
       setRenameError(SAVED_MIX_NAME_ERROR_MESSAGE);
       return;
     }
 
     const updatedName = trimmed || DEFAULT_SAVED_MIX_NAME;
-    setActionLoadingId(mix.id);
+    setIsRenaming(true);
+    setActionLoadingId(renameTarget.id);
     setActionStatus(null);
 
     try {
@@ -221,7 +273,7 @@ export default function DashboardPageClient() {
         method: "PATCH",
         headers,
         credentials: "same-origin",
-        body: JSON.stringify({ id: mix.id, name: updatedName }),
+        body: JSON.stringify({ id: renameTarget.id, name: updatedName }),
       });
 
       const payload = (await response
@@ -229,7 +281,13 @@ export default function DashboardPageClient() {
         .catch(() => ({}))) as SavedMixesResponse;
 
       if (!response.ok || !payload.ok) {
-        throw new Error(payload?.error ?? "Unable to rename mix.");
+        const message = payload?.error ?? "Unable to rename mix.";
+        setRenameError(message);
+        setActionStatus({
+          type: "error",
+          message,
+        });
+        return;
       }
 
       await refreshMixes();
@@ -237,24 +295,48 @@ export default function DashboardPageClient() {
         type: "success",
         message: "Mix renamed.",
       });
-      setActiveRenameId(null);
-      setRenameName("");
+      closeRenameDialog();
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : "Unable to rename mix. Please try again.";
+      setRenameError(message);
       setActionStatus({
         type: "error",
         message,
       });
     } finally {
+      setIsRenaming(false);
       setActionLoadingId(null);
     }
   };
 
-  const handleDeleteConfirm = async (mixId: string) => {
-    setActionLoadingId(mixId);
+  const openDeleteDialog = (mix: SavedMix) => {
+    setDeleteTarget(mix);
+    setDeleteError(null);
+    setActionStatus(null);
+    setRenameTarget(null);
+    setRenameError(null);
+    setIsRenaming(false);
+    setOpenMenuId(null);
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteTarget(null);
+    setDeleteError(null);
+    setIsDeleting(false);
+    setOpenMenuId(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) {
+      return;
+    }
+
+    setDeleteError(null);
+    setIsDeleting(true);
+    setActionLoadingId(deleteTarget.id);
     setActionStatus(null);
 
     try {
@@ -263,7 +345,7 @@ export default function DashboardPageClient() {
         method: "DELETE",
         headers,
         credentials: "same-origin",
-        body: JSON.stringify({ id: mixId }),
+        body: JSON.stringify({ id: deleteTarget.id }),
       });
 
       const payload = (await response
@@ -271,7 +353,13 @@ export default function DashboardPageClient() {
         .catch(() => ({}))) as SavedMixesResponse;
 
       if (!response.ok || !payload.ok) {
-        throw new Error(payload?.error ?? "Unable to delete mix.");
+        const message = payload?.error ?? "Unable to delete mix.";
+        setDeleteError(message);
+        setActionStatus({
+          type: "error",
+          message,
+        });
+        return;
       }
 
       await refreshMixes();
@@ -279,19 +367,19 @@ export default function DashboardPageClient() {
         type: "success",
         message: "Mix deleted.",
       });
-      setDeleteConfirmId(null);
-      setActiveRenameId(null);
-      setRenameName("");
+      closeDeleteDialog();
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : "Unable to delete mix. Please try again.";
+      setDeleteError(message);
       setActionStatus({
         type: "error",
         message,
       });
     } finally {
+      setIsDeleting(false);
       setActionLoadingId(null);
     }
   };
@@ -367,8 +455,6 @@ export default function DashboardPageClient() {
               return null;
             }
 
-            const isRenaming = activeRenameId === mix.id;
-            const isDeleteConfirm = deleteConfirmId === mix.id;
             const isBusy = actionLoadingId === mix.id;
 
             return (
@@ -376,103 +462,70 @@ export default function DashboardPageClient() {
                 key={mix.id}
                 className="group rounded-3xl border border-zinc-200 bg-white/90 p-5 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900/80 dark:hover:border-zinc-600"
               >
-                <Link
-                  href={`/results?${query}`}
-                  className="flex flex-col gap-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-neutral-900 dark:text-zinc-50">
-                      {mix.name}
+                <div className="flex items-start justify-between gap-3">
+                  <Link
+                    href={`/results?${query}`}
+                    className="flex flex-1 flex-col gap-3 min-w-0"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-neutral-900 dark:text-zinc-50">
+                        {mix.name}
+                      </p>
+                    </div>
+                    <p className="text-xs text-neutral-500 dark:text-zinc-400">
+                      {summarizeMix(mix)}
                     </p>
+                  </Link>
+                  <div className="relative flex-none">
+                    <button
+                      type="button"
+                      ref={openMenuId === mix.id ? menuButtonRef : null}
+                      aria-haspopup="menu"
+                      aria-expanded={openMenuId === mix.id}
+                      aria-label="Open mix menu"
+                      disabled={isBusy}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setOpenMenuId((current) =>
+                          current === mix.id ? null : mix.id,
+                        );
+                      }}
+                      className="h-9 w-9 rounded-full border border-transparent bg-white/80 text-neutral-500 transition hover:bg-zinc-100 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-900/80 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </button>
+                    {openMenuId === mix.id && (
+                      <div
+                        ref={menuContentRef}
+                        role="menu"
+                        aria-label={`${mix.name} actions`}
+                        className="absolute right-0 top-full z-10 mt-2 w-44 rounded-2xl border border-zinc-200 bg-white py-1 text-sm shadow-lg shadow-black/10 dark:border-zinc-700 dark:bg-zinc-950"
+                      >
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => openRenameDialog(mix)}
+                          className="w-full px-4 py-2 text-left font-medium text-neutral-700 transition hover:bg-zinc-100 dark:text-neutral-200 dark:hover:bg-zinc-900"
+                        >
+                          Rename
+                        </button>
+                        <div className="border-t border-zinc-100 dark:border-zinc-800" />
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => openDeleteDialog(mix)}
+                          className="w-full px-4 py-2 text-left font-medium text-rose-600 transition hover:bg-rose-50 dark:hover:bg-rose-900/40"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-neutral-500 dark:text-zinc-400">
-                    {summarizeMix(mix)}
-                  </p>
-                </Link>
+                </div>
                 <p className="mt-2 text-[11px] uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-500">
                   {formatUpdatedAt(mix.updated_at)}
                 </p>
-
-                <div className="mt-4 flex flex-wrap items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
-                  <button
-                    type="button"
-                    onClick={() => startRename(mix)}
-                    disabled={isBusy}
-                    className="text-zinc-500 transition hover:text-zinc-700 dark:hover:text-zinc-300"
-                  >
-                    Rename
-                  </button>
-                  {isDeleteConfirm ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteConfirm(mix.id)}
-                        disabled={isBusy}
-                        className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-rose-600 transition hover:border-rose-300 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300"
-                      >
-                        {isBusy ? "Deleting…" : "Confirm delete"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteConfirmId(null)}
-                        disabled={isBusy}
-                        className="text-[11px] text-zinc-500 transition hover:text-zinc-300 dark:hover:text-zinc-500"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => toggleDeleteConfirm(mix.id)}
-                      disabled={isBusy}
-                      className="text-rose-600 transition hover:text-rose-500"
-                    >
-                      Delete
-                    </button>
-                  )}
-                </div>
-
-                {isRenaming && (
-                  <form
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      handleRenameSubmit(mix);
-                    }}
-                    className="mt-3 space-y-2"
-                  >
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
-                      New mix name
-                      <input
-                        type="text"
-                        value={renameName}
-                        maxLength={SAVED_MIX_NAME_MAX_LENGTH}
-                        onChange={(event) => setRenameName(event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-neutral-900 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
-                      />
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="submit"
-                        disabled={isBusy}
-                        className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 disabled:opacity-60"
-                      >
-                        {isBusy ? "Saving…" : "Save"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveRenameId(null)}
-                        disabled={isBusy}
-                        className="inline-flex items-center justify-center rounded-2xl border border-zinc-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-700 transition hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-200 dark:hover:border-zinc-500"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                    {renameError && (
-                      <p className="text-xs text-rose-500">{renameError}</p>
-                    )}
-                  </form>
-                )}
               </div>
             );
           })}
@@ -488,6 +541,189 @@ export default function DashboardPageClient() {
           </p>
         </div>
       )}
+      <ModalDialog
+        open={Boolean(renameTarget)}
+        onClose={closeRenameDialog}
+        title="Rename mix"
+        description="Give this mix a short, descriptive name."
+      >
+        <form onSubmit={handleRenameSubmit} className="space-y-4">
+          <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-100">
+            New mix name
+            <input
+              type="text"
+              value={renameValue}
+              maxLength={SAVED_MIX_NAME_MAX_LENGTH}
+              onChange={(event) => setRenameValue(event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-neutral-900 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+            />
+          </label>
+          {renameError && (
+            <p className="text-sm text-rose-500">{renameError}</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={closeRenameDialog}
+              disabled={isRenaming}
+              className="inline-flex items-center justify-center rounded-2xl border border-zinc-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-700 transition hover:border-zinc-300 dark:border-zinc-700 dark:text-neutral-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isRenaming}
+              className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
+            >
+              {isRenaming ? "Saving…" : "Save name"}
+            </button>
+          </div>
+        </form>
+      </ModalDialog>
+      <ModalDialog
+        open={Boolean(deleteTarget)}
+        onClose={closeDeleteDialog}
+        title="Delete mix"
+      >
+        <p className="text-sm text-neutral-500">
+          Are you sure you want to delete{" "}
+          <span className="font-semibold text-neutral-900 dark:text-neutral-50">
+            “{deleteTarget?.name}”
+          </span>
+          ? This action can’t be undone.
+        </p>
+        {deleteError && (
+          <p className="mt-2 text-sm text-rose-500">{deleteError}</p>
+        )}
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={closeDeleteDialog}
+            disabled={isDeleting}
+            className="inline-flex items-center justify-center rounded-2xl border border-zinc-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-700 transition hover:border-zinc-300 dark:border-zinc-700 dark:text-neutral-200"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleDeleteConfirm}
+            disabled={isDeleting}
+            className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-rose-600 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-60"
+          >
+            {isDeleting ? "Deleting…" : "Delete"}
+          </button>
+        </div>
+      </ModalDialog>
     </section>
+  );
+}
+
+type ModalDialogProps = {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  description?: string;
+  children: ReactNode;
+};
+
+function ModalDialog({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+}: ModalDialogProps) {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+  const titleId = useId();
+  const descriptionId = useId();
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    previousActiveElement.current = document.activeElement as HTMLElement | null;
+    const raf = requestAnimationFrame(() => {
+      dialogRef.current?.focus();
+    });
+
+    return () => {
+      cancelAnimationFrame(raf);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      previousActiveElement.current?.focus();
+    };
+  }, [open]);
+
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        aria-hidden="true"
+        onClick={onClose}
+      />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
+        tabIndex={-1}
+        className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-zinc-200 bg-white p-5 shadow-xl shadow-black/20 outline-none dark:border-zinc-700 dark:bg-zinc-950"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="space-y-2">
+          <h2
+            id={titleId}
+            className="text-lg font-semibold text-neutral-900 dark:text-neutral-50"
+          >
+            {title}
+          </h2>
+          {description && (
+            <p
+              id={descriptionId}
+              className="text-sm text-neutral-500 dark:text-neutral-400"
+            >
+              {description}
+            </p>
+          )}
+        </div>
+        <div className="mt-4">{children}</div>
+      </div>
+    </div>
   );
 }
