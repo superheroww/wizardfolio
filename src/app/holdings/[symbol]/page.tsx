@@ -2,50 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 
-const STATIC_ETF_SYMBOLS = [
-  "ZSP.TO",
-  "XUU.TO",
-  "SCHD",
-  "VXUS",
-  "SCHX",
-  "VO",
-  "VEE.TO",
-  "VCN.TO",
-  "VGRO.TO",
-  "VBAL.TO",
-  "VWO",
-  "IJH",
-  "IEMG",
-  "SCHB",
-  "SCHG",
-  "IVV",
-  "ITOT",
-  "VEA",
-  "VFV.TO",
-  "XIC.TO",
-  "BND",
-  "VOO",
-  "ZAG.TO",
-  "VTI",
-  "VIU.TO",
-  "VCNS.TO",
-  "SPY",
-  "QQQ",
-  "XTOT.TO",
-  "VT",
-  "VB",
-  "XEF.TO",
-  "XAW.TO",
-  "XEC.TO",
-  "VUN.TO",
-  "HHIS.TO",
-  "VEQT.TO",
-  "XEQT.TO",
-  "VDY.TO",
-  "IJR",
-] as const;
-
-export const revalidate = 86400;
+export const dynamic = "force-dynamic";
 
 type HoldingRow = {
   holding_symbol: string;
@@ -69,10 +26,6 @@ function getSymbolFromParams(params: HoldingParams) {
     return symbol[0] ?? "";
   }
   return symbol ?? "";
-}
-
-export async function generateStaticParams() {
-  return STATIC_ETF_SYMBOLS.map((symbol) => ({ symbol }));
 }
 
 export async function generateMetadata({ params }: HoldingsPageProps): Promise<Metadata> {

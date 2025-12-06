@@ -5,12 +5,14 @@ import {
   useMemo,
   useRef,
   useState,
+  type FormEvent,
   type TouchEvent,
 } from "react";
 import BenchmarkComparisonCard from "@/components/BenchmarkComparisonCard";
 import ExposureSummary from "@/components/ExposureSummary";
 import HoldingsTable from "@/components/HoldingsTable";
 import MixLine from "@/components/MixLine";
+import { AuthDialog } from "@/components/auth/AuthDialog";
 import RegionExposureChart from "@/components/RegionExposureChart";
 import { SectorBreakdownCard } from "@/components/SectorBreakdownCard";
 import { aggregateHoldingsBySymbol } from "@/lib/exposureAggregations";
@@ -23,6 +25,7 @@ import {
 } from "@/lib/positionsQuery";
 import type { ApiExposureRow, UserPosition } from "@/lib/exposureEngine";
 import { useImageShare } from "@/hooks/useImageShare";
+import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { BENCHMARK_MIXES } from "@/lib/benchmarkPresets";
 import {
   compareMixes,
@@ -187,6 +190,34 @@ export default function ResultsPageClient({
     return base;
   }, [sanitizedPositions, singleETFSymbol]);
 
+  const user = useSupabaseUser();
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [pendingSave, setPendingSave] = useState(false);
+  const [showSaveForm, setShowSaveForm] = useState(false);
+  const [saveName, setSaveName] = useState(mixName || "My saved mix");
+  const [isSaving, setIsSaving] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<
+    { type: "success" | "error"; message: string } | null
+  >(null);
+
+  useEffect(() => {
+    if (!showSaveForm) {
+      setSaveName(mixName || "My saved mix");
+    }
+  }, [mixName, showSaveForm]);
+
+  useEffect(() => {
+    if (user && pendingSave) {
+      setPendingSave(false);
+      setShowSaveForm(true);
+      return;
+    }
+
+    if (!user) {
+      setShowSaveForm(false);
+    }
+  }, [user, pendingSave]);
+
   const [selectedBenchmarkId, setSelectedBenchmarkId] = useState(
     defaultBenchmark.id,
   );
@@ -230,6 +261,80 @@ export default function ResultsPageClient({
     });
 
     setSelectedBenchmarkId(newBenchmarkId);
+  };
+
+  const handleSaveClick = () => {
+    if (!hasValidPositions) {
+      setStatusMessage({
+        type: "error",
+        message: EMPTY_POSITIONS_ERROR,
+      });
+      return;
+    }
+
+    if (!user) {
+      setPendingSave(true);
+      setAuthDialogOpen(true);
+      return;
+    }
+
+    setShowSaveForm(true);
+  };
+
+  const handleSaveSubmit = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+    if (!hasValidPositions || !user) {
+      return;
+    }
+
+    const payloadName = saveName.trim() || "My saved mix";
+    setIsSaving(true);
+    setStatusMessage(null);
+
+    try {
+      const response = await fetch("/api/saved-mixes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          name: payloadName,
+          positions: sanitizedPositions,
+        }),
+      });
+
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          body?.error ?? "Unable to save mix. Please try again.",
+        );
+      }
+
+      setStatusMessage({
+        type: "success",
+        message: "Mix saved to your dashboard.",
+      });
+      setShowSaveForm(false);
+      capture("mix_saved", {
+        mix_name: payloadName,
+        positions_count: positionsCount,
+      });
+    } catch (error: any) {
+      setStatusMessage({
+        type: "error",
+        message:
+          error?.message ?? "Something went wrong while saving your mix.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    if (pendingSave) {
+      setPendingSave(false);
+      setShowSaveForm(true);
+    }
   };
 
   const [exposure, setExposure] = useState<ApiExposureRow[]>([]);
@@ -685,24 +790,90 @@ const handleTryTopMix = (mixId: string) => {
             ))}
           </div>
         </div>
-      </div>
+    </div>
 
-      {hasValidPositions && (
-        <BenchmarkComparisonCard
-          userLabel="Your mix"
-          benchmark={selectedBenchmark}
-          comparison={benchmarkComparison}
-          benchmarks={BENCHMARK_MIXES}
-          onBenchmarkChange={handleBenchmarkChange}
-          exposure={exposure}
-          userExposureMix={userExposureMix}
-          singleSymbol={singleETFSymbol}
-          mixName={mixName}
-          positionsCount={positionsCount}
-          benchmarkSymbol={benchmarkSymbol}
-          hasBenchmarkComparison={Boolean(benchmarkComparison)}
-        />
-      )}
+    {hasValidPositions && (
+      <section className="rounded-3xl border border-zinc-200 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900/80">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-400">
+              Personalization
+            </p>
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+              Save this mix to your dashboard
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={handleSaveClick}
+            disabled={isSaving}
+            className="rounded-full border border-transparent bg-blue-600 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
+          >
+            Save this mix
+          </button>
+        </div>
+
+        {showSaveForm && (
+          <form onSubmit={handleSaveSubmit} className="mt-4 space-y-3">
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
+              Mix name
+              <input
+                type="text"
+                value={saveName}
+                onChange={(event) => setSaveName(event.target.value)}
+                placeholder="My saved mix"
+                className="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-neutral-900 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+              />
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
+              >
+                {isSaving ? "Saving…" : "Save mix"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSaveForm(false)}
+                className="inline-flex items-center justify-center rounded-2xl border border-zinc-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-700 transition hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-200 dark:hover:border-zinc-500"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+
+        {statusMessage && (
+          <p
+            className={`mt-3 text-xs ${
+              statusMessage.type === "success"
+                ? "text-emerald-600"
+                : "text-rose-500"
+            }`}
+          >
+            {statusMessage.message}
+          </p>
+        )}
+      </section>
+    )}
+
+    {hasValidPositions && (
+      <BenchmarkComparisonCard
+        userLabel="Your mix"
+        benchmark={selectedBenchmark}
+        comparison={benchmarkComparison}
+        benchmarks={BENCHMARK_MIXES}
+        onBenchmarkChange={handleBenchmarkChange}
+        exposure={exposure}
+        userExposureMix={userExposureMix}
+        singleSymbol={singleETFSymbol}
+        mixName={mixName}
+        positionsCount={positionsCount}
+        benchmarkSymbol={benchmarkSymbol}
+        hasBenchmarkComparison={Boolean(benchmarkComparison)}
+      />
+    )}
 
       <section className="rounded-3xl border border-zinc-200 bg-white/90 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
         <div className="mb-2 flex items-center justify-between">
@@ -738,6 +909,11 @@ const handleTryTopMix = (mixId: string) => {
           Based on the mix you entered on the previous step.
         </p>
       </section>
+      <AuthDialog
+        open={authDialogOpen}
+        onOpenChange={setAuthDialogOpen}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Suspense } from "react";
 import "./globals.css";
 import { Footer } from "@/components/Footer";
+import { Header } from "@/components/Header";
 import { PostHogProvider } from "@/providers/PostHogProvider";
 
 const SITE_TITLE = "WizardFolio – ETF Look-Through & Portfolio Analyzer";
@@ -73,17 +74,7 @@ export default function RootLayout({
           <PostHogProvider>
             <div className="flex min-h-screen flex-col">
               <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
-                <header className="mb-4 flex items-center justify-between">
-                  <div>
-                    <h1 className="text-xl font-semibold tracking-tight text-neutral-900 dark:text-zinc-50">
-                      WizardFolio Portfolio Look-Through
-                    </h1>
-                    <p className="text-xs text-neutral-500 dark:text-zinc-400">
-                      Type your ETF and stock mix as percentages and see your true
-                      exposure.
-                    </p>
-                  </div>
-                </header>
+                <Header />
                 <main className="flex-1 space-y-4">{children}</main>
               </div>
               <Footer />
