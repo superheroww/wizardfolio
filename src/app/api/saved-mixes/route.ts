@@ -1,11 +1,7 @@
-import { cookies, headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import type { SavedMix } from "@/lib/savedMixes";
 import type { UserPosition } from "@/lib/exposureEngine";
-import {
-  createServerClient,
-  type CookieMethodsServer,
-} from "@supabase/auth-helpers-nextjs";
 
 type SaveMixPayload = {
   name?: string;
@@ -24,100 +20,62 @@ function requireEnv(key: "SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY") {
 const supabaseUrl = requireEnv("SUPABASE_URL");
 const supabaseAnonKey = requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
 
-async function createAuthenticatedSupabaseClient() {
-  const [headerStore, cookieStore] = await Promise.all([headers(), cookies()]);
+function getBearerToken(req: NextRequest) {
+  const authorization = req.headers.get("authorization");
+  if (!authorization) {
+    return null;
+  }
 
-  const headerEntries = [...headerStore.entries()];
-  const headerObject = headerEntries.reduce(
-    (acc, [key, value]) => ({ ...acc, [key]: value }),
-    {} as Record<string, string>,
-  );
+  const [scheme, value] = authorization.split(" ");
+  if (scheme?.toLowerCase() !== "bearer" || !value) {
+    return null;
+  }
 
-  const cookieMethods: CookieMethodsServer = {
-    getAll: () => {
-      const items = cookieStore.getAll();
-      if (!items || !items.length) {
-        return null;
-      }
+  return value.trim();
+}
 
-      return items.map((item) => ({
-        name: item.name,
-        value: item.value,
-      }));
-    },
-    setAll: (values) => {
-      for (const entry of values) {
-        const { name, value, options } = entry;
-        cookieStore.set({
-          name,
-          value,
-          domain: options?.domain,
-          expires: options?.expires,
-          httpOnly: options?.httpOnly ?? true,
-          maxAge: options?.maxAge,
-          path: options?.path,
-          sameSite: options?.sameSite,
-          secure: options?.secure,
-        });
-      }
-    },
-  };
-
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
+function createSupabaseClientWithToken(token: string) {
+  return createClient(supabaseUrl, supabaseAnonKey, {
     global: {
-      headers: headerObject,
-    },
-    cookies: {
-      getAll: cookieMethods.getAll,
-      setAll: cookieMethods.setAll,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     },
   });
 }
 
-async function getAuthenticatedUser(req: NextRequest) {
-  const supabase = await createAuthenticatedSupabaseClient();
-  const authorization = req.headers.get("authorization");
-  const token =
-    authorization && authorization.toLowerCase().startsWith("bearer ")
-      ? authorization.slice(7).trim()
-      : undefined;
-
-  if (token) {
-    const { data: tokenData, error: tokenError } = await supabase.auth.getUser(
-      token,
-    );
-
-    if (tokenError) {
-      console.error("[saved-mixes] token auth error", tokenError);
-    }
-
-    if (tokenData?.user?.id) {
-      return { supabase, user: tokenData.user, error: tokenError };
-    }
-  }
-
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-
-  return { supabase, user: session?.user ?? null, error };
-}
-
 export const runtime = "nodejs";
 
-export async function POST(req: NextRequest) {
-  const { supabase, user, error: userError } = await getAuthenticatedUser(
-    req,
-  );
+async function getAuthenticatedSupabaseClient(req: NextRequest) {
+  const token = getBearerToken(req);
+  if (!token) {
+    return null;
+  }
 
-  if (userError || !user) {
-    console.error("[saved-mixes] auth error", userError);
+  const supabase = createSupabaseClientWithToken(token);
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    console.error("[saved-mixes] auth error", error);
+    return null;
+  }
+
+  return { supabase, user };
+}
+
+export async function POST(req: NextRequest) {
+  const authenticated = await getAuthenticatedSupabaseClient(req);
+  if (!authenticated) {
     return NextResponse.json(
       { ok: false, error: "Unauthorized" },
       { status: 401 },
     );
   }
+
+  const { supabase, user } = authenticated;
 
   let payload: SaveMixPayload = {};
   try {
@@ -161,25 +119,21 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const { supabase, user, error: userError } = await getAuthenticatedUser(
-    req,
-  );
-
-  if (userError || !user) {
-    console.error("[saved-mixes] auth error", userError);
+  const authenticated = await getAuthenticatedSupabaseClient(req);
+  if (!authenticated) {
     return NextResponse.json(
       { ok: false, error: "Unauthorized" },
       { status: 401 },
     );
   }
 
+  const { supabase, user } = authenticated;
+
   const { data: mixesData, error: fetchError } = await supabase
     .from("saved_mixes")
     .select("id,name,positions,created_at,updated_at")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false });
-
-  const mixes = (mixesData ?? []) as SavedMix[];
 
   if (fetchError) {
     console.error("[saved-mixes] fetch error", fetchError);
@@ -189,5 +143,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  return NextResponse.json({ ok: true, mixes: mixes ?? [] });
+  const mixes = (mixesData ?? []) as SavedMix[];
+
+  return NextResponse.json({ ok: true, mixes });
 }
