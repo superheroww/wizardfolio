@@ -801,7 +801,7 @@ const handleTryTopMix = (mixId: string) => {
             </div>
           </div>
 
-          <div className="flex justify-center gap-2 pt-1 md:hidden">
+          <div className="flex justify-center gap-2 pt-3 md:hidden">
             {SLIDE_INDICES.map((idx) => (
               <button
                 key={idx}
@@ -816,10 +816,10 @@ const handleTryTopMix = (mixId: string) => {
               >
                 <span
                   className={[
-                    "block h-1.5 w-1.5 rounded-full transition-all",
+                    "block h-1.5 rounded-full transition-all",
                     slide === idx
                       ? "w-4 bg-neutral-900"
-                      : "bg-neutral-300",
+                      : "w-1.5 bg-neutral-300",
                   ].join(" ")}
                 />
               </button>
