@@ -21,19 +21,6 @@ export function getSupabaseBrowserClient() {
   return supabaseBrowserClient;
 }
 
-export function signInWithGoogle() {
-  if (typeof window === "undefined") {
-    return Promise.reject(new Error("Google sign-in requires a browser"));
-  }
-
-  return supabaseBrowserClient.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: window.location.href,
-    },
-  });
-}
-
 export function signInWithEmail(email: string, password: string) {
   return supabaseBrowserClient.auth.signInWithPassword({
     email,

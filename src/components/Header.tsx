@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AuthDialog } from "@/components/auth/AuthDialog";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { signOut } from "@/lib/supabaseBrowser";
 
 export function Header() {
   const user = useSupabaseUser();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -35,6 +37,11 @@ export function Header() {
   const handleSignOut = async () => {
     await signOut();
     setMenuOpen(false);
+  };
+
+  const handleNewMix = () => {
+    setMenuOpen(false);
+    router.push("/");
   };
 
   return (
@@ -68,6 +75,13 @@ export function Header() {
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-full mt-2 w-44 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+                <button
+                  type="button"
+                  onClick={handleNewMix}
+                  className="block w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                >
+                  New mix
+                </button>
                 <Link
                   href="/dashboard"
                   className="block w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/supabaseBrowser";
+import { signInWithEmail, signUpWithEmail } from "@/lib/supabaseBrowser";
 
 type AuthDialogProps = {
   open: boolean;
@@ -27,21 +27,6 @@ export function AuthDialog({
   const handleClose = () => {
     onOpenChange(false);
     setErrorMessage(null);
-  };
-
-  const handleGoogle = async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      await signInWithGoogle();
-    } catch (error: any) {
-      setErrorMessage(
-        error?.message ?? "Unable to continue with Google. Please try again.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleEmailSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -114,21 +99,6 @@ export function AuthDialog({
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={handleGoogle}
-          disabled={isLoading}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-zinc-900/10 bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-black disabled:opacity-60 dark:border-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
-        >
-          <span>Continue with Google</span>
-        </button>
-
-        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-zinc-400">
-          <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
-          <span>or</span>
-          <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
-        </div>
-
         <form onSubmit={handleEmailSubmit} className="space-y-3">
           <label className="block space-y-1 text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">
             Email
@@ -156,7 +126,7 @@ export function AuthDialog({
             disabled={isLoading}
             className="w-full rounded-2xl border border-transparent bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 dark:focus-visible:ring-offset-zinc-900 disabled:opacity-60"
           >
-            Continue with email
+            Sign in
           </button>
         </form>
 

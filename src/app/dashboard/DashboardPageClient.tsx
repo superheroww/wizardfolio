@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { buildPositionsSearchParams } from "@/lib/positionsQuery";
 import { formatMixSummary } from "@/lib/mixFormatting";
@@ -100,6 +101,11 @@ export default function DashboardPageClient() {
   const [renameError, setRenameError] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const router = useRouter();
+
+  const handleNewMix = () => {
+    router.push("/");
+  };
 
   const loadMixes = useCallback(async () => {
     if (!user) {
@@ -312,12 +318,23 @@ export default function DashboardPageClient() {
   return (
     <section className="space-y-4">
       <div className="rounded-3xl border border-zinc-200 bg-white/90 p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
-        <h1 className="text-2xl font-semibold text-neutral-900 dark:text-zinc-50">
-          Saved mixes
-        </h1>
-        <p className="mt-2 text-sm text-neutral-500 dark:text-zinc-400">
-          Re-open any mix and see exposures right where you left off.
-        </p>
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold text-neutral-900 dark:text-zinc-50">
+              Saved mixes
+            </h1>
+            <p className="text-sm text-neutral-500 dark:text-zinc-400">
+              Re-open any mix and see exposures right where you left off.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleNewMix}
+            className="inline-flex w-full items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 disabled:opacity-60 dark:focus-visible:ring-offset-zinc-900 md:w-auto"
+          >
+            New mix
+          </button>
+        </div>
       </div>
 
       {actionStatus && (
