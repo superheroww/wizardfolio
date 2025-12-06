@@ -44,6 +44,52 @@ const QUICK_START_TEMPLATES: Template[] = [
     isDefaultTemplate: false,
   },
   {
+    id: "all_in_one_xeqt",
+    emoji: "🔥",
+    name: "All-in-one XEQT",
+    description:
+      "Simple global all-equity portfolio with XEQT only. Great as a clean benchmark.",
+    positions: [{ symbol: "XEQT.TO", weightPct: 100 }],
+    type: "template",
+    isDefaultTemplate: true,
+  },
+  {
+    id: "all_in_one_veqt",
+    emoji: "🧭",
+    name: "All-in-one VEQT",
+    description:
+      "Global all-equity one-ticket using VEQT only. Helpful to compare its regional tilt against others.",
+    positions: [{ symbol: "VEQT.TO", weightPct: 100 }],
+    type: "template",
+    isDefaultTemplate: true,
+  },
+  {
+    id: "us_two_fund_voo_vxus",
+    emoji: "🇺🇸",
+    name: "US 2-fund: VOO + VXUS",
+    description:
+      "S&P 500 plus international stocks in a simple 60/40 split.",
+    positions: [
+      { symbol: "VOO", weightPct: 60 },
+      { symbol: "VXUS", weightPct: 40 },
+    ],
+    type: "template",
+    isDefaultTemplate: false,
+  },
+  {
+    id: "all_in_one_voo",
+    emoji: "⚖️",
+    name: "Pure S&P 500 (VOO)",
+    description:
+      "100% S&P 500 exposure, useful as a simple US benchmark against more diversified mixes.",
+    positions: [{ symbol: "VOO", weightPct: 100 }],
+    type: "template",
+    isDefaultTemplate: false,
+  },
+
+  // EXISTING TEMPLATES (unchanged)
+
+  {
     id: "growth-focus",
     emoji: "🚀",
     name: "Growth Focus",
