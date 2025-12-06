@@ -19,7 +19,7 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
         capture_pageview: false,
         capture_pageleave: true,
         session_recording: {
-          maskAllInputs: false,
+          maskAllInputs: true,
         },
       });
       (posthog as any).__loaded = true;
