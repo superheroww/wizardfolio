@@ -153,10 +153,12 @@ export default function PortfolioInput({
   };
 
   return (
-    <section className="w-full rounded-2xl border border-zinc-200 bg-white/80 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
+    <section className="w-full rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm">
       <header className="mb-3">
-        <h2 className="text-lg font-semibold">Your portfolio mix</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <h2 className="text-base font-semibold text-neutral-900">
+          Your portfolio mix
+        </h2>
+        <p className="text-sm text-neutral-700">
           Add ETFs and their weights until you reach 100%.
         </p>
       </header>
@@ -165,10 +167,10 @@ export default function PortfolioInput({
         {positions.map((pos, index) => (
           <div
             key={index}
-            className="flex w-full flex-nowrap items-end gap-3 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3 dark:border-zinc-700 dark:bg-zinc-900/70"
+            className="flex w-full flex-nowrap items-end gap-3 rounded-xl border border-neutral-200 bg-neutral-50/70 p-3"
           >
-            <div className="flex-1 min-w-0">
-              <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <div className="min-w-0 flex-1">
+              <label className="block text-xs font-medium text-neutral-500">
                 Symbol
               </label>
               <EtfBottomSheetSelect
@@ -176,12 +178,12 @@ export default function PortfolioInput({
                 onChange={(symbol) => handleSymbolCommit(index, symbol)}
               />
             </div>
-            <div className="flex flex-col gap-1 w-24 min-w-[80px]">
-              <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <div className="flex min-w-[80px] w-24 flex-col gap-1">
+              <label className="block text-xs font-medium text-neutral-500">
                 Weight %
               </label>
               <input
-                className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-base sm:text-sm outline-none ring-0 focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900"
+                className="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-base text-neutral-900 outline-none ring-0 focus:border-neutral-400 sm:text-sm"
                 type="number"
                 min={0}
                 max={100}
@@ -210,7 +212,7 @@ export default function PortfolioInput({
             <button
               type="button"
               onClick={() => removeRow(index)}
-              className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full border border-zinc-200 text-xs text-zinc-500 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full border border-neutral-200 text-sm text-neutral-500 hover:bg-neutral-100"
             >
               ×
             </button>
@@ -226,7 +228,7 @@ export default function PortfolioInput({
             type="button"
             onClick={addRow}
             disabled={!canAddMore}
-            className="inline-flex items-center rounded-full border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            className="inline-flex items-center rounded-full border border-neutral-200 px-3 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {canAddMore ? "+ Add asset" : `Max ${MAX_ASSETS} assets`}
           </button>
@@ -234,7 +236,7 @@ export default function PortfolioInput({
             type="button"
             onClick={onAnalyze}
             disabled={!canAnalyze}
-            className="inline-flex items-center rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
+            className="inline-flex items-center rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
           >
             {analyzeLabel}
           </button>

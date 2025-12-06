@@ -50,7 +50,7 @@ export function Header() {
       <header className="border-b border-neutral-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
           <Link href="/" className="flex flex-col">
-            <span className="text-sm font-semibold tracking-tight text-neutral-900">
+            <span className="text-sm font-semibold text-neutral-900">
               WizardFolio
             </span>
             <span className="text-[11px] text-neutral-500">
@@ -62,7 +62,7 @@ export function Header() {
               {user && (
                 <Link
                   href="/dashboard"
-                  className="text-xs font-medium text-neutral-700 transition hover:text-neutral-900"
+                  className="text-xs font-medium text-neutral-700 transition hover:text-neutral-900 md:text-sm"
                 >
                   Dashboard
                 </Link>
@@ -71,7 +71,7 @@ export function Header() {
                 <button
                   type="button"
                   onClick={() => setMenuOpen((prev) => !prev)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white text-xs font-semibold text-neutral-900 shadow-sm transition hover:border-zinc-300"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-xs font-semibold text-neutral-900 shadow-sm transition hover:border-neutral-300"
                 >
                   {initials}
                   <span className="sr-only">Open account menu</span>
@@ -80,7 +80,7 @@ export function Header() {
                 <button
                   type="button"
                   onClick={() => setAuthDialogOpen(true)}
-                  className="rounded-full bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
+                  className="rounded-full bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
                 >
                   Sign in
                 </button>
@@ -92,29 +92,29 @@ export function Header() {
               onClick={() => setMenuOpen((prev) => !prev)}
               aria-label="Open navigation"
             >
-              <Menu className="h-4 w-4 text-neutral-800" />
+              <Menu className="h-4 w-4 text-neutral-700" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-lg">
+              <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg">
                 {user ? (
                   <>
                     <button
                       type="button"
                       onClick={handleNewMix}
-                      className="block w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-zinc-100"
+                      className="block w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100"
                     >
                       New mix
                     </button>
                     <Link
                       href="/dashboard"
-                      className="block w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-zinc-100"
+                      className="block w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100"
                     >
                       Dashboard
                     </Link>
                     <button
                       type="button"
                       onClick={handleSignOut}
-                      className="w-full border-t border-zinc-100 px-4 py-2 text-left text-sm text-neutral-700 hover:bg-zinc-50"
+                      className="w-full border-t border-neutral-100 px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50"
                     >
                       Sign out
                     </button>
@@ -126,7 +126,7 @@ export function Header() {
                       setMenuOpen(false);
                       setAuthDialogOpen(true);
                     }}
-                    className="block w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-zinc-100"
+                    className="block w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100"
                   >
                     Sign in
                   </button>

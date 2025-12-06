@@ -11,20 +11,20 @@ export default function AboutPage() {
     <div className="mx-auto max-w-5xl px-4 py-12 sm:py-16">
       <div className="space-y-6">
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-zinc-400">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
             About
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-zinc-50 sm:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
             WizardFolio
           </h1>
-          <p className="text-sm text-neutral-600 dark:text-zinc-300 sm:text-base">
+          <p className="text-sm text-neutral-700 sm:text-base">
             WizardFolio is a minimalist ETF look-through and portfolio analysis tool built for investors. It helps you see what&apos;s inside your ETFs, how your portfolio is allocated across sectors and countries, and how different mixes compare.
           </p>
         </div>
 
-        <div className="space-y-3 text-sm text-neutral-700 dark:text-zinc-300 sm:text-base">
+        <div className="space-y-3 text-sm text-neutral-700 sm:text-base">
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-zinc-50 sm:text-base">
+            <h2 className="text-base font-semibold text-neutral-900">
               Why WizardFolio exists
             </h2>
             <p>
@@ -33,7 +33,7 @@ export default function AboutPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-zinc-50 sm:text-base">
+            <h2 className="text-base font-semibold text-neutral-900">
               What WizardFolio does
             </h2>
             <ul className="list-disc space-y-1 pl-4">
@@ -44,14 +44,14 @@ export default function AboutPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-zinc-50 sm:text-base">
+            <h2 className="text-base font-semibold text-neutral-900">
               Contact
             </h2>
             <p>
               If you have feedback, questions, or you&apos;ve spotted something that doesn&apos;t look right, you can reach us at{" "}
               <a
                 href="mailto:support@wizardfolio.com"
-                className="font-medium text-neutral-900 dark:text-zinc-50 underline underline-offset-2"
+                className="text-sm font-medium text-neutral-700 underline underline-offset-2 hover:text-neutral-900"
               >
                 support@wizardfolio.com
               </a>

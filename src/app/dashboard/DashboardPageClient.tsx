@@ -394,11 +394,11 @@ export default function DashboardPageClient() {
   if (!user) {
     return (
       <section className="space-y-4">
-        <div className="rounded-3xl border border-zinc-200 bg-white/90 p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
-          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-zinc-50">
+        <div className="rounded-3xl border border-neutral-200 bg-white/90 p-6 shadow-sm">
+          <h1 className="text-2xl font-semibold text-neutral-900">
             Saved mixes
           </h1>
-          <p className="mt-2 text-sm text-neutral-500 dark:text-zinc-400">
+          <p className="mt-2 text-sm text-neutral-700">
             Sign in to save mixes, revisit them later, and build on your favorite
             ETF combos.
           </p>
@@ -412,20 +412,20 @@ export default function DashboardPageClient() {
 
   return (
     <section className="space-y-4">
-      <div className="rounded-3xl border border-zinc-200 bg-white/90 p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
+      <div className="rounded-3xl border border-neutral-200 bg-white/90 p-6 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-2">
-            <h1 className="text-2xl font-semibold text-neutral-900 dark:text-zinc-50">
+            <h1 className="text-2xl font-semibold text-neutral-900">
               Saved mixes
             </h1>
-            <p className="text-sm text-neutral-500 dark:text-zinc-400">
+            <p className="text-sm text-neutral-700">
               Re-open any mix and see exposures right where you left off.
             </p>
           </div>
           <button
             type="button"
             onClick={handleNewMix}
-            className="inline-flex w-full items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 disabled:opacity-60 dark:focus-visible:ring-offset-zinc-900 md:w-auto"
+            className="inline-flex w-full items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 disabled:opacity-60 md:w-auto"
           >
             New mix
           </button>
@@ -436,8 +436,8 @@ export default function DashboardPageClient() {
         <div
           className={`rounded-2xl border px-4 py-3 text-sm ${
             actionStatus.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200"
-              : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-200"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-rose-200 bg-rose-50 text-rose-700"
           }`}
         >
           {actionStatus.message}
@@ -445,13 +445,13 @@ export default function DashboardPageClient() {
       )}
 
       {errorMessage && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-200">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
           {errorMessage}
         </div>
       )}
 
       {isLoading ? (
-        <div className="rounded-2xl border border-neutral-200 bg-white/80 p-4 text-sm text-neutral-600 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-neutral-300">
+        <div className="rounded-2xl border border-neutral-200 bg-white/80 p-4 text-sm text-neutral-700 shadow-sm">
           Loading saved mixes...
         </div>
       ) : hasMixes && mixes ? (
@@ -467,7 +467,7 @@ export default function DashboardPageClient() {
             return (
               <div
                 key={mix.id}
-                className="group rounded-3xl border border-zinc-200 bg-white/90 p-5 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900/80 dark:hover:border-zinc-600"
+                className="group rounded-3xl border border-neutral-200 bg-white/90 p-5 transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-3">
                   <Link
@@ -475,11 +475,11 @@ export default function DashboardPageClient() {
                     className="flex flex-1 flex-col gap-3 min-w-0"
                   >
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-neutral-900 dark:text-zinc-50">
+                      <p className="text-sm font-semibold text-neutral-900">
                         {mix.name}
                       </p>
                     </div>
-                    <p className="text-xs text-neutral-500 dark:text-zinc-400">
+                    <p className="text-sm text-neutral-700">
                       {summarizeMix(mix)}
                     </p>
                   </Link>
@@ -498,7 +498,7 @@ export default function DashboardPageClient() {
                           current === mix.id ? null : mix.id,
                         );
                       }}
-                      className="h-9 w-9 rounded-full border border-transparent bg-white/80 text-neutral-500 transition hover:bg-zinc-100 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-900/80 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                      className="h-9 w-9 rounded-full border border-transparent bg-white/80 text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </button>
@@ -507,22 +507,22 @@ export default function DashboardPageClient() {
                         ref={menuContentRef}
                         role="menu"
                         aria-label={`${mix.name} actions`}
-                        className="absolute right-0 top-full z-10 mt-2 w-44 rounded-2xl border border-zinc-200 bg-white py-1 text-sm shadow-lg shadow-black/10 dark:border-zinc-700 dark:bg-zinc-950"
+                        className="absolute right-0 top-full z-10 mt-2 w-44 rounded-2xl border border-neutral-200 bg-white py-1 text-sm shadow-lg shadow-black/10"
                       >
                         <button
                           type="button"
                           role="menuitem"
                           onClick={() => openRenameDialog(mix)}
-                          className="w-full px-4 py-2 text-left font-medium text-neutral-700 transition hover:bg-zinc-100 dark:text-neutral-200 dark:hover:bg-zinc-900"
+                          className="w-full px-4 py-2 text-left font-medium text-neutral-700 transition hover:bg-neutral-100"
                         >
                           Rename
                         </button>
-                        <div className="border-t border-zinc-100 dark:border-zinc-800" />
+                        <div className="border-t border-neutral-100" />
                         <button
                           type="button"
                           role="menuitem"
                           onClick={() => openDeleteDialog(mix)}
-                          className="w-full px-4 py-2 text-left font-medium text-rose-600 transition hover:bg-rose-50 dark:hover:bg-rose-900/40"
+                          className="w-full px-4 py-2 text-left font-medium text-rose-600 transition hover:bg-rose-50"
                         >
                           Delete
                         </button>
@@ -530,7 +530,7 @@ export default function DashboardPageClient() {
                     )}
                   </div>
                 </div>
-                <p className="mt-2 text-[11px] uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-500">
+                <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
                   {formatUpdatedAt(mix.updated_at)}
                 </p>
               </div>
@@ -538,11 +538,11 @@ export default function DashboardPageClient() {
           })}
         </div>
       ) : (
-        <div className="rounded-3xl border border-dashed border-neutral-200 bg-white/80 p-6 text-sm text-neutral-600 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-neutral-300">
-          <p className="font-semibold text-neutral-900 dark:text-zinc-50">
+        <div className="rounded-3xl border border-dashed border-neutral-200 bg-white/80 p-6 text-sm text-neutral-700 shadow-sm">
+          <p className="font-semibold text-neutral-900">
             No saved mixes yet?
           </p>
-          <p className="mt-2 text-xs text-neutral-500 dark:text-zinc-400">
+          <p className="mt-2 text-sm text-neutral-700">
             Head back to the results screen, save your mix, and it will show up
             here for easy access next time.
           </p>
@@ -555,14 +555,14 @@ export default function DashboardPageClient() {
         description="Give this mix a short, descriptive name."
       >
         <form onSubmit={handleRenameSubmit} className="space-y-4">
-          <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-100">
+          <label className="block text-sm font-medium text-neutral-700">
             New mix name
             <input
               type="text"
               value={renameValue}
               maxLength={SAVED_MIX_NAME_MAX_LENGTH}
               onChange={(event) => setRenameValue(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-neutral-900 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+              className="mt-2 w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
             />
           </label>
           {!renameError && !isRenameValueValid && renameValue.length > 0 && (
@@ -578,14 +578,14 @@ export default function DashboardPageClient() {
               type="button"
               onClick={closeRenameDialog}
               disabled={isRenaming}
-              className="inline-flex items-center justify-center rounded-2xl border border-zinc-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-700 transition hover:border-zinc-300 dark:border-zinc-700 dark:text-neutral-200"
+              className="inline-flex items-center justify-center rounded-2xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:border-neutral-300"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!isRenameValueValid || isRenaming}
-              className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isRenaming ? "Saving…" : "Save name"}
             </button>
@@ -597,9 +597,9 @@ export default function DashboardPageClient() {
         onClose={closeDeleteDialog}
         title="Delete mix"
       >
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-neutral-700">
           Are you sure you want to delete{" "}
-          <span className="font-semibold text-neutral-900 dark:text-neutral-50">
+          <span className="font-semibold text-neutral-900">
             “{deleteTarget?.name}”
           </span>
           ? This action can’t be undone.
@@ -612,7 +612,7 @@ export default function DashboardPageClient() {
             type="button"
             onClick={closeDeleteDialog}
             disabled={isDeleting}
-            className="inline-flex items-center justify-center rounded-2xl border border-zinc-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-700 transition hover:border-zinc-300 dark:border-zinc-700 dark:text-neutral-200"
+            className="inline-flex items-center justify-center rounded-2xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:border-neutral-300"
           >
             Cancel
           </button>
@@ -620,7 +620,7 @@ export default function DashboardPageClient() {
             type="button"
             onClick={handleDeleteConfirm}
             disabled={isDeleting}
-            className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-rose-600 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-rose-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-60"
           >
             {isDeleting ? "Deleting…" : "Delete"}
           </button>
@@ -715,20 +715,20 @@ function ModalDialog({
         aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
-        className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-zinc-200 bg-white p-5 shadow-xl shadow-black/20 outline-none dark:border-zinc-700 dark:bg-zinc-950"
+        className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-neutral-200 bg-white p-5 shadow-xl shadow-black/20 outline-none"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="space-y-2">
           <h2
             id={titleId}
-            className="text-lg font-semibold text-neutral-900 dark:text-neutral-50"
+            className="text-lg font-semibold text-neutral-900"
           >
             {title}
           </h2>
           {description && (
             <p
               id={descriptionId}
-              className="text-sm text-neutral-500 dark:text-neutral-400"
+              className="text-sm text-neutral-700"
             >
               {description}
             </p>

@@ -314,20 +314,18 @@ export default function ExposureSummary({
 
         {/* Center label */}
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-          <p className="mt-0.5 text-sm font-medium tracking-tight text-zinc-900 dark:text-zinc-50 md:text-[15px]">
+          <p className="mt-0.5 text-base font-semibold text-neutral-900 md:text-[15px]">
             {classification}
           </p>
-          <p className="mt-0.5 text-[11px] text-zinc-500 tabular-nums dark:text-zinc-400">
+          <p className="mt-0.5 text-[11px] text-neutral-500 tabular-nums">
             Top 5 represent {fmtPercent(topFivePct)}%
           </p>
         </div>
 
         {/* Hover tooltip */}
         {hoveredSlice && (
-          <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-black/80 px-3 py-1 text-[11px] text-white shadow-lg backdrop-blur-sm dark:bg-black/90">
-            <span className="font-medium">
-              {hoveredSlice.label}
-            </span>
+          <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-black/80 px-3 py-1 text-[11px] text-white shadow-lg backdrop-blur-sm">
+            <span className="font-medium">{hoveredSlice.label}</span>
             <span className="ml-1 tabular-nums text-white/80">
               {fmtPercent(hoveredSlice.weightPct)}%
             </span>
@@ -339,17 +337,17 @@ export default function ExposureSummary({
       <div className="flex-1 space-y-3">
         {showHeader && (
           <div className="space-y-1">
-            <h3 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            <h3 className="text-base font-semibold text-neutral-900">
               Exposure breakdown
             </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-neutral-700">
               Bright slices show your heaviest tilts. The rest is grouped as
               “Other”.
             </p>
           </div>
         )}
 
-        <p className="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
           % of your portfolio
         </p>
 
@@ -367,7 +365,7 @@ export default function ExposureSummary({
                   className="h-2.5 w-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: slice.color }}
                 />
-                <span className="truncate font-medium text-zinc-800 dark:text-zinc-100">
+                <span className="truncate text-sm font-medium text-neutral-900">
                   {slice.label}
                 </span>
               </div>

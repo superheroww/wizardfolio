@@ -126,7 +126,7 @@ export default function EtfBottomSheetSelect({
   );
 
   const optionClasses =
-    "flex w-full items-center justify-between rounded-2xl border border-transparent px-4 py-3 text-base font-medium text-zinc-900 transition hover:border-zinc-200 hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400 dark:text-zinc-100 dark:hover:border-zinc-700 dark:hover:bg-zinc-800";
+    "flex w-full items-center justify-between rounded-2xl border border-transparent px-4 py-3 text-base font-medium text-neutral-900 transition hover:border-neutral-200 hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400";
 
   const renderOption = (symbol: string) => {
     const isSelected = value === symbol;
@@ -136,14 +136,12 @@ export default function EtfBottomSheetSelect({
         type="button"
         onClick={() => handleSelect(symbol)}
         className={`${optionClasses} ${
-          isSelected
-            ? "border-zinc-300 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800/70"
-            : "border-transparent"
+          isSelected ? "border-neutral-300 bg-neutral-100" : "border-transparent"
         }`}
       >
         <span>{symbol}</span>
         {isSelected && (
-          <span className="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">
+          <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
             Selected
           </span>
         )}
@@ -174,24 +172,24 @@ export default function EtfBottomSheetSelect({
                 aria-modal="true"
                 aria-labelledby={labelId}
                 tabIndex={-1}
-                className="mx-auto flex h-[70vh] w-full max-w-md flex-col rounded-t-3xl border border-zinc-200 bg-white shadow-2xl outline-none transition dark:border-zinc-700 dark:bg-zinc-900 md:h-auto md:max-h-[80vh] md:rounded-3xl"
+                className="mx-auto flex h-[70vh] w-full max-w-md flex-col rounded-t-3xl border border-neutral-200 bg-white shadow-2xl outline-none transition md:h-auto md:max-h-[80vh] md:rounded-3xl"
               >
                 <div className="px-6 pt-4">
                   <div
                     ref={dragHandleRef}
-                    className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-zinc-200 dark:bg-zinc-700 md:hidden"
+                    className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-neutral-200 md:hidden"
                   />
                   <div className="flex items-center justify-between gap-4">
                     <h2
                       id={labelId}
-                      className="text-lg font-semibold text-zinc-900 dark:text-zinc-100"
+                      className="text-base font-semibold text-neutral-900"
                     >
                       Select ETF
                     </h2>
                     <button
                       type="button"
                       onClick={closeSheet}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 text-lg text-zinc-500 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-lg text-neutral-500 transition hover:bg-neutral-100"
                       aria-label="Close ETF selector"
                     >
                       ×
@@ -199,14 +197,14 @@ export default function EtfBottomSheetSelect({
                   </div>
                 </div>
                 <div className="mt-2 flex-1 overflow-y-auto px-6 pb-6">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
                     Popular ETFs
                   </p>
                   <div className="mt-2 space-y-2">
                     {popularEtfs.map(renderOption)}
                   </div>
-                  <div className="my-5 h-px w-full bg-zinc-200 dark:bg-zinc-800" />
-                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <div className="my-5 h-px w-full bg-neutral-200" />
+                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
                     All ETFs
                   </p>
                   <div className="mt-2 space-y-2">
@@ -228,11 +226,11 @@ export default function EtfBottomSheetSelect({
         onClick={openSheet}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        className="mt-1 flex w-full items-center justify-between rounded-lg border border-zinc-200 bg-white px-3 py-2 text-base text-left text-zinc-900 transition hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+        className="mt-1 flex w-full items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2 text-left text-base text-neutral-900 transition hover:border-neutral-400"
       >
         <span>{value || "ETF"}</span>
         <svg
-          className="h-4 w-4 text-zinc-500"
+          className="h-4 w-4 text-neutral-500"
           viewBox="0 0 20 20"
           fill="none"
           stroke="currentColor"

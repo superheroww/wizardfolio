@@ -13,23 +13,23 @@ export default function TermsPage() {
     <div className="mx-auto max-w-5xl px-4 py-12 sm:py-16">
       <div className="space-y-6">
         <header className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-zinc-400">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
             Legal
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-zinc-50 sm:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
             Terms of Use
           </h1>
-          <p className="text-xs text-neutral-500 dark:text-zinc-400">Last updated: {LAST_UPDATED}</p>
+          <p className="text-xs text-neutral-500">Last updated: {LAST_UPDATED}</p>
         </header>
 
-        <div className="space-y-4 text-sm text-neutral-700 dark:text-zinc-300 sm:text-base">
+        <div className="space-y-4 text-sm text-neutral-700 sm:text-base">
           <p>
             By accessing or using WizardFolio (&quot;the service&quot;), you agree to these Terms of Use.
             If you do not agree with these terms, you should not use the service.
           </p>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-zinc-50 sm:text-base">
+            <h2 className="text-base font-semibold text-neutral-900">
               Informational Use Only
             </h2>
             <p>
@@ -44,7 +44,7 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-zinc-50 sm:text-base">
+            <h2 className="text-base font-semibold text-neutral-900">
               No Guarantees of Accuracy
             </h2>
             <p>
@@ -54,7 +54,7 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-zinc-50 sm:text-base">
+            <h2 className="text-base font-semibold text-neutral-900">
               Limitation of Liability
             </h2>
             <p>
@@ -69,7 +69,7 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-zinc-50 sm:text-base">
+            <h2 className="text-base font-semibold text-neutral-900">
               User Responsibilities
             </h2>
             <p>By using WizardFolio, you agree to:</p>
@@ -86,7 +86,7 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-zinc-50 sm:text-base">
+            <h2 className="text-base font-semibold text-neutral-900">
               Changes to the Service
             </h2>
             <p>
@@ -97,14 +97,14 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-zinc-50 sm:text-base">
+            <h2 className="text-base font-semibold text-neutral-900">
               Contact
             </h2>
             <p>
               If you have questions about these Terms of Use, you can reach us at{" "}
               <a
                 href="mailto:support@wizardfolio.com"
-                className="font-medium text-neutral-900 dark:text-zinc-50 underline underline-offset-2"
+                className="text-sm font-medium text-neutral-700 underline underline-offset-2 hover:text-neutral-900"
               >
                 support@wizardfolio.com
               </a>

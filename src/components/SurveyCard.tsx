@@ -66,14 +66,14 @@ export default function SurveyCard() {
 
   if (state === "success") {
     return (
-      <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white/70 p-4 text-left shadow-sm dark:border-zinc-800/80 dark:bg-zinc-900/70">
-        <p className="text-xs font-medium uppercase tracking-wide text-emerald-500">
+      <div className="flex h-full flex-col rounded-2xl border border-neutral-200 bg-white/70 p-4 text-left shadow-sm">
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-emerald-600">
           Thank you ✨
         </p>
-        <h3 className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+        <h3 className="mt-1 text-base font-semibold text-neutral-900">
           You’re officially helping design WizardFolio.
         </h3>
-        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="mt-2 text-sm text-neutral-700">
           We’ll use this to decide what to build next. If you left an email,
           we’ll ping you as new features go live.
         </p>
@@ -84,15 +84,15 @@ export default function SurveyCard() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white/70 p-4 text-left shadow-sm dark:border-zinc-800/80 dark:bg-zinc-900/70"
+      className="flex h-full flex-col rounded-2xl border border-neutral-200 bg-white/70 p-4 text-left shadow-sm"
     >
-      <p className="text-[11px] font-medium uppercase tracking-wide text-indigo-500">
+      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
         Help shape WizardFolio
       </p>
-      <h3 className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+      <h3 className="mt-1 text-base font-semibold text-neutral-900">
         What would you love to see next?
       </h3>
-      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="mt-1 text-sm text-neutral-700">
         Tap a few wishes below. Optional: add your email and we’ll let you know
         when new features land.
       </p>
@@ -107,10 +107,10 @@ export default function SurveyCard() {
               type="button"
               onClick={() => toggleFeature(feature)}
               className={[
-                "rounded-full border px-3 py-1 text-xs transition",
+                "rounded-full border px-3 py-1 text-sm transition",
                 selected
                   ? "border-indigo-500 bg-indigo-500 text-white shadow-sm"
-                  : "border-zinc-200 bg-white/60 text-zinc-700 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-200",
+                  : "border-neutral-200 bg-white/60 text-neutral-700 hover:border-neutral-300",
               ].join(" ")}
             >
               {feature}
@@ -122,14 +122,14 @@ export default function SurveyCard() {
       {/* Something else textarea */}
       {hasSomethingElse && (
         <div className="mt-3">
-          <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-200">
+          <label className="mb-1 block text-sm text-neutral-700">
             Something else you wish WizardFolio could do?
           </label>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={3}
-            className="w-full rounded-xl border border-zinc-200 bg-white/80 p-2 text-xs text-zinc-900 outline-none ring-0 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100"
+            className="w-full rounded-xl border border-neutral-200 bg-white/80 p-3 text-sm text-neutral-900 outline-none ring-0 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             placeholder="e.g., See all my accounts in one place etc."
           />
         </div>
@@ -137,7 +137,7 @@ export default function SurveyCard() {
 
       {/* Email input */}
       <div className="mt-3">
-        <label className="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-200">
+        <label className="mb-1 block text-sm text-neutral-700">
           Email (optional)
         </label>
         <input
@@ -146,10 +146,10 @@ export default function SurveyCard() {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-xs text-zinc-900 outline-none ring-0 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-100"
+          className="w-full rounded-xl border border-neutral-200 bg-white/80 px-3 py-2 text-sm text-neutral-900 outline-none ring-0 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
           placeholder="you@example.com"
         />
-        <p className="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+        <p className="mt-1 text-[11px] text-neutral-500">
           Optional. We’ll only email you about WizardFolio updates.
         </p>
       </div>
@@ -170,9 +170,9 @@ export default function SurveyCard() {
           type="submit"
           disabled={isSubmitting || !selectedFeatures.length}
           className={[
-            "inline-flex flex-1 items-center justify-center rounded-full px-3 py-2 text-xs font-semibold transition",
+            "inline-flex flex-1 items-center justify-center rounded-full px-3 py-2 text-sm font-semibold transition",
             isSubmitting || !selectedFeatures.length
-              ? "bg-zinc-300 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+              ? "bg-neutral-300 text-neutral-600"
               : "bg-indigo-600 text-white shadow-sm hover:bg-indigo-500",
           ].join(" ")}
         >

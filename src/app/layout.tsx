@@ -52,7 +52,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="h-full">
-      <body className="bg-neutral-50 font-sans text-neutral-900 antialiased dark:bg-zinc-950 dark:text-zinc-50">
+      <body className="min-h-screen bg-neutral-50 font-sans text-neutral-900 antialiased">
         <script
           type="application/ld+json"
           suppressHydrationWarning

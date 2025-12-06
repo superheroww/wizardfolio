@@ -185,23 +185,23 @@ export function AuthDialog({
         onClick={handleClose}
       />
 
-      <div className="relative w-full max-w-md space-y-4 overflow-hidden rounded-3xl border border-zinc-200 bg-white p-5 shadow-xl shadow-black/20 dark:border-zinc-800 dark:bg-zinc-950 sm:p-6">
+      <div className="relative w-full max-w-md space-y-4 overflow-hidden rounded-3xl border border-neutral-200 bg-white p-5 shadow-xl shadow-black/20 sm:p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-zinc-400">
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
               Wizardfolio
             </p>
-            <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">
+            <h2 className="text-base font-semibold text-neutral-900">
               {title}
             </h2>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-sm text-neutral-700">
               {description}
             </p>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="rounded-full border border-transparent p-1 text-zinc-500 hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-100"
+            className="rounded-full border border-transparent p-1 text-neutral-500 transition hover:border-neutral-200 hover:text-neutral-900"
           >
             <span className="sr-only">Close sign in dialog</span>
             ✕
@@ -211,7 +211,7 @@ export function AuthDialog({
         {isForgotMode ? (
           <div className="space-y-4">
             <div className="space-y-1 text-sm">
-              <label className="block text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">
+              <label className="block text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
                 Email
               </label>
               <input
@@ -219,7 +219,7 @@ export function AuthDialog({
                 value={forgotEmail}
                 onChange={(event) => setForgotEmail(event.target.value)}
                 autoComplete="email"
-                className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+                className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
               />
             </div>
 
@@ -227,7 +227,7 @@ export function AuthDialog({
               type="button"
               onClick={handleForgotPasswordSubmit}
               disabled={isSubmittingForgot || !forgotEmail.trim()}
-              className="w-full rounded-2xl border border-transparent bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 dark:focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-2xl border border-transparent bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmittingForgot ? "Sending…" : "Send reset link"}
             </button>
@@ -242,7 +242,7 @@ export function AuthDialog({
             <button
               type="button"
               onClick={() => handleModeChange("sign-in")}
-              className="mt-2 text-xs text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+              className="mt-2 text-xs text-neutral-500 hover:text-neutral-900"
             >
               Back to sign in
             </button>
@@ -253,17 +253,17 @@ export function AuthDialog({
               onSubmit={isSignInMode ? handleSignIn : handleSignUp}
               className="space-y-3"
             >
-              <label className="block space-y-1 text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">
+              <label className="block space-y-1 text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
                 Email
                 <input
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
-                  className="mt-1 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
                 />
               </label>
-              <label className="block space-y-1 text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">
+              <label className="block space-y-1 text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
                 Password
                 <input
                   type="password"
@@ -271,7 +271,7 @@ export function AuthDialog({
                   onChange={(event) => setPassword(event.target.value)}
                   required
                   minLength={6}
-                  className="mt-1 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
                 />
               </label>
 
@@ -290,7 +290,7 @@ export function AuthDialog({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full rounded-2xl border border-transparent bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 dark:focus-visible:ring-offset-zinc-900 disabled:opacity-60"
+                className="w-full rounded-2xl border border-transparent bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 disabled:opacity-60"
               >
                 {primaryLabel}
               </button>
@@ -300,7 +300,7 @@ export function AuthDialog({
               <p className="text-sm text-rose-500">{errorMessage}</p>
             )}
 
-            <div className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">
+            <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
               {isSignInMode ? (
                 <>
                   New here?{" "}

@@ -223,14 +223,14 @@ export default function BenchmarkComparisonCard({
 
   const renderStockList = () => (
     <div className="space-y-3">
-      <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+      <div className="flex items-center justify-between text-xs text-neutral-500">
+        <p className="text-base font-semibold text-neutral-900">
           Tilts vs {benchmarkLabel} by stock
         </p>
         {loadingStocks && <span>Loading…</span>}
       </div>
       {stockError && (
-        <p className="text-[11px] text-rose-500 dark:text-rose-300">
+        <p className="text-[11px] text-rose-500">
           {stockError}
         </p>
       )}
@@ -257,20 +257,20 @@ export default function BenchmarkComparisonCard({
     dimension: string,
   ) => (
     <div className="space-y-3">
-      <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+      <div className="flex items-center justify-between text-xs text-neutral-500">
+        <p className="text-base font-semibold text-neutral-900">
           {header}
         </p>
         {loading && <span>Loading…</span>}
       </div>
-      <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+      <p className="text-[11px] text-neutral-500">
         Your mix vs {benchmarkLabel} by {dimension}
       </p>
       {error && (
-        <p className="text-[11px] text-rose-500 dark:text-rose-300">{error}</p>
+        <p className="text-[11px] text-rose-500">{error}</p>
       )}
       {!rows.length && !loading ? (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-xs text-neutral-500">
           No benchmark data available.
         </p>
       ) : (
@@ -285,7 +285,7 @@ export default function BenchmarkComparisonCard({
   const renderTiltRow = (row: GroupDetailRow) => (
     <div
       key={row.label}
-      className="rounded-2xl border border-zinc-100 bg-white/70 px-3 py-2 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70"
+      className="rounded-2xl border border-neutral-100 bg-white/70 px-3 py-2 shadow-sm"
     >
       <ExposureComparisonRow
         label={row.label}
@@ -304,7 +304,7 @@ export default function BenchmarkComparisonCard({
 
   const TiltColumn = ({ title, rows, emptyText }: TiltColumnProps) => (
     <div className="space-y-2">
-      <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
         {title}
       </p>
       {rows.length ? (
@@ -312,34 +312,34 @@ export default function BenchmarkComparisonCard({
           {rows.map(renderTiltRow)}
         </div>
       ) : (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">{emptyText}</p>
+        <p className="text-xs text-neutral-500">{emptyText}</p>
       )}
     </div>
   );
 
   return (
-    <section className="space-y-4 rounded-3xl border border-zinc-200 bg-white/90 p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
+    <section className="space-y-4 rounded-3xl border border-neutral-200 bg-white/90 p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
             Benchmark comparison
           </p>
-          <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+          <h3 className="text-base font-semibold text-neutral-900">
             {userLabel} vs {benchmark.label}
           </h3>
-          <p className="text-sm text-zinc-500 dark:text-zinc-300">
+          <p className="text-sm text-neutral-700">
             {benchmark.description}
           </p>
         </div>
 
         <div className="flex flex-col items-start gap-1 text-xs">
-          <label className="text-zinc-500 dark:text-zinc-400">Benchmark</label>
-            <div className="relative inline-flex w-full min-w-[150px] rounded-full border border-zinc-200 bg-white px-3 py-1 text-left text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-50">
-              <select
-                value={benchmark.id}
-                onChange={handleChange}
-                className="appearance-none w-full bg-transparent text-left text-sm font-semibold text-zinc-900 outline-none dark:text-zinc-50"
-              >
+          <label className="text-xs text-neutral-500">Benchmark</label>
+          <div className="relative inline-flex w-full min-w-[150px] rounded-full border border-neutral-200 bg-white px-3 py-1 text-left text-sm font-semibold text-neutral-900 shadow-sm transition hover:border-neutral-300">
+            <select
+              value={benchmark.id}
+              onChange={handleChange}
+              className="w-full appearance-none bg-transparent text-left text-sm font-semibold text-neutral-900 outline-none"
+            >
                 {benchmarks.map((option) => {
                   const optionSymbol =
                     option.positions?.[0]?.symbol?.trim().toUpperCase() ??
@@ -360,21 +360,21 @@ export default function BenchmarkComparisonCard({
                   );
                 })}
               </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">
               ▾
             </span>
           </div>
         </div>
       </div>
 
-      <div className="space-y-2 text-xs sm:text-sm text-zinc-600 dark:text-zinc-300">
+      <div className="space-y-2 text-sm text-neutral-700">
         <p>
           {labelSlice} overlap:{" "}
-          <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+          <span className="font-semibold text-neutral-900">
             {comparison ? `${formatPercent(overlapPct)}` : "—"}
           </span>{" "}
         </p>
-        <div className="h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+        <div className="h-2 overflow-hidden rounded-full bg-neutral-100">
           <div
             className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-blue-500 transition-all"
             style={{ width: `${overlapWidth}%` }}
@@ -382,7 +382,7 @@ export default function BenchmarkComparisonCard({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-100 bg-white/90 p-4 dark:border-zinc-800 dark:bg-zinc-900/70">
+      <div className="rounded-2xl border border-neutral-100 bg-white/90 p-4">
         <div className="flex flex-wrap gap-2">
           {EXPOSURE_TABS.map((tab) => (
             <button
@@ -392,8 +392,8 @@ export default function BenchmarkComparisonCard({
               className={[
                 "rounded-full px-3 py-1.5 text-xs font-semibold transition",
                 activeTab === tab.id
-                  ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
-                  : "bg-transparent text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800",
+                  ? "bg-neutral-900 text-white"
+                  : "bg-transparent text-neutral-600 hover:bg-neutral-100",
               ].join(" ")}
             >
               {tab.label}
@@ -423,7 +423,7 @@ export default function BenchmarkComparisonCard({
       </div>
 
       {comparison && (
-        <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+        <p className="mt-1 text-[11px] text-neutral-500">
           Based on each ETF’s {visibleHoldingsText}, normalized to 100% for this
           comparison. Smaller positions in the fund are not included in this
           view.
@@ -452,8 +452,8 @@ function ComparisonList({
   isPositive = false,
 }: ComparisonListProps) {
   return (
-    <div className="space-y-2 rounded-2xl border border-zinc-100 bg-white/60 p-3 text-sm dark:border-zinc-800 dark:bg-zinc-900/60">
-      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+    <div className="space-y-2 rounded-2xl border border-neutral-100 bg-white/60 p-3 text-sm text-neutral-700">
+      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
         {title}
       </p>
       {items.length ? (
@@ -461,13 +461,13 @@ function ComparisonList({
           {items.map((item) => (
             <li
               key={item.ticker}
-              className="flex items-center justify-between font-medium text-zinc-900 dark:text-zinc-50"
+              className="flex items-center justify-between text-sm font-medium text-neutral-900"
             >
               <span>{item.ticker}</span>
               <span
                 className={[
-                  "text-xs font-semibold",
-                  isPositive ? "text-green-600 dark:text-green-400" : "text-rose-600 dark:text-rose-400",
+                  "text-sm font-semibold",
+                  isPositive ? "text-emerald-600" : "text-rose-600",
                 ].join(" ")}
               >
                 {item.deltaPct > 0 ? `+${item.deltaPct.toFixed(1)}%` : `${item.deltaPct.toFixed(1)}%`}
@@ -476,7 +476,7 @@ function ComparisonList({
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">{emptyText}</p>
+        <p className="text-xs text-neutral-500">{emptyText}</p>
       )}
     </div>
   );

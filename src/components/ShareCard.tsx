@@ -10,9 +10,9 @@ export default function ShareCard() {
   const { copy, copied } = useClipboard();
 
   return (
-    <div className="rounded-2xl border bg-card/60 p-5 shadow-sm space-y-4">
-      <h3 className="text-lg font-semibold">🔥 Share your mix</h3>
-      <p className="text-sm text-muted-foreground">
+    <div className="rounded-2xl border border-neutral-200 bg-white/80 p-5 shadow-sm space-y-4">
+      <h3 className="text-lg font-semibold text-neutral-900">🔥 Share your mix</h3>
+      <p className="text-sm text-neutral-700">
         Show your ETF blend on Instagram, Facebook, TikTok, or Reddit.
       </p>
 
@@ -25,7 +25,7 @@ export default function ShareCard() {
 
       <button
         onClick={() => copy(shareUrl)}
-        className="w-full rounded-full bg-primary text-white px-4 py-2 text-sm font-medium"
+        className="w-full rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
       >
         {copied ? "Copied! 🚀" : "Copy Share Link"}
       </button>

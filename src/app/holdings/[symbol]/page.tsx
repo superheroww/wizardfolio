@@ -79,26 +79,26 @@ export default async function HoldingsPage({ params }: HoldingsPageProps) {
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-10">
       <section className="space-y-3">
-        <h1 className="text-3xl font-semibold tracking-tight">
+        <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
           {symbol} Holdings (Top {topHoldings.length})
         </h1>
-        <p className="text-sm ">
+        <p className="text-sm text-neutral-700">
           This page shows the latest holdings for {symbol} from the WizardFolio ETF
           look-through engine. Use it to understand the underlying stocks, sectors,
           and countries in this ETF.
         </p>
       </section>
 
-      <section className="rounded-2xl border bg-card/50 p-4 shadow-sm">
+      <section className="rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em]">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
             Top holdings
           </p>
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
-              <tr className="text-xs uppercase tracking-[0.25em]">
+              <tr className="text-xs uppercase tracking-[0.12em] text-neutral-500">
                 <th scope="col" className="pb-2 pr-4 text-left">
                   Stock
                 </th>
@@ -116,25 +116,25 @@ export default async function HoldingsPage({ params }: HoldingsPageProps) {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 text-sm">
+            <tbody className="divide-y divide-neutral-100 text-sm">
               {topHoldings.map((row) => (
                 <tr
                   key={`${row.holding_symbol}-${row.holding_name}`}
                   className="last:border-b-0"
                 >
-                  <td className="py-3 pr-4 font-medium ">
+                  <td className="py-3 pr-4 font-medium text-neutral-900">
                     {row.holding_name}
                   </td>
-                  <td className="py-3 pr-4 font-mono text-xs uppercase tracking-wide">
+                  <td className="py-3 pr-4 font-mono text-sm font-semibold text-neutral-900">
                     {row.holding_symbol}
                   </td>
-                  <td className="py-3 pr-4 text-sm ">
+                  <td className="py-3 pr-4 text-sm text-neutral-700">
                     {row.country ?? "—"}
                   </td>
-                  <td className="py-3 pr-4 text-sm ">
+                  <td className="py-3 pr-4 text-sm text-neutral-700">
                     {row.sector ?? "—"}
                   </td>
-                  <td className="py-3 text-right font-semibold ">
+                  <td className="py-3 text-right text-sm font-semibold text-neutral-900">
                     {row.weight_pct.toFixed(2)}%
                   </td>
                 </tr>
@@ -144,40 +144,40 @@ export default async function HoldingsPage({ params }: HoldingsPageProps) {
         </div>
       </section>
 
-      <section className="rounded-2xl border bg-muted/40 p-4 text-sm">
+      <section className="rounded-2xl border border-neutral-200 bg-white/80 p-4 text-sm text-neutral-700">
         <div className="space-y-3">
-          <p className="text-sm font-semibold ">
+          <p className="text-base font-semibold text-neutral-900">
             Compare {symbol} or mix it with other ETFs
           </p>
-          <p className="text-sm ">
+          <p className="text-sm text-neutral-700">
             Use WizardFolio to mix {symbol} with ETFs such as QQQ, XEQT, and VEQT
             and see the true stock-level exposure of your blend.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <a
               href="/"
-              className="rounded-full bg-white px-4 py-2 text-sm font-medium shadow-sm ring-1 ring-border hover:bg-accent"
+              className="inline-flex rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"
             >
               Try your own mix →
             </a>
             <a
               href="/compare/voo-vs-qqq"
-              className="text-sm text-primary underline-offset-4 hover:underline"
+              className="text-sm font-medium text-neutral-700 underline underline-offset-2 hover:text-neutral-900"
             >
               VOO vs QQQ comparison
             </a>
           </div>
         </div>
       </section>
-      <section className="rounded-2xl border bg-card/50 p-4 shadow-sm">
-        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide">
+      <section className="rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm">
+        <h2 className="mb-3 text-base font-semibold text-neutral-900">
           Related ETF Pages
         </h2>
-        <ul className="space-y-2 text-sm">
+        <ul className="space-y-2 text-sm text-neutral-700">
           <li>
             <a
               href="/compare/voo-vs-qqq"
-              className="text-primary underline-offset-4 hover:underline"
+              className="text-sm font-medium text-neutral-700 underline underline-offset-2 hover:text-neutral-900"
             >
               VOO vs QQQ comparison
             </a>
@@ -185,7 +185,7 @@ export default async function HoldingsPage({ params }: HoldingsPageProps) {
           <li>
             <a
               href="/compare/spy-vs-qqq"
-              className="text-primary underline-offset-4 hover:underline"
+              className="text-sm font-medium text-neutral-700 underline underline-offset-2 hover:text-neutral-900"
             >
               SPY vs QQQ comparison
             </a>
@@ -193,7 +193,7 @@ export default async function HoldingsPage({ params }: HoldingsPageProps) {
           <li>
             <a
               href="/holdings/QQQ"
-              className="text-primary underline-offset-4 hover:underline"
+              className="text-sm font-medium text-neutral-700 underline underline-offset-2 hover:text-neutral-900"
             >
               QQQ holdings
             </a>

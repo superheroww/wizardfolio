@@ -138,21 +138,21 @@ export default function HomePage() {
     <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
       <div className="mx-auto max-w-2xl space-y-6">
         <section className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+          <h1 className="text-2xl font-semibold text-neutral-900 md:text-3xl">
             ETF Look-Through
           </h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-300">
+          <p className="mt-2 text-sm text-neutral-700">
             Mix a few ETFs and we’ll show you the real stocks, sectors, and
             regions underneath.
           </p>
         </section>
 
-        <section className="space-y-3 rounded-2xl border border-zinc-200 bg-white/80 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
+        <section className="space-y-3 rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm">
           <div className="flex flex-col gap-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
               Step 1 · Pick a starting point
             </p>
-            <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            <p className="text-sm text-neutral-700">
               Tap a preset or start from a fresh mix.
             </p>
           </div>
@@ -225,7 +225,7 @@ export default function HomePage() {
                 });
               }
             }}
-            className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-800 shadow-sm transition active:scale-[0.98] hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+            className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm font-medium text-neutral-900 shadow-sm transition hover:bg-white active:scale-[0.98]"
           >
             <span>Start from a fresh mix</span>
           </button>
@@ -233,10 +233,10 @@ export default function HomePage() {
 
         <section
           ref={step2Ref}
-          className="space-y-3 rounded-2xl border border-zinc-200 bg-white/80 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80"
+          className="space-y-3 rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm"
         >
           <div className="flex flex-col gap-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
               Step 2 · Adjust your mix
             </p>
           </div>
@@ -248,16 +248,18 @@ export default function HomePage() {
           />
 
           <div className="mt-3 space-y-1">
-            <div className="flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
+            <div className="flex items-center justify-between text-xs text-neutral-500">
               <span>Total allocation</span>
-              <span>{totalWeight.toFixed(0)}% of 100%</span>
+              <span className="font-medium text-neutral-900">
+                {totalWeight.toFixed(0)}% of 100%
+              </span>
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+            <div className="h-1.5 overflow-hidden rounded-full bg-neutral-200">
               <div
                 className={`h-full rounded-full ${
                   totalWeight === 100
                     ? "bg-emerald-500"
-                    : "bg-zinc-500 dark:bg-zinc-400"
+                    : "bg-neutral-500"
                 }`}
                 style={{ width: `${totalClamped}%` }}
               />
@@ -265,12 +267,12 @@ export default function HomePage() {
           </div>
 
           {feedbackMessage && (
-            <p className="text-xs text-rose-500 dark:text-rose-400">
+            <p className="text-xs text-rose-500">
               {feedbackMessage}
             </p>
           )}
 
-          <div className="mt-3 space-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+          <div className="mt-3 space-y-1 text-[11px] text-neutral-500">
             <p>
               Step 3 · Tap “See my breakdown →” to view your stocks, sectors,
               and regions.

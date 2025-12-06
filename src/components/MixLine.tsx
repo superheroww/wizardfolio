@@ -13,9 +13,5 @@ export default function MixLine({ positions }: MixLineProps) {
     return null;
   }
 
-  return (
-    <p className="truncate text-xs font-medium text-zinc-500 dark:text-zinc-400">
-      {mixLine}
-    </p>
-  );
+  return <p className="truncate text-sm text-neutral-700">{mixLine}</p>;
 }

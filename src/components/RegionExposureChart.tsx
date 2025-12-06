@@ -95,12 +95,12 @@ export default function RegionExposureChart({
   const hasData = regions.some((r) => r.value > 0.5);
 
   return (
-    <section className="rounded-3xl border border-zinc-200 bg-white/90 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
+    <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-sm">
       <div className="mb-3 flex flex-col gap-1">
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+        <h3 className="text-base font-semibold text-neutral-900">
           Where in the world you’re invested
         </h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-neutral-700">
           Split between U.S., Canada, and the rest of the world based on your
           underlying holdings.
         </p>
@@ -109,7 +109,7 @@ export default function RegionExposureChart({
       {hasData ? (
         <>
           {/* Stacked bar */}
-          <div className="mt-1 mb-3 h-3 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+          <div className="mt-1 mb-3 h-3 w-full overflow-hidden rounded-full bg-neutral-100">
             {regions.map((r) => (
               <div
                 key={r.key}
@@ -123,7 +123,7 @@ export default function RegionExposureChart({
           </div>
 
           {/* Legend with percentages */}
-          <ul className="space-y-1.5 text-xs sm:text-sm">
+          <ul className="space-y-1.5 text-sm">
             {regions.map((r) => (
               <li key={r.key} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -131,23 +131,23 @@ export default function RegionExposureChart({
                     className="h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: REGION_COLORS[r.key] }}
                   />
-                  <span className="font-medium text-zinc-800 dark:text-zinc-100">
+                  <span className="font-medium text-neutral-900">
                     {r.label}
                   </span>
                 </div>
-                <span className="tabular-nums text-zinc-600 dark:text-zinc-300">
+                <span className="tabular-nums text-neutral-700">
                   {r.value.toFixed(1).replace(/\.0$/, "")}%
                 </span>
               </li>
             ))}
           </ul>
 
-          <p className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+          <p className="mt-2 text-[11px] text-neutral-500">
             Based on the countries tagged in the ETF holdings data.
           </p>
         </>
       ) : (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-neutral-700">
           Add some ETFs above to see your regional split.
         </p>
       )}

@@ -648,7 +648,7 @@ const handleTryTopMix = (mixId: string) => {
   return (
     <div className="space-y-4">
       <div>
-        <div className="hidden md:flex items-center justify-between gap-3 text-xs sm:text-sm mb-3">
+        <div className="mb-3 hidden items-center justify-between gap-3 text-sm md:flex">
           <div className="flex flex-wrap items-center gap-2">
             {TAB_VIEWS.map((view) => (
               <button
@@ -660,7 +660,7 @@ const handleTryTopMix = (mixId: string) => {
                   trackSlideView(view.id);
                 }}
                 className={[
-                  "px-3 py-1.5 rounded-full text-xs font-medium transition",
+                  "rounded-full px-3 py-1.5 text-sm font-medium transition",
                   view.id === slide
                     ? "bg-neutral-900 text-white"
                     : "bg-transparent text-neutral-600 hover:bg-neutral-100",
@@ -714,7 +714,7 @@ const handleTryTopMix = (mixId: string) => {
                   {title}
                 </h2>
                 <MixLine positions={sanitizedPositions} />
-                <p className="text-xs text-neutral-600">
+                <p className="text-xs text-neutral-500">
                   Powered by WizardFolio
                 </p>
               </div>
@@ -726,13 +726,13 @@ const handleTryTopMix = (mixId: string) => {
               onTouchEnd={handleTouchEnd}
             >
               {isLoading && (
-                <div className="flex h-full items-center justify-center text-xs text-neutral-500">
+                <div className="flex h-full items-center justify-center text-sm text-neutral-700">
                   Crunching your ETF mix…
                 </div>
               )}
 
               {!isLoading && error && (
-                <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-xs text-rose-500">
+                <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-rose-500">
                   <p>{error}</p>
                   <button
                     type="button"
@@ -762,7 +762,7 @@ const handleTryTopMix = (mixId: string) => {
 
                   {slide === 4 && (
                     <div className="flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-4 text-left text-xs shadow-sm sm:text-sm">
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
                         Top loved mixes
                       </p>
                       <h3 className="mt-1 text-sm font-semibold text-neutral-900">
@@ -790,7 +790,7 @@ const handleTryTopMix = (mixId: string) => {
                         ))}
                       </div>
 
-                      <p className="mt-3 text-[10px] text-neutral-500">
+                      <p className="mt-3 text-[11px] text-neutral-500">
                         We’ll reload WizardFolio with your chosen mix prefilled so you can see its
                         true exposure in one tap.
                       </p>
@@ -829,13 +829,13 @@ const handleTryTopMix = (mixId: string) => {
     </div>
 
     {hasValidPositions && (
-      <section className="rounded-3xl border border-zinc-200 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900/80">
+      <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-sm transition hover:shadow-md">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-400">
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
               Personalization
             </p>
-            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+            <h3 className="text-base font-semibold text-neutral-900">
               Save this mix to your dashboard
             </h3>
           </div>
@@ -843,7 +843,7 @@ const handleTryTopMix = (mixId: string) => {
             type="button"
             onClick={handleSaveClick}
             disabled={isSaving}
-            className="rounded-full border border-transparent bg-blue-600 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
+            className="rounded-full border border-transparent bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
           >
             Save this mix
           </button>
@@ -851,7 +851,7 @@ const handleTryTopMix = (mixId: string) => {
 
         {showSaveForm && (
           <form onSubmit={handleSaveSubmit} className="mt-4 space-y-3">
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
+            <label className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
               Mix name
               <input
                 type="text"
@@ -859,21 +859,21 @@ const handleTryTopMix = (mixId: string) => {
                 onChange={(event) => setSaveName(event.target.value)}
                 placeholder="My saved mix"
                 maxLength={SAVED_MIX_NAME_MAX_LENGTH}
-                className="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-neutral-900 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+                className="mt-2 w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
               />
             </label>
             <div className="flex flex-wrap gap-2">
               <button
                 type="submit"
                 disabled={!isSaveNameValid || isSaving}
-                className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSaving ? "Saving…" : "Save mix"}
               </button>
               <button
                 type="button"
                 onClick={() => setShowSaveForm(false)}
-                className="inline-flex items-center justify-center rounded-2xl border border-zinc-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-700 transition hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-200 dark:hover:border-zinc-500"
+                className="inline-flex items-center justify-center rounded-2xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:border-neutral-300"
               >
                 Cancel
               </button>
@@ -883,7 +883,7 @@ const handleTryTopMix = (mixId: string) => {
 
         {statusMessage && (
           <p
-            className={`mt-3 text-xs ${
+            className={`mt-3 text-sm ${
               statusMessage.type === "success"
                 ? "text-emerald-600"
                 : "text-rose-500"
@@ -912,37 +912,37 @@ const handleTryTopMix = (mixId: string) => {
       />
     )}
 
-      <section className="rounded-3xl border border-zinc-200 bg-white/90 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
+      <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+          <h3 className="text-base font-semibold text-neutral-900">
             Your mix
           </h3>
           <button
             type="button"
             onClick={handleEditInputs}
-            className="text-[11px] font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+            className="text-sm font-medium text-neutral-700 underline-offset-2 hover:text-neutral-900 hover:underline"
           >
             Edit inputs
           </button>
         </div>
 
-        <ul className="divide-y divide-zinc-100 text-xs dark:divide-zinc-800 sm:text-sm">
+        <ul className="divide-y divide-neutral-100 text-sm">
           {positions.map((pos, idx) => (
             <li
               key={`${pos.symbol}-${idx}`}
               className="flex items-center justify-between py-1.5"
             >
-              <span className="font-medium text-zinc-800 dark:text-zinc-100">
+              <span className="font-medium text-neutral-900">
                 {pos.symbol || "—"}
               </span>
-              <span className="tabular-nums text-zinc-600 dark:text-zinc-300">
+              <span className="tabular-nums text-neutral-700">
                 {(pos.weightPct ?? 0).toFixed(1).replace(/\.0$/, "")}%
               </span>
             </li>
           ))}
         </ul>
 
-        <p className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+        <p className="mt-2 text-[11px] text-neutral-500">
           Based on the mix you entered on the previous step.
         </p>
       </section>
