@@ -11,6 +11,7 @@ import {
   DEFAULT_SAVED_MIX_NAME,
   SAVED_MIX_NAME_ERROR_MESSAGE,
   SAVED_MIX_NAME_MAX_LENGTH,
+  SAVED_MIX_NAME_REQUIRED_MESSAGE,
   type SavedMix,
 } from "@/lib/savedMixes";
 import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
@@ -102,6 +103,8 @@ export default function DashboardPageClient() {
   const [renameValue, setRenameValue] = useState("");
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
+  const trimmedRenameValue = renameValue.trim();
+  const isRenameValueValid = trimmedRenameValue.length > 0;
   const [deleteTarget, setDeleteTarget] = useState<SavedMix | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -256,13 +259,17 @@ export default function DashboardPageClient() {
     }
 
     setRenameError(null);
-    const trimmed = renameValue.trim();
-    if (trimmed.length > SAVED_MIX_NAME_MAX_LENGTH) {
+    const trimmedName = renameValue.trim();
+    if (!trimmedName) {
+      setRenameError(SAVED_MIX_NAME_REQUIRED_MESSAGE);
+      return;
+    }
+
+    if (trimmedName.length > SAVED_MIX_NAME_MAX_LENGTH) {
       setRenameError(SAVED_MIX_NAME_ERROR_MESSAGE);
       return;
     }
 
-    const updatedName = trimmed || DEFAULT_SAVED_MIX_NAME;
     setIsRenaming(true);
     setActionLoadingId(renameTarget.id);
     setActionStatus(null);
@@ -273,7 +280,7 @@ export default function DashboardPageClient() {
         method: "PATCH",
         headers,
         credentials: "same-origin",
-        body: JSON.stringify({ id: renameTarget.id, name: updatedName }),
+        body: JSON.stringify({ id: renameTarget.id, name: trimmedName }),
       });
 
       const payload = (await response
@@ -558,6 +565,11 @@ export default function DashboardPageClient() {
               className="mt-2 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-neutral-900 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
             />
           </label>
+          {!renameError && !isRenameValueValid && renameValue.length > 0 && (
+            <p className="text-xs text-rose-500">
+              {SAVED_MIX_NAME_REQUIRED_MESSAGE}
+            </p>
+          )}
           {renameError && (
             <p className="text-sm text-rose-500">{renameError}</p>
           )}
@@ -572,8 +584,8 @@ export default function DashboardPageClient() {
             </button>
             <button
               type="submit"
-              disabled={isRenaming}
-              className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
+              disabled={!isRenameValueValid || isRenaming}
+              className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isRenaming ? "Saving…" : "Save name"}
             </button>

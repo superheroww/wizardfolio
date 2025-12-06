@@ -4,6 +4,7 @@ import {
   DEFAULT_SAVED_MIX_NAME,
   SAVED_MIX_NAME_ERROR_MESSAGE,
   SAVED_MIX_NAME_MAX_LENGTH,
+  SAVED_MIX_NAME_REQUIRED_MESSAGE,
   type SavedMix,
 } from "@/lib/savedMixes";
 import type { UserPosition } from "@/lib/exposureEngine";
@@ -58,17 +59,34 @@ function createSupabaseClientWithToken(token: string) {
   });
 }
 
-function validateMixName(name?: string | null) {
-  const trimmed = typeof name === "string" ? name.trim() : "";
-  if (!trimmed) {
+type ValidateMixNameOptions = {
+  allowFallback?: boolean;
+};
+
+function validateMixName(
+  name?: string | null,
+  options: ValidateMixNameOptions = {},
+) {
+  const trimmed =
+    typeof name === "string" ? name.trim() : undefined;
+
+  if (typeof name === "string") {
+    if (!trimmed) {
+      return { error: SAVED_MIX_NAME_REQUIRED_MESSAGE };
+    }
+
+    if (trimmed.length > SAVED_MIX_NAME_MAX_LENGTH) {
+      return { error: SAVED_MIX_NAME_ERROR_MESSAGE };
+    }
+
+    return { value: trimmed };
+  }
+
+  if (options.allowFallback) {
     return { value: DEFAULT_SAVED_MIX_NAME };
   }
 
-  if (trimmed.length > SAVED_MIX_NAME_MAX_LENGTH) {
-    return { error: SAVED_MIX_NAME_ERROR_MESSAGE };
-  }
-
-  return { value: trimmed };
+  return { error: SAVED_MIX_NAME_REQUIRED_MESSAGE };
 }
 
 export const runtime = "nodejs";
@@ -122,7 +140,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const nameValidation = validateMixName(payload.name ?? null);
+  const nameValidation = validateMixName(payload.name ?? null, {
+    allowFallback: true,
+  });
   if (nameValidation.error) {
     return NextResponse.json(
       { ok: false, error: nameValidation.error },

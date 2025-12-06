@@ -41,6 +41,7 @@ import {
   DEFAULT_SAVED_MIX_NAME,
   SAVED_MIX_NAME_ERROR_MESSAGE,
   SAVED_MIX_NAME_MAX_LENGTH,
+  SAVED_MIX_NAME_REQUIRED_MESSAGE,
 } from "@/lib/savedMixes";
 
 type SlideIndex = 0 | 1 | 2 | 3 | 4;
@@ -207,6 +208,8 @@ export default function ResultsPageClient({
   const [statusMessage, setStatusMessage] = useState<
     { type: "success" | "error"; message: string } | null
   >(null);
+  const trimmedSaveName = saveName.trim();
+  const isSaveNameValid = trimmedSaveName.length > 0;
 
   useEffect(() => {
     if (!showSaveForm) {
@@ -297,6 +300,13 @@ export default function ResultsPageClient({
 
     setStatusMessage(null);
     const trimmedName = saveName.trim();
+    if (!trimmedName) {
+      setStatusMessage({
+        type: "error",
+        message: SAVED_MIX_NAME_REQUIRED_MESSAGE,
+      });
+      return;
+    }
     if (trimmedName.length > SAVED_MIX_NAME_MAX_LENGTH) {
       setStatusMessage({
         type: "error",
@@ -304,7 +314,6 @@ export default function ResultsPageClient({
       });
       return;
     }
-    const payloadName = trimmedName || DEFAULT_SAVED_MIX_NAME;
     setIsSaving(true);
 
     try {
@@ -324,7 +333,7 @@ export default function ResultsPageClient({
         headers,
         credentials: "same-origin",
         body: JSON.stringify({
-          name: payloadName,
+          name: trimmedName,
           positions: sanitizedPositions,
         }),
       });
@@ -343,7 +352,7 @@ export default function ResultsPageClient({
       });
       setShowSaveForm(false);
       capture("mix_saved", {
-        mix_name: payloadName,
+        mix_name: trimmedName,
         positions_count: positionsCount,
       });
     } catch (error: any) {
@@ -856,8 +865,8 @@ const handleTryTopMix = (mixId: string) => {
             <div className="flex flex-wrap gap-2">
               <button
                 type="submit"
-                disabled={isSaving}
-                className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
+                disabled={!isSaveNameValid || isSaving}
+                className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isSaving ? "Saving…" : "Save mix"}
               </button>
