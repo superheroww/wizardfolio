@@ -36,6 +36,7 @@ import {
 import type { MixComparisonResult } from "@/lib/benchmarkEngine";
 import { formatMixSummary } from "@/lib/mixFormatting";
 import { getBenchmarkLabel } from "@/lib/benchmarkUtils";
+import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
 
 type SlideIndex = 0 | 1 | 2 | 3 | 4;
 
@@ -292,9 +293,20 @@ export default function ResultsPageClient({
     setStatusMessage(null);
 
     try {
+      const { data: sessionData } =
+        await getSupabaseBrowserClient().auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
+
       const response = await fetch("/api/saved-mixes", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         credentials: "same-origin",
         body: JSON.stringify({
           name: payloadName,

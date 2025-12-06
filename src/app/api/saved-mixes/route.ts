@@ -74,20 +74,42 @@ async function createAuthenticatedSupabaseClient() {
   });
 }
 
-async function getAuthenticatedUser() {
+async function getAuthenticatedUser(req: NextRequest) {
   const supabase = await createAuthenticatedSupabaseClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const authorization = req.headers.get("authorization");
+  const token =
+    authorization && authorization.toLowerCase().startsWith("bearer ")
+      ? authorization.slice(7).trim()
+      : undefined;
 
-  return { supabase, user, error };
+  if (token) {
+    const { data: tokenData, error: tokenError } = await supabase.auth.getUser(
+      token,
+    );
+
+    if (tokenError) {
+      console.error("[saved-mixes] token auth error", tokenError);
+    }
+
+    if (tokenData?.user?.id) {
+      return { supabase, user: tokenData.user, error: tokenError };
+    }
+  }
+
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+
+  return { supabase, user: session?.user ?? null, error };
 }
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  const { supabase, user, error: userError } = await getAuthenticatedUser();
+  const { supabase, user, error: userError } = await getAuthenticatedUser(
+    req,
+  );
 
   if (userError || !user) {
     console.error("[saved-mixes] auth error", userError);
@@ -138,8 +160,10 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true, mix: savedMix });
 }
 
-export async function GET() {
-  const { supabase, user, error: userError } = await getAuthenticatedUser();
+export async function GET(req: NextRequest) {
+  const { supabase, user, error: userError } = await getAuthenticatedUser(
+    req,
+  );
 
   if (userError || !user) {
     console.error("[saved-mixes] auth error", userError);
