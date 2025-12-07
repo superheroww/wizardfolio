@@ -274,32 +274,29 @@ export default function CompareSelectorModal({
             </button>
           </div>
 
-          {/* Tabs */}
-          <div className="flex border-b border-neutral-200 bg-white px-2">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => handleTabClick(tab.id)}
-                className={`flex-1 min-h-[48px] px-3 py-3 text-center text-sm font-semibold transition ${
-                  tab.id === activeTab
-                    ? "text-blue-600"
-                    : "text-neutral-500 hover:text-neutral-700"
-                }`}
-              >
-                {tab.label}
-                <span
-                  className={`mt-2 block h-1 rounded-full bg-blue-600 transition-all ${
-                    tab.id === activeTab ? "opacity-100" : "opacity-0"
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
+          <div className="flex-1 px-5 py-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-2 rounded-2xl bg-neutral-50 p-1">
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => handleTabClick(tab.id)}
+                    className={`flex-1 rounded-2xl px-3 py-2 text-center text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 ${
+                      tab.id === activeTab
+                        ? "bg-white text-blue-600 shadow"
+                        : "text-neutral-500 hover:text-neutral-700"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
 
-          {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto px-5 py-4">
-            {tabContent()}
+              <div className="min-h-[260px] max-h-[360px] overflow-y-auto rounded-2xl border border-neutral-100 bg-white/80 px-3 py-3">
+                {tabContent()}
+              </div>
+            </div>
           </div>
         </div>
       </div>

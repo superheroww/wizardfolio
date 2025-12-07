@@ -1,4 +1,4 @@
-"import type { UserPosition } from "@/lib/exposureEngine";
+import type { UserPosition } from "@/lib/exposureEngine";
 
 export type CompareSavedMix = {
   id: string;
