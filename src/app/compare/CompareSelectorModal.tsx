@@ -86,6 +86,20 @@ export default function CompareSelectorModal({
     onClose();
   };
 
+  const handleTabClick = (tabId: CompareSelectorTabId) => {
+    if (tabId === "scratch") {
+      handleSelect({
+        id: "scratch",
+        label: "Start from scratch",
+        positions: [],
+        source: "scratch",
+      });
+      return;
+    }
+
+    onTabChange(tabId);
+  };
+
   const savedMixesContent = useMemo(() => {
     if (!savedMixes.length) {
       return (
@@ -162,31 +176,6 @@ export default function CompareSelectorModal({
     </div>
   );
 
-  const renderScratch = () => (
-    <div>
-      <button
-        type="button"
-        onClick={() =>
-          handleSelect({
-            id: "scratch",
-            label: "Start from scratch",
-            positions: [],
-            source: "scratch",
-          })
-        }
-        className="w-full rounded-3xl border border-dashed border-neutral-300 bg-white/90 px-5 py-6 text-left shadow-sm transition hover:border-blue-500/50 hover:shadow-lg"
-      >
-        <p className="text-sm font-semibold text-neutral-900">
-          Start from scratch
-        </p>
-        <p className="mt-2 text-sm text-neutral-600">
-          Build a mix from zero and compare it instantly once the second slot is
-          ready.
-        </p>
-      </button>
-    </div>
-  );
-
   const renderTemplates = () => (
     <div className="grid gap-3">
       {quickStartTemplates.map((template) => (
@@ -228,8 +217,6 @@ export default function CompareSelectorModal({
         return savedMixesContent;
       case "benchmarks":
         return renderBenchmarks();
-      case "scratch":
-        return renderScratch();
       case "templates":
         return renderTemplates();
       default:
@@ -293,7 +280,7 @@ export default function CompareSelectorModal({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => onTabChange(tab.id)}
+                onClick={() => handleTabClick(tab.id)}
                 className={`flex-1 min-h-[48px] px-3 py-3 text-center text-sm font-semibold transition ${
                   tab.id === activeTab
                     ? "text-blue-600"

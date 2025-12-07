@@ -13,6 +13,7 @@ type MixPositionsEditorProps = {
 };
 
 const DEFAULT_MAX_ASSETS = 5;
+const TOTAL_WEIGHT_TOLERANCE = 0.0001;
 
 export default function MixPositionsEditor({
   positions,
@@ -22,6 +23,16 @@ export default function MixPositionsEditor({
 }: MixPositionsEditorProps) {
   const canAddMore = positions.length < maxAssets;
   const lastWeightByRow = useRef<Record<number, number>>({});
+
+  const getTotalWeight = useCallback(
+    (list: UserPosition[]) =>
+      list.reduce(
+        (sum, position) =>
+          sum + (Number.isFinite(position.weightPct) ? position.weightPct : 0),
+        0,
+      ),
+    [],
+  );
 
   useEffect(() => {
     positions.forEach((position, index) => {
@@ -40,27 +51,38 @@ export default function MixPositionsEditor({
 
   const updatePosition = useCallback(
     (index: number, patch: Partial<UserPosition>) => {
-      const next = positions.map((position, i) =>
+      const patched = positions.map((position, i) =>
         i === index ? { ...position, ...patch } : position,
       );
 
-      onChange(next);
+      const row = patched[index];
+      const rowIsComplete = row.symbol.trim() !== "" && row.weightPct > 0;
 
-      const row = next[index];
-      const rowIsComplete =
-        row.symbol.trim() !== "" && row.weightPct > 0;
-
-      const lastRow = next[next.length - 1];
+      const lastRow = patched[patched.length - 1];
       const lastRowIsEmpty =
         lastRow?.symbol.trim() === "" && (lastRow?.weightPct ?? 0) === 0;
 
-      const canAutoAdd = next.length < maxAssets;
+      const canAutoAdd = patched.length < maxAssets;
+      const totalWeight = getTotalWeight(patched);
+      const withinCapacity =
+        totalWeight <
+        100 - TOTAL_WEIGHT_TOLERANCE;
 
-      if (rowIsComplete && !lastRowIsEmpty && canAutoAdd) {
-        onChange([...next, { symbol: "", weightPct: 0 }]);
+      let nextPositions = patched;
+
+      if (rowIsComplete && !lastRowIsEmpty && canAutoAdd && withinCapacity) {
+        nextPositions = [...patched, { symbol: "", weightPct: 0 }];
+      } else if (
+        !withinCapacity &&
+        lastRowIsEmpty &&
+        patched.length > 1
+      ) {
+        nextPositions = patched.slice(0, -1);
       }
+
+      onChange(nextPositions);
     },
-    [positions, onChange, maxAssets],
+    [positions, onChange, maxAssets, getTotalWeight],
   );
 
   const handleSymbolCommit = useCallback(
