@@ -322,6 +322,7 @@ export async function GET(req: NextRequest) {
                 >
                   <div
                     style={{
+                      display: "flex",
                       width: 12,
                       height: 12,
                       borderRadius: "50%",
@@ -364,6 +365,7 @@ export async function GET(req: NextRequest) {
               width: "70%",
               height: 1,
               backgroundColor: "rgba(15,23,42,0.08)",
+              display: "flex",
               margin: "4px 0 18px",
             }}
           />
@@ -449,6 +451,9 @@ export async function GET(req: NextRequest) {
           <div
             style={{
               marginTop: 42,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <span
