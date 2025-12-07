@@ -24,16 +24,6 @@ export default function MixPositionsEditor({
   const canAddMore = positions.length < maxAssets;
   const lastWeightByRow = useRef<Record<number, number>>({});
 
-  const getTotalWeight = useCallback(
-    (list: UserPosition[]) =>
-      list.reduce(
-        (sum, position) =>
-          sum + (Number.isFinite(position.weightPct) ? position.weightPct : 0),
-        0,
-      ),
-    [],
-  );
-
   useEffect(() => {
     positions.forEach((position, index) => {
       if (lastWeightByRow.current[index] === undefined) {
@@ -62,8 +52,12 @@ export default function MixPositionsEditor({
       const lastRowIsEmpty =
         lastRow?.symbol.trim() === "" && (lastRow?.weightPct ?? 0) === 0;
 
+      const totalWeight = patched.reduce(
+        (sum, position) =>
+          sum + (Number.isFinite(position.weightPct) ? position.weightPct : 0),
+        0,
+      );
       const canAutoAdd = patched.length < maxAssets;
-      const totalWeight = getTotalWeight(patched);
       const withinCapacity =
         totalWeight <
         100 - TOTAL_WEIGHT_TOLERANCE;
@@ -82,7 +76,7 @@ export default function MixPositionsEditor({
 
       onChange(nextPositions);
     },
-    [positions, onChange, maxAssets, getTotalWeight],
+    [positions, onChange, maxAssets],
   );
 
   const handleSymbolCommit = useCallback(

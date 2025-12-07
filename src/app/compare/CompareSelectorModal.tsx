@@ -13,7 +13,7 @@ import type { QuickStartTemplate } from "@/components/QuickStartTemplates";
 const TABS: { id: CompareSelectorTabId; label: string }[] = [
   { id: "your-mixes", label: "Your Mixes" },
   { id: "benchmarks", label: "Benchmarks" },
-  { id: "scratch", label: "Start From Scratch" },
+  { id: "scratch", label: "Custom mix" },
   { id: "templates", label: "Templates" },
 ];
 
@@ -90,7 +90,7 @@ export default function CompareSelectorModal({
     if (tabId === "scratch") {
       handleSelect({
         id: "scratch",
-        label: "Start from scratch",
+        label: "Custom mix",
         positions: [],
         source: "scratch",
       });

@@ -13,7 +13,7 @@ const SOURCE_LABEL: Record<CompareSelectionSource, string> = {
   mixes: "Saved mix",
   benchmarks: "Benchmark",
   templates: "Template",
-  scratch: "Start from scratch",
+  scratch: "Custom mix",
 };
 
 type CompareSlotProps = {
