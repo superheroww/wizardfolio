@@ -60,6 +60,14 @@ export default function CompareLandingClient() {
     A: createEmptyExposureState(),
     B: createEmptyExposureState(),
   });
+  const [editingScratchSlot, setEditingScratchSlot] =
+    useState<CompareSlotId | null>(null);
+  const [scratchDraftPositions, setScratchDraftPositions] = useState<
+    Record<CompareSlotId, UserPosition[]>
+  >(() => ({
+    A: [{ symbol: "", weightPct: 0 }],
+    B: [{ symbol: "", weightPct: 0 }],
+  }));
   const exposureCacheRef = useRef(new Map<string, ApiExposureRow[]>());
 
   const defaultSelectorTab = useMemo<CompareSelectorTabId>(() => {
@@ -140,10 +148,34 @@ export default function CompareLandingClient() {
   };
 
   const handleModalSelect = (selection: CompareSelection) => {
+    if (selection.source === "scratch") {
+      const draftPositions = scratchDraftPositions[activeSlot];
+      setSelectedMixes((prev) => ({
+        ...prev,
+        [activeSlot]: {
+          ...selection,
+          positions:
+            draftPositions && draftPositions.length
+              ? draftPositions
+              : [{ symbol: "", weightPct: 0 }],
+        },
+      }));
+      setEditingScratchSlot(activeSlot);
+      capture("compare_slot_selected", {
+        slot: activeSlot,
+        source: selection.source,
+      });
+      setModalOpen(false);
+      return;
+    }
+
     setSelectedMixes((prev) => ({
       ...prev,
       [activeSlot]: selection,
     }));
+    if (editingScratchSlot === activeSlot) {
+      setEditingScratchSlot(null);
+    }
     capture("compare_slot_selected", {
       slot: activeSlot,
       source: selection.source,
@@ -234,6 +266,45 @@ export default function CompareLandingClient() {
     return handleExposureUpdate("B", selectedMixes.B);
   }, [selectedMixes.B]);
 
+  const handleChangeMixClick = (slot: CompareSlotId) => {
+    const current = selectedMixes[slot];
+    if (current?.source === "scratch") {
+      setEditingScratchSlot(slot);
+      return;
+    }
+
+    handleSlotClick(slot);
+  };
+
+  const handleScratchPositionsChange = (
+    slot: CompareSlotId,
+    positions: UserPosition[],
+  ) => {
+    setScratchDraftPositions((prev) => ({
+      ...prev,
+      [slot]: positions,
+    }));
+
+    setSelectedMixes((prev) => {
+      const current = prev[slot];
+      if (!current || current.source !== "scratch") {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [slot]: {
+          ...current,
+          positions,
+        },
+      };
+    });
+  };
+
+  const handleFinishScratchEditing = (slot: CompareSlotId) => {
+    setEditingScratchSlot((current) => (current === slot ? null : current));
+  };
+
   const readyToCompare = Boolean(selectedMixes.A && selectedMixes.B);
 
   return (
@@ -269,7 +340,14 @@ export default function CompareLandingClient() {
               <CompareSlot
                 slotId={slotId}
                 selection={selectedMixes[slotId]}
-                onRequestSelection={() => handleSlotClick(slotId)}
+                onSlotClick={() => handleSlotClick(slotId)}
+                onChangeMixClick={() => handleChangeMixClick(slotId)}
+                isEditingScratch={editingScratchSlot === slotId}
+                scratchPositions={scratchDraftPositions[slotId]}
+                onScratchPositionsChange={(positions) =>
+                  handleScratchPositionsChange(slotId, positions)
+                }
+                onScratchEditingDone={() => handleFinishScratchEditing(slotId)}
               />
             ) : (
               <LoginRequiredCard onSignIn={() => setAuthDialogOpen(true)} />
