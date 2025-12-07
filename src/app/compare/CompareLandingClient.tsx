@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AuthDialog } from "@/components/auth/AuthDialog";
 import CompareSlot from "./CompareSlot";
 import CompareSelectorModal from "./CompareSelectorModal";
-import CompareView from "./CompareView";
+import CompareResultsModal from "./CompareResultsModal";
 import LoginRequiredCard from "./LoginRequiredCard";
 import { usePostHogSafe } from "@/lib/usePostHogSafe";
 import type { ApiExposureRow, UserPosition } from "@/lib/exposureEngine";
@@ -62,6 +62,8 @@ export default function CompareLandingClient() {
     A: createEmptyExposureState(),
     B: createEmptyExposureState(),
   });
+  const [resultsMode, setResultsMode] = useState(false);
+  const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const exposureCacheRef = useRef(new Map<string, ApiExposureRow[]>());
 
   const defaultSelectorTab = useMemo<CompareSelectorTabId>(() => {
@@ -71,6 +73,11 @@ export default function CompareLandingClient() {
   useEffect(() => {
     capture("compare_opened");
   }, [capture]);
+
+  useEffect(() => {
+    setResultsMode(false);
+    setResultsModalOpen(false);
+  }, [selectedMixes.A, selectedMixes.B]);
 
   useEffect(() => {
     if (modalOpen) {
@@ -355,33 +362,61 @@ export default function CompareLandingClient() {
       </div>
 
       {isSignedIn ? (
-        bothReady ? (
-          <CompareView
-            mixA={{
-              selection: selectedMixes.A!,
-              exposures: slotExposures.A.exposures,
-              loading: slotExposures.A.loading,
-              error: slotExposures.A.error,
-            }}
-            mixB={{
-              selection: selectedMixes.B!,
-              exposures: slotExposures.B.exposures,
-              loading: slotExposures.B.loading,
-              error: slotExposures.B.error,
-            }}
-          />
-        ) : (
-          <div className="rounded-3xl border border-dashed border-neutral-200 bg-white/80 p-5 text-sm text-neutral-600 shadow-sm shadow-black/5">
-            <p>Select two mixes to reveal the comparison.</p>
-            {allocationHint ? (
-              <p className="mt-2 text-sm text-neutral-500">{allocationHint}</p>
-            ) : (
-              <p className="mt-2 text-sm text-neutral-500">
-                Tap any slot above to begin.
+        <>
+          {/* CTA Card: 3 states based on bothReady and resultsMode */}
+          {!bothReady ? (
+            <div className="rounded-3xl border border-neutral-200 bg-white/90 p-6 shadow-sm shadow-black/5">
+              <p className="text-base font-medium text-neutral-900">
+                Pick two mixes to compare
               </p>
-            )}
-          </div>
-        )
+              <p className="mt-2 text-sm text-neutral-600">
+                {allocationHint
+                  ? allocationHint
+                  : "Tap any slot above to begin."}
+              </p>
+              <button
+                disabled
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-400 cursor-not-allowed"
+              >
+                Compare these mixes
+              </button>
+            </div>
+          ) : !resultsMode ? (
+            <div className="rounded-3xl border border-neutral-200 bg-white/90 p-6 shadow-sm shadow-black/5">
+              <p className="text-base font-medium text-neutral-900">
+                Ready to compare
+              </p>
+              <p className="mt-2 text-sm text-neutral-600">
+                {slotStates.A.selection?.label} vs {slotStates.B.selection?.label}
+              </p>
+              <button
+                onClick={() => {
+                  setResultsMode(true);
+                  setResultsModalOpen(true);
+                  capture("compare_triggered");
+                }}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              >
+                Compare these mixes
+              </button>
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-neutral-200 bg-white/90 p-6 shadow-sm shadow-black/5">
+              <p className="text-base font-medium text-neutral-900">
+                Comparing
+              </p>
+              <p className="mt-2 text-sm text-neutral-600">
+                {slotStates.A.selection?.label} vs {slotStates.B.selection?.label}
+              </p>
+              <button
+                onClick={() => setResultsMode(false)}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-neutral-200 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-300 transition-colors"
+              >
+                Change mixes
+              </button>
+            </div>
+          )}
+        </>
       ) : null}
 
       {isSignedIn && (
@@ -395,6 +430,25 @@ export default function CompareLandingClient() {
           onClose={() => setModalOpen(false)}
           onTabChange={setSelectorTab}
           onSelect={handleModalSelect}
+        />
+      )}
+
+      {isSignedIn && bothReady && resultsMode && (
+        <CompareResultsModal
+          open={resultsModalOpen}
+          mixA={{
+            selection: selectedMixes.A!,
+            exposures: slotExposures.A.exposures,
+            loading: slotExposures.A.loading,
+            error: slotExposures.A.error,
+          }}
+          mixB={{
+            selection: selectedMixes.B!,
+            exposures: slotExposures.B.exposures,
+            loading: slotExposures.B.loading,
+            error: slotExposures.B.error,
+          }}
+          onClose={() => setResultsModalOpen(false)}
         />
       )}
 
