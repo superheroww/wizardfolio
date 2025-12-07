@@ -50,8 +50,10 @@ export default function CompareSelectorModal({
       const timer = window.setTimeout(() => {
         setIsRendered(false);
       }, 220);
+
       document.body.style.overflow = "";
       window.scrollTo(0, scrollPosition.current);
+
       return () => window.clearTimeout(timer);
     }
 
@@ -84,7 +86,7 @@ export default function CompareSelectorModal({
     onClose();
   };
 
-  const renderSavedMixes = useMemo(() => {
+  const savedMixesContent = useMemo(() => {
     if (!savedMixes.length) {
       return (
         <p className="max-w-sm text-sm text-neutral-600">
@@ -126,7 +128,7 @@ export default function CompareSelectorModal({
         ))}
       </div>
     );
-  }, [savedMixes]);
+  }, [savedMixes, handleSelect]);
 
   const renderBenchmarks = () => (
     <div className="space-y-3">
@@ -174,9 +176,12 @@ export default function CompareSelectorModal({
         }
         className="w-full rounded-3xl border border-dashed border-neutral-300 bg-white/90 px-5 py-6 text-left shadow-sm transition hover:border-blue-500/50 hover:shadow-lg"
       >
-        <p className="text-sm font-semibold text-neutral-900">Start from scratch</p>
+        <p className="text-sm font-semibold text-neutral-900">
+          Start from scratch
+        </p>
         <p className="mt-2 text-sm text-neutral-600">
-          Build a mix from zero and compare it instantly once the second slot is ready.
+          Build a mix from zero and compare it instantly once the second slot is
+          ready.
         </p>
       </button>
     </div>
@@ -209,7 +214,9 @@ export default function CompareSelectorModal({
               Template
             </span>
           </div>
-          <p className="mt-1 text-sm text-neutral-500">{template.description}</p>
+          <p className="mt-1 text-sm text-neutral-500">
+            {template.description}
+          </p>
         </button>
       ))}
     </div>
@@ -218,7 +225,7 @@ export default function CompareSelectorModal({
   const tabContent = () => {
     switch (activeTab) {
       case "your-mixes":
-        return renderSavedMixes;
+        return savedMixesContent;
       case "benchmarks":
         return renderBenchmarks();
       case "scratch":
@@ -230,17 +237,16 @@ export default function CompareSelectorModal({
     }
   };
 
-  if (!isRendered) {
-    return null;
-  }
+  if (!isRendered) return null;
 
   return (
     <div
       aria-hidden={!open}
-      className={`fixed inset-0 z-50 flex items-end justify-center px-4 ${
+      className={`fixed inset-0 z-50 flex px-4 ${
         isVisible ? "pointer-events-auto" : "pointer-events-none"
-      }`}
+      } items-end sm:items-center justify-center`}
     >
+      {/* Backdrop */}
       <div
         className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
           isVisible ? "opacity-100" : "opacity-0"
@@ -248,16 +254,18 @@ export default function CompareSelectorModal({
         onClick={onClose}
       />
 
+      {/* Panel */}
       <div
         aria-modal="true"
         aria-labelledby="compare-selector-title"
         role="dialog"
-        className={`relative w-full max-w-3xl rounded-t-3xl bg-white shadow-2xl transition-transform duration-200 ${
+        className={`relative z-10 w-full max-w-lg transition-transform duration-200 ${
           isVisible ? "translate-y-0" : "translate-y-full"
         }`}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex h-full max-h-[85vh] flex-col overflow-hidden rounded-t-3xl bg-white">
+        <div className="flex h-[80vh] sm:h-auto sm:max-h-[80vh] flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+          {/* Header */}
           <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-neutral-500">
@@ -279,6 +287,7 @@ export default function CompareSelectorModal({
             </button>
           </div>
 
+          {/* Tabs */}
           <div className="flex border-b border-neutral-200 bg-white px-2">
             {TABS.map((tab) => (
               <button
@@ -301,6 +310,7 @@ export default function CompareSelectorModal({
             ))}
           </div>
 
+          {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto px-5 py-4">
             {tabContent()}
           </div>
