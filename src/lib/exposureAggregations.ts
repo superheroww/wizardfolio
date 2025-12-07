@@ -3,16 +3,22 @@ import type { ApiExposureRow } from "@/lib/exposureEngine";
 export type SectorSlice = {
   sector: string;
   weightPct: number;
+  normalizedWeightPct: number;
 };
 
 export type RegionSlice = {
   region: string;
   weightPct: number;
+  normalizedWeightPct: number;
+};
+
+export type HoldingSlice = ApiExposureRow & {
+  normalized_total_weight_pct: number;
 };
 
 export function aggregateHoldingsBySymbol(
   exposure: ApiExposureRow[],
-): ApiExposureRow[] {
+): HoldingSlice[] {
   const holdings = new Map<string, ApiExposureRow>();
 
   for (const row of exposure ?? []) {
@@ -37,7 +43,24 @@ export function aggregateHoldingsBySymbol(
     }
   }
 
-  return Array.from(holdings.values());
+  const slices = Array.from(holdings.values());
+  const totalWeight = slices.reduce(
+    (sum, slice) => sum + (slice.total_weight_pct ?? 0),
+    0,
+  );
+
+  if (totalWeight <= 0) {
+    return slices.map((slice) => ({
+      ...slice,
+      normalized_total_weight_pct: 0,
+    }));
+  }
+
+  return slices.map((slice) => ({
+    ...slice,
+    normalized_total_weight_pct:
+      ((slice.total_weight_pct ?? 0) / totalWeight) * 100,
+  }));
 }
 
 export function aggregateBySector(exposure: ApiExposureRow[]): SectorSlice[] {
@@ -49,10 +72,27 @@ export function aggregateBySector(exposure: ApiExposureRow[]): SectorSlice[] {
     totals.set(key, prev + row.total_weight_pct);
   }
 
-  return Array.from(totals.entries())
+  const slices = Array.from(totals.entries())
     .map(([sector, weightPct]) => ({ sector, weightPct }))
     .filter((s) => s.weightPct > 0.1)
     .sort((a, b) => b.weightPct - a.weightPct);
+
+  const totalWeight = slices.reduce(
+    (sum, slice) => sum + slice.weightPct,
+    0,
+  );
+
+  if (totalWeight <= 0) {
+    return slices.map((slice) => ({
+      ...slice,
+      normalizedWeightPct: 0,
+    }));
+  }
+
+  return slices.map((slice) => ({
+    ...slice,
+    normalizedWeightPct: (slice.weightPct / totalWeight) * 100,
+  }));
 }
 
 export function aggregateByRegion(exposure: ApiExposureRow[]): RegionSlice[] {
@@ -64,8 +104,25 @@ export function aggregateByRegion(exposure: ApiExposureRow[]): RegionSlice[] {
     totals.set(key, prev + row.total_weight_pct);
   }
 
-  return Array.from(totals.entries())
+  const slices = Array.from(totals.entries())
     .map(([region, weightPct]) => ({ region, weightPct }))
     .filter((r) => r.weightPct > 0.1)
     .sort((a, b) => b.weightPct - a.weightPct);
+
+  const totalWeight = slices.reduce(
+    (sum, slice) => sum + slice.weightPct,
+    0,
+  );
+
+  if (totalWeight <= 0) {
+    return slices.map((slice) => ({
+      ...slice,
+      normalizedWeightPct: 0,
+    }));
+  }
+
+  return slices.map((slice) => ({
+    ...slice,
+    normalizedWeightPct: (slice.weightPct / totalWeight) * 100,
+  }));
 }

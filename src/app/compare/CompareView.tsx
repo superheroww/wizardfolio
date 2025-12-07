@@ -48,6 +48,17 @@ const formatPercent = (value: number | undefined | null) => {
   return `${value.toFixed(1)}%`;
 };
 
+const NORMALIZATION_NOTE =
+  "Based on the largest holdings we have for each ETF, normalized to 100% for this comparison. Smaller positions in the fund may not be included in this view.";
+
+function NormalizationCaption() {
+  return (
+    <p className="mt-2 text-[11px] leading-snug text-neutral-400">
+      {NORMALIZATION_NOTE}
+    </p>
+  );
+}
+
 export default function CompareView({ mixA, mixB }: CompareViewProps) {
   const [activeTab, setActiveTab] = useState<CompareViewTab>("regions");
   const { capture } = usePostHogSafe();
@@ -133,47 +144,60 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
     ]);
 
     const regions = Array.from(regionSet);
+    const aLookup = new Map(
+      aSlices.map((slice) => [
+        slice.region,
+        slice.normalizedWeightPct ?? slice.weightPct,
+      ]),
+    );
+    const bLookup = new Map(
+      bSlices.map((slice) => [
+        slice.region,
+        slice.normalizedWeightPct ?? slice.weightPct,
+      ]),
+    );
+
     const getRegionScore = (region: string) => {
-      const aWeight = aSlices.find((s) => s.region === region)?.weightPct ?? 0;
-      const bWeight = bSlices.find((s) => s.region === region)?.weightPct ?? 0;
+      const aWeight = aLookup.get(region) ?? 0;
+      const bWeight = bLookup.get(region) ?? 0;
       return Math.max(aWeight, bWeight);
     };
     regions.sort((r1, r2) => getRegionScore(r2) - getRegionScore(r1));
 
-    const aLookup = new Map(aSlices.map((slice) => [slice.region, slice.weightPct]));
-    const bLookup = new Map(bSlices.map((slice) => [slice.region, slice.weightPct]));
-
     return (
-      <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white/80">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-neutral-50/80">
-            <tr>
-              <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Region
-              </th>
-              <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Mix A
-              </th>
-              <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Mix B
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {regions.map((region) => (
-              <tr key={region} className="border-t border-neutral-100">
-                <td className="px-4 py-2 text-sm text-neutral-900">{region}</td>
-                <td className="px-4 py-2 text-sm text-neutral-700">
-                  {formatPercent(aLookup.get(region))}
-                </td>
-                <td className="px-4 py-2 text-sm text-neutral-700">
-                  {formatPercent(bLookup.get(region))}
-                </td>
+      <>
+        <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white/80">
+          <table className="min-w-full text-left text-sm">
+            <thead className="bg-neutral-50/80">
+              <tr>
+                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Region
+                </th>
+                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Mix A
+                </th>
+                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Mix B
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {regions.map((region) => (
+                <tr key={region} className="border-t border-neutral-100">
+                  <td className="px-4 py-2 text-sm text-neutral-900">{region}</td>
+                  <td className="px-4 py-2 text-sm text-neutral-700">
+                    {formatPercent(aLookup.get(region))}
+                  </td>
+                  <td className="px-4 py-2 text-sm text-neutral-700">
+                    {formatPercent(bLookup.get(region))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <NormalizationCaption />
+      </>
     );
   };
 
@@ -195,47 +219,60 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
     ]);
 
     const sectors = Array.from(sectorSet);
+    const aLookup = new Map(
+      aSlices.map((slice) => [
+        slice.sector,
+        slice.normalizedWeightPct ?? slice.weightPct,
+      ]),
+    );
+    const bLookup = new Map(
+      bSlices.map((slice) => [
+        slice.sector,
+        slice.normalizedWeightPct ?? slice.weightPct,
+      ]),
+    );
+
     const getSectorScore = (sector: string) => {
-      const aWeight = aSlices.find((s) => s.sector === sector)?.weightPct ?? 0;
-      const bWeight = bSlices.find((s) => s.sector === sector)?.weightPct ?? 0;
+      const aWeight = aLookup.get(sector) ?? 0;
+      const bWeight = bLookup.get(sector) ?? 0;
       return Math.max(aWeight, bWeight);
     };
     sectors.sort((s1, s2) => getSectorScore(s2) - getSectorScore(s1));
 
-    const aLookup = new Map(aSlices.map((slice) => [slice.sector, slice.weightPct]));
-    const bLookup = new Map(bSlices.map((slice) => [slice.sector, slice.weightPct]));
-
     return (
-      <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white/80">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-neutral-50/80">
-            <tr>
-              <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Sector
-              </th>
-              <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Mix A
-              </th>
-              <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Mix B
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {sectors.map((sector) => (
-              <tr key={sector} className="border-t border-neutral-100">
-                <td className="px-4 py-2 text-sm text-neutral-900">{sector}</td>
-                <td className="px-4 py-2 text-sm text-neutral-700">
-                  {formatPercent(aLookup.get(sector))}
-                </td>
-                <td className="px-4 py-2 text-sm text-neutral-700">
-                  {formatPercent(bLookup.get(sector))}
-                </td>
+      <>
+        <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white/80">
+          <table className="min-w-full text-left text-sm">
+            <thead className="bg-neutral-50/80">
+              <tr>
+                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Sector
+                </th>
+                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Mix A
+                </th>
+                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Mix B
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {sectors.map((sector) => (
+                <tr key={sector} className="border-t border-neutral-100">
+                  <td className="px-4 py-2 text-sm text-neutral-900">{sector}</td>
+                  <td className="px-4 py-2 text-sm text-neutral-700">
+                    {formatPercent(aLookup.get(sector))}
+                  </td>
+                  <td className="px-4 py-2 text-sm text-neutral-700">
+                    {formatPercent(bLookup.get(sector))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <NormalizationCaption />
+      </>
     );
   };
 
@@ -257,68 +294,63 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
     ]);
 
     const symbols = Array.from(symbolSet).filter(Boolean);
-    symbols.sort((s1, s2) => {
-      const a1 =
-        aHoldings.find((holding) => holding.holding_symbol === s1)
-          ?.total_weight_pct ?? 0;
-      const b1 =
-        bHoldings.find((holding) => holding.holding_symbol === s1)
-          ?.total_weight_pct ?? 0;
-      const a2 =
-        aHoldings.find((holding) => holding.holding_symbol === s2)
-          ?.total_weight_pct ?? 0;
-      const b2 =
-        bHoldings.find((holding) => holding.holding_symbol === s2)
-          ?.total_weight_pct ?? 0;
-      return Math.max(b2, a2) - Math.max(b1, a1);
-    });
-
-    const trimmedSymbols = symbols.slice(0, 5);
-
     const aLookup = new Map(
       aHoldings.map((holding) => [
         holding.holding_symbol,
-        holding.total_weight_pct,
+        holding.normalized_total_weight_pct ?? holding.total_weight_pct ?? 0,
       ]),
     );
     const bLookup = new Map(
       bHoldings.map((holding) => [
         holding.holding_symbol,
-        holding.total_weight_pct,
+        holding.normalized_total_weight_pct ?? holding.total_weight_pct ?? 0,
       ]),
     );
 
+    const getHoldingScore = (symbol: string) => {
+      const aWeight = aLookup.get(symbol) ?? 0;
+      const bWeight = bLookup.get(symbol) ?? 0;
+      return Math.max(aWeight, bWeight);
+    };
+
+    symbols.sort((s1, s2) => getHoldingScore(s2) - getHoldingScore(s1));
+
+    const trimmedSymbols = symbols.slice(0, 5);
+
     return (
-      <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white/80">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-neutral-50/80">
-            <tr>
-              <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Holding
-              </th>
-              <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Mix A
-              </th>
-              <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Mix B
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {trimmedSymbols.map((symbol) => (
-              <tr key={symbol} className="border-t border-neutral-100">
-                <td className="px-4 py-2 text-sm text-neutral-900">{symbol}</td>
-                <td className="px-4 py-2 text-sm text-neutral-700">
-                  {formatPercent(aLookup.get(symbol))}
-                </td>
-                <td className="px-4 py-2 text-sm text-neutral-700">
-                  {formatPercent(bLookup.get(symbol))}
-                </td>
+      <>
+        <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white/80">
+          <table className="min-w-full text-left text-sm">
+            <thead className="bg-neutral-50/80">
+              <tr>
+                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Holding
+                </th>
+                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Mix A
+                </th>
+                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Mix B
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {trimmedSymbols.map((symbol) => (
+                <tr key={symbol} className="border-t border-neutral-100">
+                  <td className="px-4 py-2 text-sm text-neutral-900">{symbol}</td>
+                  <td className="px-4 py-2 text-sm text-neutral-700">
+                    {formatPercent(aLookup.get(symbol))}
+                  </td>
+                  <td className="px-4 py-2 text-sm text-neutral-700">
+                    {formatPercent(bLookup.get(symbol))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <NormalizationCaption />
+      </>
     );
   };
 
