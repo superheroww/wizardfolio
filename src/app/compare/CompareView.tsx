@@ -438,7 +438,7 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
             Performance backtests are coming soon.
           </p>
           <p className="mt-1">
-            We&rsquo;re tracking interest in this feature to help prioritize our Pro
+            We&rsquo;re tracking interest in this feature to help prioritize our
             roadmap. Your click just helped bump it up.
           </p>
         </div>

@@ -103,7 +103,7 @@ export default function CompareSelectorModal({
   const savedMixesContent = useMemo(() => {
     if (!savedMixes.length) {
       return (
-        <p className="max-w-sm text-sm text-neutral-600">
+        <p className="text-sm text-neutral-600">
           You haven’t saved any mixes yet. Build one in the dashboard to see it
           listed here instantly.
         </p>
@@ -211,7 +211,7 @@ export default function CompareSelectorModal({
     </div>
   );
 
-  const tabContent = () => {
+  const renderActiveTabContent = () => {
     switch (activeTab) {
       case "your-mixes":
         return savedMixesContent;
@@ -275,26 +275,32 @@ export default function CompareSelectorModal({
           </div>
 
           <div className="flex-1 px-5 py-4">
-            <div className="flex flex-col gap-3">
-              <div className="flex gap-2 rounded-2xl bg-neutral-50 p-1">
-                {TABS.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => handleTabClick(tab.id)}
-                    className={`flex-1 rounded-2xl px-3 py-2 text-center text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 ${
-                      tab.id === activeTab
-                        ? "bg-white text-blue-600 shadow"
-                        : "text-neutral-500 hover:text-neutral-700"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+            <div className="flex flex-col">
+              <div className="mt-3">
+                <div className="relative">
+                  <div className="flex w-full gap-2 overflow-x-auto pb-1 whitespace-nowrap scroll-smooth rounded-2xl bg-neutral-50 px-1 py-1 [-webkit-overflow-scrolling:touch] scrollbar-hide sm:flex-wrap sm:overflow-visible">
+                    {TABS.map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => handleTabClick(tab.id)}
+                        className={`rounded-2xl px-3 py-2 text-center text-xs font-semibold whitespace-nowrap transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 sm:flex-1 ${
+                          tab.id === activeTab
+                            ? "bg-white text-blue-600 shadow"
+                            : "text-neutral-500 hover:text-neutral-700"
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-white to-transparent sm:hidden" />
+                </div>
               </div>
 
-              <div className="min-h-[260px] max-h-[360px] overflow-y-auto rounded-2xl border border-neutral-100 bg-white/80 px-3 py-3">
-                {tabContent()}
+              <div className="mt-3 min-h-[260px] max-h-[360px] overflow-y-auto rounded-2xl border border-neutral-100 bg-white/80 px-3 py-3">
+                {renderActiveTabContent()}
               </div>
             </div>
           </div>
