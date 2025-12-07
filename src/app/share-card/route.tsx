@@ -21,9 +21,9 @@ export const size = {
 export const contentType = "image/png";
 
 const DONUT_COLORS = ["#9CB9E9", "#F5D0D0", "#F9E1B8", "#C9E0C6", "#CFD5EA"];
-const DONUT_SIZE = 320;
-const DONUT_RADIUS = 120;
-const DONUT_STROKE = 24;
+const DONUT_SIZE = 240;
+const DONUT_RADIUS = 85;
+const DONUT_STROKE = 18;
 const DONUT_CENTER = DONUT_SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
 
@@ -147,7 +147,6 @@ export async function GET(req: NextRequest) {
     const subtitle = formatShareCardTickers(positions);
 
     const donutSegments = buildDonutSegments(positions);
-    const showFallbackDonut = donutSegments.length === 0;
     const legendEntries = buildLegendEntries(positions, 4);
     const topHoldings = getTopHoldings(exposureRows, 3);
     const holdingsRows =
@@ -173,257 +172,173 @@ export async function GET(req: NextRequest) {
             width: "100%",
             height: "100%",
             display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            padding: "68px 90px 56px",
-            fontSize: 32,
-            color: "#0F172A",
-            backgroundImage: "linear-gradient(180deg, #FFFFFF 0%, #F7F7F5 100%)",
+            justifyContent: "center",
+            alignItems: "stretch",
+            backgroundImage: "linear-gradient(#ffffff, #f7f7f5)",
             fontFamily:
-              "Inter, 'SF Pro Display', 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+            color: "#111827",
           }}
         >
           <div
             style={{
               width: "100%",
-              maxWidth: 780,
+              maxWidth: 900,
+              padding: "56px 72px 40px",
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
-              flex: 1,
+              justifyContent: "space-between",
+              alignItems: "stretch",
+              boxSizing: "border-box",
             }}
           >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 32,
+              }}
+            >
+              <div style={{ fontSize: 40, fontWeight: 600, letterSpacing: "-0.03em" }}>
+                Your ETF Mix
+              </div>
+              <div
+                style={{
+                  fontSize: 24,
+                  fontWeight: 400,
+                  color: "#6B7280",
+                  textAlign: "center",
+                }}
+              >
+                {subtitle}
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 48,
+                marginBottom: 32,
+              }}
+            >
+              <div
+                style={{
+                  width: DONUT_SIZE,
+                  height: DONUT_SIZE,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "9999px",
+                  background: "radial-gradient(circle, #ffffff, #f3f4f6 75%)",
+                  boxShadow: "0 16px 32px rgba(15,23,42,0.12)",
+                }}
+              >
+                <svg
+                  width={DONUT_SIZE}
+                  height={DONUT_SIZE}
+                  viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
+                >
+                  <circle
+                    cx={DONUT_CENTER}
+                    cy={DONUT_CENTER}
+                    r={DONUT_RADIUS}
+                    stroke="#E5E7EB"
+                    strokeWidth={DONUT_STROKE}
+                    fill="none"
+                  />
+
+                  {donutSegments.map((segment, idx) => (
+                    <circle
+                      key={segment.label + idx}
+                      cx={DONUT_CENTER}
+                      cy={DONUT_CENTER}
+                      r={DONUT_RADIUS}
+                      stroke={segment.color}
+                      strokeWidth={DONUT_STROKE}
+                      strokeLinecap="round"
+                      fill="none"
+                      strokeDasharray={segment.dashArray.join(" ")}
+                      strokeDashoffset={segment.dashOffset}
+                      transform={`rotate(-90 ${DONUT_CENTER} ${DONUT_CENTER})`}
+                    />
+                  ))}
+                </svg>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                  fontSize: 22,
+                  color: "#374151",
+                }}
+              >
+                {legendEntries.map((entry) => (
+                  <div
+                    key={entry.label}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "9999px",
+                        backgroundColor: entry.color,
+                      }}
+                    />
+                    <span style={{ fontWeight: 500 }}>{entry.label}</span>
+                    <span style={{ color: "#6B7280", marginLeft: 6 }}>
+                      {formatPercentValue(entry.weightPct)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div
+              style={{
+                width: "100%",
+                height: 1,
+                backgroundColor: "rgba(148,163,184,0.35)",
+                marginBottom: 18,
+              }}
+            />
+
             <div
               style={{
                 width: "100%",
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "center",
                 gap: 8,
-                marginTop: 4,
+                marginBottom: 16,
               }}
             >
-            <span
-              style={{ fontSize: 40, fontWeight: 600, letterSpacing: "0.02em" }}
-            >
-              Your ETF Mix
-            </span>
-            <span
-              style={{
-                fontSize: 24,
-                fontWeight: 500,
-                color: "#475467",
-                textAlign: "center",
-                lineHeight: 1.2,
-                maxWidth: 720,
-              }}
-            >
-              {subtitle}
-            </span>
-          </div>
-
-          <div
-            style={{
-              width: DONUT_SIZE,
-              height: DONUT_SIZE,
-              borderRadius: "50%",
-              boxShadow: "0 14px 38px rgba(15, 23, 42, 0.08)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginTop: 28,
-            }}
-          >
-            <svg
-              width={DONUT_SIZE}
-              height={DONUT_SIZE}
-              viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
-            >
-              <defs>
-                <radialGradient id="innerGradient">
-                  <stop offset="0%" stopColor="#FFFFFF" />
-                  <stop offset="80%" stopColor="#F7F7F5" />
-                </radialGradient>
-                <radialGradient id="centerGlow">
-                  <stop offset="0%" stopColor="rgba(255,255,255,0.2)" />
-                  <stop offset="70%" stopColor="rgba(255,255,255,0)" />
-                </radialGradient>
-              </defs>
-              <circle
-                cx={DONUT_CENTER}
-                cy={DONUT_CENTER}
-                r={DONUT_RADIUS}
-                fill="none"
-                stroke="#E5E7EB"
-                strokeWidth={DONUT_STROKE}
-                opacity={0.5}
-              />
-              {showFallbackDonut && (
-                <circle
-                  cx={DONUT_CENTER}
-                  cy={DONUT_CENTER}
-                  r={DONUT_RADIUS}
-                  fill="none"
-                  stroke="#CBD5F5"
-                  strokeWidth={DONUT_STROKE}
-                  opacity={0.5}
-                />
-              )}
-              {donutSegments.map((segment, idx) => (
-                <circle
-                  key={`${segment.color}-${idx}`}
-                  cx={DONUT_CENTER}
-                  cy={DONUT_CENTER}
-                  r={DONUT_RADIUS}
-                  fill="none"
-                  stroke={segment.color}
-                  strokeWidth={DONUT_STROKE}
-                  strokeLinecap="round"
-                  strokeDasharray={segment.dashArray.join(" ")}
-                  strokeDashoffset={segment.dashOffset}
-                  transform={`rotate(-90 ${DONUT_CENTER} ${DONUT_CENTER})`}
-                />
-              ))}
-              <circle
-                cx={DONUT_CENTER}
-                cy={DONUT_CENTER}
-                r={DONUT_RADIUS - DONUT_STROKE}
-                fill="url(#innerGradient)"
-              />
-              <circle
-                cx={DONUT_CENTER}
-                cy={DONUT_CENTER}
-                r={DONUT_RADIUS - DONUT_STROKE - 6}
-                fill="url(#centerGlow)"
-              />
-            </svg>
-          </div>
-
-          {legendEntries.length > 0 && (
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 24,
-                justifyContent: "center",
-                marginTop: 20,
-                marginBottom: 26,
-              }}
-            >
-              {legendEntries.map((segment) => (
-                <div
-                  key={segment.label}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    minWidth: 160,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      width: 12,
-                      height: 12,
-                      borderRadius: "50%",
-                      backgroundColor: segment.color,
-                      boxShadow: "0 0 6px rgba(15,23,42,0.08)",
-                    }}
-                  />
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 2,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 22,
-                        fontWeight: 600,
-                        color: "#0F172A",
-                      }}
-                    >
-                      {segment.label}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 20,
-                        color: "#6B7280",
-                      }}
-                    >
-                      {formatPercentValue(segment.weightPct)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div
-            style={{
-              width: "70%",
-              height: 1,
-              backgroundColor: "rgba(15,23,42,0.08)",
-              display: "flex",
-              margin: "4px 0 18px",
-            }}
-          />
-
-          <div
-            style={{
-              width: "100%",
-              maxWidth: 760,
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
-            }}
-          >
-            <span
-              style={{
-                fontSize: 30,
-                fontWeight: 600,
-                color: "#0F172A",
-                letterSpacing: "0.02em",
-              }}
-            >
-              Top 3 Holdings
-            </span>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-              }}
-            >
+              <div style={{ fontSize: 26, fontWeight: 600, marginBottom: 4 }}>
+                Top 3 Holdings
+              </div>
               {holdingsRows.map((holding, idx) => (
                 <div
                   key={`${holding.label}-${idx}`}
                   style={{
                     display: "flex",
-                    alignItems: "center",
                     justifyContent: "space-between",
-                    fontSize: 26,
-                    lineHeight: 1.3,
+                    alignItems: "center",
+                    fontSize: 22,
+                    color: "#111827",
                   }}
                 >
-                  <span
-                    style={{
-                      fontWeight: 500,
-                      color:
-                        holding.label === "—" ? "#9CA3AF" : "#0F172A",
-                    }}
-                  >
-                    {holding.label}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 26,
-                      fontWeight: 500,
-                      color:
-                        holding.label === "—" ? "#9CA3AF" : "#475467",
-                    }}
-                  >
+                  <span style={{ fontWeight: 500 }}>{holding.label}</span>
+                  <span style={{ color: "#4B5563" }}>
                     {holding.label === "—"
                       ? "No data"
                       : `${formatPercentValue(holding.percent)} of portfolio`}
@@ -431,41 +346,31 @@ export async function GET(req: NextRequest) {
                 </div>
               ))}
             </div>
-          </div>
 
-          <div
-            style={{
-              marginTop: 26,
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              fontSize: 25,
-              color: "#6B7280",
-            }}
-          >
-            <span>{regionLine}</span>
-            <span>{topSectorLine}</span>
-          </div>
-          </div>
-
-          <div
-            style={{
-              marginTop: 42,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <span
+            <div
               style={{
-                fontSize: 22,
-                color: "rgba(107, 114, 128, 0.5)",
-                fontWeight: 400,
-                letterSpacing: "0.12em",
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                fontSize: 20,
+                color: "#4B5563",
+                marginBottom: 24,
+              }}
+            >
+              <div>{regionLine}</div>
+              <div>{topSectorLine}</div>
+            </div>
+
+            <div
+              style={{
+                fontSize: 18,
+                color: "#9CA3AF",
+                opacity: 0.7,
+                textAlign: "center",
               }}
             >
               made with wizardfolio
-            </span>
+            </div>
           </div>
         </div>
       ),
