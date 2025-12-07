@@ -165,7 +165,10 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
     };
     regions.sort((r1, r2) => getRegionScore(r2) - getRegionScore(r1));
 
-    const rows = regions.map((region) => ({
+    // Only keep top 5 regions
+    const topRegions = regions.slice(0, 5);
+
+    const rows = topRegions.map((region) => ({
       label: region,
       aValue: formatPercent(aLookup.get(region)),
       bValue: formatPercent(bLookup.get(region)),
@@ -175,6 +178,9 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
       <>
         <CompareTable rows={rows} />
         <NormalizationCaption />
+        <p className="mt-1 text-[11px] leading-snug text-neutral-400">
+          Showing the top 5 regions.
+        </p>
       </>
     );
   };
@@ -217,7 +223,10 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
     };
     sectors.sort((s1, s2) => getSectorScore(s2) - getSectorScore(s1));
 
-    const rows = sectors.map((sector) => ({
+    // Only keep top 5 sectors
+    const topSectors = sectors.slice(0, 5);
+
+    const rows = topSectors.map((sector) => ({
       label: sector,
       aValue: formatPercent(aLookup.get(sector)),
       bValue: formatPercent(bLookup.get(sector)),
@@ -227,6 +236,9 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
       <>
         <CompareTable rows={rows} />
         <NormalizationCaption />
+        <p className="mt-1 text-[11px] leading-snug text-neutral-400">
+          Showing the top 5 sectors.
+        </p>
       </>
     );
   };
@@ -282,6 +294,9 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
       <>
         <CompareTable rows={rows} />
         <NormalizationCaption />
+        <p className="mt-1 text-[11px] leading-snug text-neutral-400">
+          Showing the top 5 holdings.
+        </p>
       </>
     );
   };
@@ -334,44 +349,52 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-5">
-      <div className="flex gap-2 rounded-2xl bg-neutral-50 p-1">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => handleTabClick(tab.id)}
-            className={`flex-1 min-h-[40px] rounded-2xl px-3 text-xs font-semibold transition sm:min-h-[44px] sm:text-sm ${
-              activeTab === tab.id
-                ? "bg-white text-blue-600 shadow"
-                : "text-neutral-500 hover:text-neutral-800"
-            }`}
-          >
-            <span className="inline-flex items-center justify-center gap-1">
-              {tab.label}
-              {tab.id === "performance" && (
-                <span className="ml-1 inline-flex items-center justify-center text-[10px]">
-                  🔒
+    <div className="flex flex-col">
+      {/* Sticky Tab Header */}
+      <div className="sticky top-0 z-10 bg-white border-b border-neutral-200 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="overflow-x-auto scrollbar-hide">
+          <div className="flex min-w-max gap-2 rounded-2xl bg-neutral-50 p-1">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabClick(tab.id)}
+                className={`rounded-2xl px-3 min-h-[40px] sm:min-h-[44px] text-xs sm:text-sm font-semibold transition ${
+                  activeTab === tab.id
+                    ? "bg-white text-blue-600 shadow"
+                    : "text-neutral-500 hover:text-neutral-800"
+                }`}
+              >
+                <span className="inline-flex items-center justify-center gap-1 whitespace-nowrap">
+                  {tab.label}
+                  {tab.id === "performance" && (
+                    <span className="ml-1 inline-flex items-center justify-center text-[10px]">
+                      🔒
+                    </span>
+                  )}
                 </span>
-              )}
-            </span>
-          </button>
-        ))}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {showPerformanceUpsell && (
-        <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/80 px-4 py-3 text-xs text-neutral-600">
-          <p className="font-medium text-neutral-800">
-            Performance backtests are coming soon.
-          </p>
-          <p className="mt-1">
-            We&rsquo;re tracking interest in this feature to help prioritize our
-            roadmap. Your click just helped bump it up.
-          </p>
-        </div>
-      )}
+      {/* Scrollable Content */}
+      <div className="flex-1 space-y-4 sm:space-y-5 px-4 py-4 sm:px-6 sm:py-5">
+        {showPerformanceUpsell && (
+          <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/80 px-4 py-3 text-xs text-neutral-600">
+            <p className="font-medium text-neutral-800">
+              Performance backtests are coming soon.
+            </p>
+            <p className="mt-1">
+              We&rsquo;re tracking interest in this feature to help prioritize our
+              roadmap. Your click just helped bump it up.
+            </p>
+          </div>
+        )}
 
-      {renderActiveTab()}
+        {renderActiveTab()}
+      </div>
     </div>
   );
 }

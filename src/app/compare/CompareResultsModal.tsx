@@ -74,7 +74,7 @@ export default function CompareResultsModal({
     >
       {/* Panel */}
       <div
-        className={`flex w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-200 ${
+        className={`flex w-full max-w-5xl flex-col overflow-hidden overflow-x-hidden rounded-3xl bg-white shadow-2xl transition-all duration-200 ${
           isVisible
             ? "translate-y-0 scale-100 sm:scale-100"
             : "translate-y-full sm:scale-95"
@@ -103,7 +103,7 @@ export default function CompareResultsModal({
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+        <div className="flex-1 overflow-y-auto px-0 py-0">
           <CompareView mixA={mixA} mixB={mixB} />
         </div>
       </div>

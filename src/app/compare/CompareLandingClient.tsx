@@ -361,58 +361,29 @@ export default function CompareLandingClient() {
 
       {isSignedIn ? (
         <>
-          {/* CTA Card: 3 states based on bothReady and resultsMode */}
-          {!bothReady ? (
-            <div className="rounded-3xl border border-neutral-200 bg-white/90 p-6 shadow-sm shadow-black/5">
-              <p className="text-base font-medium text-neutral-900">
-                Pick two mixes to compare
-              </p>
-              <p className="mt-2 text-sm text-neutral-600">
-                {allocationHint
-                  ? allocationHint
-                  : "Tap any slot above to begin."}
-              </p>
-              <button
-                disabled
-                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-400 cursor-not-allowed"
-              >
-                Compare these mixes
-              </button>
-            </div>
-          ) : !resultsMode ? (
-            <div className="rounded-3xl border border-neutral-200 bg-white/90 p-6 shadow-sm shadow-black/5">
-              <p className="text-base font-medium text-neutral-900">
-                Ready to compare
-              </p>
-              <p className="mt-2 text-sm text-neutral-600">
-                {slotStates.A.selection?.label} vs {slotStates.B.selection?.label}
-              </p>
-              <button
-                onClick={() => {
-                  setResultsMode(true);
-                  capture("compare_triggered");
-                }}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-              >
-                Compare these mixes
-              </button>
-            </div>
-          ) : (
-            <div className="rounded-3xl border border-neutral-200 bg-white/90 p-6 shadow-sm shadow-black/5">
-              <p className="text-base font-medium text-neutral-900">
-                Comparing
-              </p>
-              <p className="mt-2 text-sm text-neutral-600">
-                {slotStates.A.selection?.label} vs {slotStates.B.selection?.label}
-              </p>
-              <button
-                onClick={() => setResultsMode(false)}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-neutral-200 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-300 transition-colors"
-              >
-                Change mixes
-              </button>
-            </div>
-          )}
+          {/* CTA Button: 3 states based on bothReady and resultsMode */}
+          <button
+            disabled={!bothReady}
+            onClick={() => {
+              if (resultsMode) {
+                setResultsMode(false);
+              } else {
+                setResultsMode(true);
+                capture("compare_triggered");
+              }
+            }}
+            className={`w-full rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+              !bothReady
+                ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                : resultsMode
+                ? "bg-neutral-200 text-neutral-900 hover:bg-neutral-300"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
+          >
+            {resultsMode
+              ? "Change mixes"
+              : "Compare these mixes"}
+          </button>
         </>
       ) : null}
 

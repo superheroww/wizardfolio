@@ -275,7 +275,7 @@ export default function CompareSelectorModal({
           </div>
 
           <div className="flex-1 px-5 py-4">
-            <div className="flex flex-col">
+            <div className="flex h-full flex-col">
               <div className="mt-3">
                 <div className="relative">
                   <div className="flex w-full gap-2 overflow-x-auto pb-1 whitespace-nowrap scroll-smooth rounded-2xl bg-neutral-50 px-1 py-1 [-webkit-overflow-scrolling:touch] scrollbar-hide sm:flex-wrap sm:overflow-visible">
@@ -299,7 +299,7 @@ export default function CompareSelectorModal({
                 </div>
               </div>
 
-              <div className="mt-3 min-h-[260px] max-h-[360px] overflow-y-auto rounded-2xl border border-neutral-100 bg-white/80 px-3 py-3">
+              <div className="mt-3 flex-1 min-h-[260px] overflow-y-auto scrollbar-hide rounded-2xl border border-neutral-100 bg-white/80 px-3 py-3 [-webkit-overflow-scrolling:touch]">
                 {renderActiveTabContent()}
               </div>
             </div>
