@@ -1,6 +1,8 @@
 "use client";
 
 import MixLine from "@/components/MixLine";
+import MixPositionsEditor from "@/components/MixPositionsEditor";
+import type { UserPosition } from "@/lib/exposureEngine";
 import type {
   CompareSelection,
   CompareSelectionSource,
@@ -17,16 +19,34 @@ const SOURCE_LABEL: Record<CompareSelectionSource, string> = {
 type CompareSlotProps = {
   slotId: CompareSlotId;
   selection: CompareSelection | null;
-  onRequestSelection: () => void;
+  onSlotClick: () => void;
+  onChangeMixClick: () => void;
   disabled?: boolean;
+  isEditingScratch: boolean;
+  scratchPositions?: UserPosition[];
+  onScratchPositionsChange: (positions: UserPosition[]) => void;
+  onScratchEditingDone: () => void;
 };
 
 export default function CompareSlot({
   slotId,
   selection,
-  onRequestSelection,
+  onSlotClick,
+  onChangeMixClick,
   disabled = false,
+  isEditingScratch,
+  scratchPositions,
+  onScratchPositionsChange,
+  onScratchEditingDone,
 }: CompareSlotProps) {
+  const isScratch = selection?.source === "scratch";
+  const showEditor = Boolean(isScratch && isEditingScratch);
+  const editorPositions =
+    scratchPositions && scratchPositions.length
+      ? scratchPositions
+      : selection?.positions ?? [{ symbol: "", weightPct: 0 }];
+  const handleButtonClick = selection ? onChangeMixClick : onSlotClick;
+
   return (
     <div className="flex h-full flex-col justify-between gap-4 rounded-3xl border border-neutral-200 bg-white/80 p-5 shadow-sm shadow-black/5">
       <div className="space-y-2">
@@ -41,7 +61,26 @@ export default function CompareSlot({
           )}
         </div>
 
-        {selection ? (
+        {showEditor ? (
+          <div className="mt-2 space-y-3">
+            <h3 className="text-lg font-semibold text-neutral-900">
+              Build your mix
+            </h3>
+            <MixPositionsEditor
+              positions={editorPositions}
+              onChange={onScratchPositionsChange}
+            />
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={onScratchEditingDone}
+                className="rounded-full bg-neutral-900 px-3 py-1 text-xs font-semibold text-white transition hover:bg-neutral-800"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        ) : selection ? (
           <>
             <h3 className="text-2xl font-semibold text-neutral-900">
               {selection.label}
@@ -62,7 +101,7 @@ export default function CompareSlot({
 
       <button
         type="button"
-        onClick={onRequestSelection}
+        onClick={handleButtonClick}
         disabled={disabled}
         className={`mt-auto flex w-full items-center justify-center rounded-full border px-4 py-3 text-sm font-semibold transition ${
           disabled
