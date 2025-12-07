@@ -17,14 +17,12 @@ import RegionExposureChart from "@/components/RegionExposureChart";
 import { SectorBreakdownCard } from "@/components/SectorBreakdownCard";
 import { aggregateHoldingsBySymbol } from "@/lib/exposureAggregations";
 import { useRouter } from "next/navigation";
-import { AppleShareIcon } from "@/components/icons/AppleShareIcon";
 import { usePostHogSafe } from "@/lib/usePostHogSafe";
 import {
   normalizePositions,
   buildPositionsSearchParams,
 } from "@/lib/positionsQuery";
 import type { ApiExposureRow, UserPosition } from "@/lib/exposureEngine";
-import { useImageShare } from "@/hooks/useImageShare";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { BENCHMARK_MIXES } from "@/lib/benchmarkPresets";
 import {
@@ -37,6 +35,7 @@ import type { MixComparisonResult } from "@/lib/benchmarkEngine";
 import { formatMixSummary } from "@/lib/mixFormatting";
 import { getBenchmarkLabel } from "@/lib/benchmarkUtils";
 import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
+import { useClipboard } from "@/lib/useClipboard";
 import {
   DEFAULT_SAVED_MIX_NAME,
   SAVED_MIX_NAME_ERROR_MESSAGE,
@@ -388,9 +387,35 @@ export default function ResultsPageClient({
     useState<MixComparisonResult | null>(null);
   const [benchmarkError, setBenchmarkError] = useState<string | null>(null);
   const [isBenchmarkLoading, setIsBenchmarkLoading] = useState(false);
-  const cardRef = useRef<HTMLDivElement | null>(null);
   const resultsLoadedRef = useRef(false);
-  const { shareElementAsImage, isSharing } = useImageShare();
+  const { copy, copied } = useClipboard();
+  const [shareOrigin, setShareOrigin] = useState<string>(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://wizardfolio.com",
+  );
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location?.origin) {
+      setShareOrigin(window.location.origin);
+    }
+  }, []);
+
+  const sharePositionsSearch = useMemo(
+    () => buildPositionsSearchParams(sanitizedPositions),
+    [sanitizedPositions],
+  );
+  const shareCardHref = sharePositionsSearch
+    ? `/share-card?${sharePositionsSearch}`
+    : null;
+  const shareResultsUrl = useMemo(() => {
+    const base =
+      shareOrigin?.replace(/\/$/, "") ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      "https://wizardfolio.com";
+    const suffix = sharePositionsSearch
+      ? `/results?${sharePositionsSearch}`
+      : "/results";
+    return `${base}${suffix}`;
+  }, [shareOrigin, sharePositionsSearch]);
 
   const top10 = useMemo(() => {
     const aggregated = aggregateHoldingsBySymbol(exposure);
@@ -558,39 +583,42 @@ export default function ResultsPageClient({
     }
   };
 
-const handleTryTopMix = (mixId: string) => {
-  const mix = TOP_LOVED_MIXES.find((m) => m.id === mixId);
-  if (!mix) return;
+  const handleTryTopMix = (mixId: string) => {
+    const mix = TOP_LOVED_MIXES.find((m) => m.id === mixId);
+    if (!mix) return;
 
-  // This already returns something like: "positions=%5B{...}%5D"
-  const positionsParam = buildPositionsSearchParams(mix.positions);
+    const positionsParam = buildPositionsSearchParams(mix.positions);
 
-  capture("top_mix_try_clicked", {
-    template_key: mix.id,
-    source_page: "results",
-    source_slide: "top_mixes",
-    mix_name: mixName,
-    positions_count: positionsCount,
-  });
-
-  // ✅ Don't re-wrap in `positions=` and don't re-encode
-  router.push(`/results?${positionsParam}`);
-};
-
-  const handleShare = async () => {
-    if (!cardRef.current || isSharing) return;
-
-    await shareElementAsImage(cardRef.current, {
-      fileName: "wizardfolio-exposure.png",
-      title: "WizardFolio ETF exposure",
-      text: "ETF look-through powered by WizardFolio (wizardfolio.com)",
+    capture("top_mix_try_clicked", {
+      template_key: mix.id,
+      source_page: "results",
+      source_slide: "top_mixes",
+      mix_name: mixName,
+      positions_count: positionsCount,
     });
+
+    router.push(`/results?${positionsParam}`);
+  };
+
+  const handleShareCardClick = () => {
+    if (!shareCardHref) return;
 
     capture("share_clicked", {
       mix_name: mixName,
       positions_count: positionsCount,
-      share_target: "image_share",
+      share_target: "share_card",
       source_card: "true_exposure_card",
+    });
+  };
+
+  const handleCopyLink = async () => {
+    const didCopy = await copy(shareResultsUrl);
+    capture("share_clicked", {
+      mix_name: mixName,
+      positions_count: positionsCount,
+      share_target: "copy_link",
+      source_card: "true_exposure_card",
+      share_success: didCopy,
     });
   };
 
@@ -691,23 +719,28 @@ const handleTryTopMix = (mixId: string) => {
         </div>
 
         <div className="relative rounded-3xl border border-neutral-200 bg-white shadow-sm">
-          <button
-            type="button"
-            onClick={handleShare}
-            disabled={isSharing}
-            aria-label="Share your ETF exposure"
-            title={
-              isSharing ? "Preparing your snapshot…" : "Share your exposure card"
-            }
-            className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white shadow-sm hover:bg-neutral-50 disabled:opacity-60 disabled:cursor-wait"
-          >
-            <AppleShareIcon className="h-4 w-4 text-neutral-700" />
-          </button>
+          {shareCardHref && (
+            <div className="absolute right-3 top-3 z-30 flex flex-col items-end gap-2 sm:flex-row">
+              <a
+                href={shareCardHref}
+                target="_blank"
+                rel="noreferrer noopener"
+                onClick={handleShareCardClick}
+                className="inline-flex items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2"
+              >
+                Share card
+              </a>
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white/90 px-4 py-2 text-xs font-medium text-neutral-700 transition hover:border-neutral-300"
+              >
+                {copied ? "Copied!" : "Copy link"}
+              </button>
+            </div>
+          )}
 
-          <div
-            ref={cardRef}
-            className="flex flex-col gap-4 rounded-3xl bg-white p-5"
-          >
+          <div className="flex flex-col gap-4 rounded-3xl bg-white p-5">
             <div className="flex items-start justify-between gap-2">
               <div className="flex flex-col gap-1">
                 <h2 className="text-base font-semibold text-neutral-900">

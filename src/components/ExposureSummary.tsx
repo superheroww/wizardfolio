@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { aggregateHoldingsBySymbol } from "@/lib/exposureAggregations";
+import { classifyExposure } from "@/lib/exposureInsights";
 
 export type ApiExposureRow = {
   holding_symbol: string;
@@ -43,102 +44,6 @@ type Slice = {
 // always an integer: 90.4 → 90, 90.5 → 91
 const fmtPercent = (value: number | null | undefined) =>
   String(Math.round(value ?? 0));
-
-type RegionKey = "US" | "Canada" | "International";
-
-function normalizeCountryToRegion(countryRaw: string | null | undefined): RegionKey {
-  if (!countryRaw) return "International";
-
-  const c = countryRaw.trim().toLowerCase();
-
-  if (
-    c === "us" ||
-    c === "usa" ||
-    c === "united states" ||
-    c === "united states of america"
-  ) {
-    return "US";
-  }
-
-  if (c === "ca" || c === "can" || c === "canada") {
-    return "Canada";
-  }
-
-  return "International";
-}
-
-function isBond(assetClassRaw: string | null | undefined): boolean {
-  if (!assetClassRaw) return false;
-  const a = assetClassRaw.toLowerCase();
-  return a.includes("bond") || a.includes("fixed income");
-}
-
-function classifyExposure(rows: ApiExposureRow[]): string {
-  if (!rows.length) return "Diversified";
-
-  let equity = 0;
-  let bonds = 0;
-  let us = 0;
-  let ca = 0;
-  let intl = 0;
-
-  for (const row of rows) {
-    const weight = row.total_weight_pct ?? 0;
-    if (weight <= 0) continue;
-
-    if (isBond(row.asset_class)) {
-      bonds += weight;
-    } else {
-      equity += weight;
-      const region = normalizeCountryToRegion(row.country);
-      if (region === "US") us += weight;
-      else if (region === "Canada") ca += weight;
-      else intl += weight;
-    }
-  }
-
-  const total = equity + bonds || 1;
-  const equityShare = equity / total;
-  const bondShare = bonds / total;
-
-  const regionTotal = us + ca + intl || 1;
-  const usShare = us / regionTotal;
-  const caShare = ca / regionTotal;
-  const intlShare = intl / regionTotal;
-
-  // -----------------------------
-  // 1) Pick dominant region first
-  // -----------------------------
-  let dominantRegion: RegionKey = "International";
-  let dominantShare = intlShare;
-
-  if (usShare >= caShare && usShare >= intlShare) {
-    dominantRegion = "US";
-    dominantShare = usShare;
-  } else if (caShare >= usShare && caShare >= intlShare) {
-    dominantRegion = "Canada";
-    dominantShare = caShare;
-  }
-
-  if (dominantRegion === "US" && dominantShare >= 0.5) {
-    return "U.S.-Concentrated";
-  }
-  if (dominantRegion === "Canada" && dominantShare >= 0.3) {
-    return "Canada-Tilted";
-  }
-  if (dominantRegion === "International" && dominantShare >= 0.4) {
-    return "International-Heavy";
-  }
-
-  // -----------------------------
-  // 2) Fall back to risk profile
-  // -----------------------------
-  if (equityShare > 0.8) return "Equity-Heavy";
-  if (equityShare > 0.6) return "Growth-Oriented";
-  if (equityShare < 0.4 && bondShare > 0.3) return "Conservative";
-
-  return "Diversified";
-}
 
 export default function ExposureSummary({
   exposure,
