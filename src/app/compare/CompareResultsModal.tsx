@@ -82,26 +82,21 @@ export default function CompareResultsModal({
         onClick={(event) => event.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-neutral-200 bg-white px-4 py-4 sm:px-6">
-          <div className="space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-neutral-500">
-              Compare mixes
-            </p>
-            <h2 className="text-base font-semibold text-neutral-900 sm:text-lg">
-              Mix A vs Mix B
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-neutral-200 bg-white px-4 py-3.5 sm:px-6">
+          <div className="flex-1 min-w-0">
+            <h2 className="truncate text-sm font-semibold text-neutral-900">
+              Comparing {formatMixSummary(mixA.selection.positions).split(' ')[0]} vs{" "}
+              {formatMixSummary(mixB.selection.positions).split(' ')[0]}
             </h2>
-            <p className="text-[11px] text-neutral-600">
-              <span className="font-medium text-neutral-700">Mix A:</span>{" "}
-              {formatMixSummary(mixA.selection.positions)}
-              <span className="mx-2">·</span>
-              <span className="font-medium text-neutral-700">Mix B:</span>{" "}
+            <p className="mt-0.5 truncate text-[11px] text-neutral-500">
+              Mix A: {formatMixSummary(mixA.selection.positions)} · Mix B:{" "}
               {formatMixSummary(mixB.selection.positions)}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-neutral-200 px-3 py-1 text-sm font-semibold text-neutral-600 transition hover:border-neutral-300"
+            className="shrink-0 rounded-full px-2 py-1 text-sm font-medium text-neutral-500 hover:bg-neutral-100 transition"
           >
             ×
           </button>

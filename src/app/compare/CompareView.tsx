@@ -50,11 +50,11 @@ const formatPercent = (value: number | undefined | null) => {
 };
 
 const NORMALIZATION_NOTE =
-  "Based on the largest holdings we have for each ETF, normalized to 100% for this comparison. Smaller positions in the fund may not be included in this view.";
+  "Based on each ETF's largest disclosed holdings, normalized to 100% for this view. Smaller positions in the fund may not be included.";
 
 function NormalizationCaption() {
   return (
-    <p className="mt-2 text-[11px] leading-snug text-neutral-400">
+    <p className="mt-3 text-[11px] leading-snug text-neutral-400 max-w-3xl">
       {NORMALIZATION_NOTE}
     </p>
   );
@@ -173,7 +173,7 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
 
     return (
       <>
-        <CompareTable sectionLabel="Regions" rows={rows} />
+        <CompareTable rows={rows} />
         <NormalizationCaption />
       </>
     );
@@ -225,7 +225,7 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
 
     return (
       <>
-        <CompareTable sectionLabel="Sectors" rows={rows} />
+        <CompareTable rows={rows} />
         <NormalizationCaption />
       </>
     );
@@ -280,7 +280,7 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
 
     return (
       <>
-        <CompareTable sectionLabel="Holdings" rows={rows} />
+        <CompareTable rows={rows} />
         <NormalizationCaption />
       </>
     );
@@ -334,10 +334,8 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
   };
 
   return (
-    <section className="mt-6 rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm sm:p-6">
-
-
-      <div className="mt-4 flex gap-2 rounded-2xl bg-neutral-50 p-1">
+    <div className="space-y-4 sm:space-y-5">
+      <div className="flex gap-2 rounded-2xl bg-neutral-50 p-1">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -345,8 +343,8 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
             onClick={() => handleTabClick(tab.id)}
             className={`flex-1 min-h-[40px] rounded-2xl px-3 text-xs font-semibold transition sm:min-h-[44px] sm:text-sm ${
               activeTab === tab.id
-                ? "bg-neutral-900 text-white"
-                : "bg-white text-neutral-500 hover:text-neutral-800"
+                ? "bg-white text-blue-600 shadow"
+                : "text-neutral-500 hover:text-neutral-800"
             }`}
           >
             <span className="inline-flex items-center justify-center gap-1">
@@ -362,7 +360,7 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
       </div>
 
       {showPerformanceUpsell && (
-        <div className="mt-3 rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/80 px-4 py-3 text-xs text-neutral-600">
+        <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/80 px-4 py-3 text-xs text-neutral-600">
           <p className="font-medium text-neutral-800">
             Performance backtests are coming soon.
           </p>
@@ -374,6 +372,6 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
       )}
 
       {renderActiveTab()}
-    </section>
+    </div>
   );
 }
