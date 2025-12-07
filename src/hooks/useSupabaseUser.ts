@@ -4,28 +4,45 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
 
-export function useSupabaseUser() {
-  const [user, setUser] = useState<User | null>(null);
+type SupabaseAuthState = {
+  user: User | null;
+  isLoading: boolean;
+};
+
+export function useSupabaseAuthState(): SupabaseAuthState {
+  const [{ user, isLoading }, setState] = useState<SupabaseAuthState>({
+    user: null,
+    isLoading: true,
+  });
 
   useEffect(() => {
     let isActive = true;
 
-    getSupabaseBrowserClient()
-      .auth.getSession()
+    const supabase = getSupabaseBrowserClient();
+
+    const update = (nextUser: User | null) => {
+      if (!isActive) {
+        return;
+      }
+
+      setState({
+        user: nextUser,
+        isLoading: false,
+      });
+    };
+
+    supabase.auth
+      .getSession()
       .then(({ data }) => {
-        if (!isActive) return;
-        setUser(data.session?.user ?? null);
+        update(data.session?.user ?? null);
       })
       .catch(() => {
-        if (isActive) {
-          setUser(null);
-        }
+        update(null);
       });
 
-    const { data: listener } = getSupabaseBrowserClient().auth.onAuthStateChange(
+    const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        if (!isActive) return;
-        setUser(session?.user ?? null);
+        update(session?.user ?? null);
       },
     );
 
@@ -35,5 +52,10 @@ export function useSupabaseUser() {
     };
   }, []);
 
+  return { user, isLoading };
+}
+
+export function useSupabaseUser() {
+  const { user } = useSupabaseAuthState();
   return user;
 }

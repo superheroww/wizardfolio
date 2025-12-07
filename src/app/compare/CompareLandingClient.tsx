@@ -11,17 +11,15 @@ import { usePostHogSafe } from "@/lib/usePostHogSafe";
 import type { ApiExposureRow, UserPosition } from "@/lib/exposureEngine";
 import { BENCHMARK_MIXES } from "@/lib/benchmarkPresets";
 import { QUICK_START_TEMPLATES } from "@/components/QuickStartTemplates";
+import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
+import { normalizePositions } from "@/lib/positionsQuery";
+import { useSupabaseAuthState } from "@/hooks/useSupabaseUser";
 import type {
   CompareSavedMix,
   CompareSelection,
   CompareSelectorTabId,
   CompareSlotId,
 } from "./types";
-
-type CompareLandingProps = {
-  isSignedIn: boolean;
-  savedMixes: CompareSavedMix[];
-};
 
 type SlotExposureState = {
   exposures: ApiExposureRow[];
@@ -37,14 +35,14 @@ const createEmptyExposureState = (): SlotExposureState => ({
 
 const slotOrder: CompareSlotId[] = ["A", "B"];
 
-export default function CompareLandingClient({
-  savedMixes,
-  isSignedIn,
-}: CompareLandingProps) {
+export default function CompareLandingClient() {
   const router = useRouter();
   const { capture } = usePostHogSafe();
+  const { user, isLoading: isAuthLoading } = useSupabaseAuthState();
+  const isSignedIn = Boolean(user);
   const [modalOpen, setModalOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState<CompareSlotId>("A");
+  const [savedMixes, setSavedMixes] = useState<CompareSavedMix[]>([]);
   const [selectorTab, setSelectorTab] = useState<CompareSelectorTabId>(
     savedMixes.length ? "your-mixes" : "benchmarks",
   );
@@ -78,7 +76,60 @@ export default function CompareLandingClient({
     }
   }, [modalOpen, defaultSelectorTab]);
 
+  useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+
+    let isActive = true;
+
+    if (!isSignedIn || !user?.id) {
+      setSavedMixes([]);
+      return;
+    }
+
+    const supabase = getSupabaseBrowserClient();
+
+    const loadSavedMixes = async () => {
+      const { data, error } = await supabase
+        .from("saved_mixes")
+        .select("id,name,positions")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false });
+
+      if (!isActive) {
+        return;
+      }
+
+      if (error) {
+        console.error("Failed to load saved mixes", error);
+        setSavedMixes([]);
+        return;
+      }
+
+      const mixes = (data ?? []).map((mix) => ({
+        id: mix.id,
+        name: mix.name ?? "My mix",
+        positions: normalizePositions(
+          Array.isArray(mix.positions) ? mix.positions : [],
+        ),
+      }));
+
+      setSavedMixes(mixes);
+    };
+
+    loadSavedMixes();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isAuthLoading, isSignedIn, user?.id]);
+
   const handleSlotClick = (slot: CompareSlotId) => {
+    if (isAuthLoading) {
+      return;
+    }
+
     if (!isSignedIn) {
       setAuthDialogOpen(true);
       return;
@@ -204,7 +255,17 @@ export default function CompareLandingClient({
       <div className="grid gap-5 md:grid-cols-2">
         {slotOrder.map((slotId) => (
           <div key={slotId} className="h-full">
-            {isSignedIn ? (
+            {isAuthLoading ? (
+              <div
+                aria-busy="true"
+                className="flex h-full min-h-[200px] flex-col justify-center rounded-3xl border border-neutral-200 bg-white/80 p-5 text-center text-sm text-neutral-500 shadow-sm shadow-black/5"
+              >
+                <p>Preparing your compare workspace…</p>
+                <p className="mt-1 text-xs text-neutral-400">
+                  One sec while we load your session.
+                </p>
+              </div>
+            ) : isSignedIn ? (
               <CompareSlot
                 slotId={slotId}
                 selection={selectedMixes[slotId]}

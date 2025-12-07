@@ -79,10 +79,6 @@ export default function CompareSelectorModal({
     return () => window.removeEventListener("keyup", handleKeyUp);
   }, [onClose, open]);
 
-  if (!isRendered) {
-    return null;
-  }
-
   const handleSelect = (selection: CompareSelection) => {
     onSelect(selection);
     onClose();
@@ -234,6 +230,10 @@ export default function CompareSelectorModal({
     }
   };
 
+  if (!isRendered) {
+    return null;
+  }
+
   return (
     <div
       aria-hidden={!open}
@@ -255,57 +255,55 @@ export default function CompareSelectorModal({
         className={`relative w-full max-w-3xl rounded-t-3xl bg-white shadow-2xl transition-transform duration-200 ${
           isVisible ? "translate-y-0" : "translate-y-full"
         }`}
-        style={{
-          minHeight: "70vh",
-          maxHeight: "95vh",
-        }}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-neutral-500">
-              Slot {activeSlot}
-            </p>
-            <h2
-              id="compare-selector-title"
-              className="text-lg font-semibold text-neutral-900"
-            >
-              Pick a mix for {activeSlot}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-neutral-200 px-3 py-1 text-sm font-semibold text-neutral-600 transition hover:border-neutral-300"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="flex border-b border-neutral-200 bg-white px-2">
-          {TABS.map((tab) => (
+        <div className="flex h-full max-h-[85vh] flex-col overflow-hidden rounded-t-3xl bg-white">
+          <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-neutral-500">
+                Slot {activeSlot}
+              </p>
+              <h2
+                id="compare-selector-title"
+                className="text-lg font-semibold text-neutral-900"
+              >
+                Pick a mix for {activeSlot}
+              </h2>
+            </div>
             <button
-              key={tab.id}
               type="button"
-              onClick={() => onTabChange(tab.id)}
-              className={`flex-1 min-h-[48px] px-3 py-3 text-center text-sm font-semibold transition ${
-                tab.id === activeTab
-                  ? "text-blue-600"
-                  : "text-neutral-500 hover:text-neutral-700"
-              }`}
+              onClick={onClose}
+              className="rounded-full border border-neutral-200 px-3 py-1 text-sm font-semibold text-neutral-600 transition hover:border-neutral-300"
             >
-              {tab.label}
-              <span
-                className={`mt-2 block h-1 rounded-full bg-blue-600 transition-all ${
-                  tab.id === activeTab ? "opacity-100" : "opacity-0"
-                }`}
-              />
+              ×
             </button>
-          ))}
-        </div>
+          </div>
 
-        <div className="flex h-full flex-col gap-4 overflow-y-auto px-5 py-4">
-          {tabContent()}
+          <div className="flex border-b border-neutral-200 bg-white px-2">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => onTabChange(tab.id)}
+                className={`flex-1 min-h-[48px] px-3 py-3 text-center text-sm font-semibold transition ${
+                  tab.id === activeTab
+                    ? "text-blue-600"
+                    : "text-neutral-500 hover:text-neutral-700"
+                }`}
+              >
+                {tab.label}
+                <span
+                  className={`mt-2 block h-1 rounded-full bg-blue-600 transition-all ${
+                    tab.id === activeTab ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            {tabContent()}
+          </div>
         </div>
       </div>
     </div>
