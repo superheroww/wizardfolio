@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ApiExposureRow } from "@/lib/exposureEngine";
 import type { CompareSelection } from "./types";
+import { formatMixSummary } from "@/lib/mixFormatting";
 import CompareView from "./CompareView";
 
 type SlotExposure = {
@@ -81,14 +82,21 @@ export default function CompareResultsModal({
         onClick={(event) => event.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-4 sm:px-6">
-          <div>
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-neutral-200 bg-white px-4 py-4 sm:px-6">
+          <div className="space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-neutral-500">
-              Comparison Results
+              Compare mixes
             </p>
-            <h2 className="mt-1 text-base font-semibold text-neutral-900 sm:text-lg">
-              {mixA.selection.label} vs {mixB.selection.label}
+            <h2 className="text-base font-semibold text-neutral-900 sm:text-lg">
+              Mix A vs Mix B
             </h2>
+            <p className="text-[11px] text-neutral-600">
+              <span className="font-medium text-neutral-700">Mix A:</span>{" "}
+              {formatMixSummary(mixA.selection.positions)}
+              <span className="mx-2">·</span>
+              <span className="font-medium text-neutral-700">Mix B:</span>{" "}
+              {formatMixSummary(mixB.selection.positions)}
+            </p>
           </div>
           <button
             type="button"

@@ -63,7 +63,6 @@ export default function CompareLandingClient() {
     B: createEmptyExposureState(),
   });
   const [resultsMode, setResultsMode] = useState(false);
-  const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const exposureCacheRef = useRef(new Map<string, ApiExposureRow[]>());
 
   const defaultSelectorTab = useMemo<CompareSelectorTabId>(() => {
@@ -76,7 +75,6 @@ export default function CompareLandingClient() {
 
   useEffect(() => {
     setResultsMode(false);
-    setResultsModalOpen(false);
   }, [selectedMixes.A, selectedMixes.B]);
 
   useEffect(() => {
@@ -392,7 +390,6 @@ export default function CompareLandingClient() {
               <button
                 onClick={() => {
                   setResultsMode(true);
-                  setResultsModalOpen(true);
                   capture("compare_triggered");
                 }}
                 className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
@@ -433,24 +430,44 @@ export default function CompareLandingClient() {
         />
       )}
 
-      {isSignedIn && bothReady && resultsMode && (
-        <CompareResultsModal
-          open={resultsModalOpen}
-          mixA={{
-            selection: selectedMixes.A!,
-            exposures: slotExposures.A.exposures,
+      {/* Build compare payloads for modal/inline views */}
+      {(() => {
+        const mixAForCompare =
+          slotStates.A.selection && {
+            selection: slotStates.A.selection as CompareSelection,
+            exposures: slotExposures.A.exposures as ApiExposureRow[],
             loading: slotExposures.A.loading,
             error: slotExposures.A.error,
-          }}
-          mixB={{
-            selection: selectedMixes.B!,
-            exposures: slotExposures.B.exposures,
+          };
+
+        const mixBForCompare =
+          slotStates.B.selection && {
+            selection: slotStates.B.selection as CompareSelection,
+            exposures: slotExposures.B.exposures as ApiExposureRow[],
             loading: slotExposures.B.loading,
             error: slotExposures.B.error,
-          }}
-          onClose={() => setResultsModalOpen(false)}
-        />
-      )}
+          };
+
+        return (
+          <>
+            {/* Inline results view removed — modal is now the single results surface */}
+
+            {/* Modal results (controlled by resultsMode) */}
+            {isSignedIn &&
+              bothReady &&
+              resultsMode &&
+              mixAForCompare &&
+              mixBForCompare && (
+                <CompareResultsModal
+                  open={resultsMode}
+                  mixA={mixAForCompare}
+                  mixB={mixBForCompare}
+                  onClose={() => setResultsMode(false)}
+                />
+              )}
+          </>
+        );
+      })()}
 
       <AuthDialog
         open={authDialogOpen}

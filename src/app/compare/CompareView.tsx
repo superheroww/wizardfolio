@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import MixLine from "@/components/MixLine";
+import CompareTable from "./components/CompareTable";
 import {
   aggregateByRegion,
   aggregateBySector,
@@ -164,38 +165,15 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
     };
     regions.sort((r1, r2) => getRegionScore(r2) - getRegionScore(r1));
 
+    const rows = regions.map((region) => ({
+      label: region,
+      aValue: formatPercent(aLookup.get(region)),
+      bValue: formatPercent(bLookup.get(region)),
+    }));
+
     return (
       <>
-        <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white/80">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-neutral-50/80">
-              <tr>
-                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                  Region
-                </th>
-                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                  Mix A
-                </th>
-                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                  Mix B
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {regions.map((region) => (
-                <tr key={region} className="border-t border-neutral-100">
-                  <td className="px-4 py-2 text-sm text-neutral-900">{region}</td>
-                  <td className="px-4 py-2 text-sm text-neutral-700">
-                    {formatPercent(aLookup.get(region))}
-                  </td>
-                  <td className="px-4 py-2 text-sm text-neutral-700">
-                    {formatPercent(bLookup.get(region))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <CompareTable sectionLabel="Regions" rows={rows} />
         <NormalizationCaption />
       </>
     );
@@ -239,38 +217,15 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
     };
     sectors.sort((s1, s2) => getSectorScore(s2) - getSectorScore(s1));
 
+    const rows = sectors.map((sector) => ({
+      label: sector,
+      aValue: formatPercent(aLookup.get(sector)),
+      bValue: formatPercent(bLookup.get(sector)),
+    }));
+
     return (
       <>
-        <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white/80">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-neutral-50/80">
-              <tr>
-                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                  Sector
-                </th>
-                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                  Mix A
-                </th>
-                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                  Mix B
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sectors.map((sector) => (
-                <tr key={sector} className="border-t border-neutral-100">
-                  <td className="px-4 py-2 text-sm text-neutral-900">{sector}</td>
-                  <td className="px-4 py-2 text-sm text-neutral-700">
-                    {formatPercent(aLookup.get(sector))}
-                  </td>
-                  <td className="px-4 py-2 text-sm text-neutral-700">
-                    {formatPercent(bLookup.get(sector))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <CompareTable sectionLabel="Sectors" rows={rows} />
         <NormalizationCaption />
       </>
     );
@@ -317,38 +272,15 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
 
     const trimmedSymbols = symbols.slice(0, 5);
 
+    const rows = trimmedSymbols.map((symbol) => ({
+      label: symbol,
+      aValue: formatPercent(aLookup.get(symbol)),
+      bValue: formatPercent(bLookup.get(symbol)),
+    }));
+
     return (
       <>
-        <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white/80">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-neutral-50/80">
-              <tr>
-                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                  Holding
-                </th>
-                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                  Mix A
-                </th>
-                <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                  Mix B
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {trimmedSymbols.map((symbol) => (
-                <tr key={symbol} className="border-t border-neutral-100">
-                  <td className="px-4 py-2 text-sm text-neutral-900">{symbol}</td>
-                  <td className="px-4 py-2 text-sm text-neutral-700">
-                    {formatPercent(aLookup.get(symbol))}
-                  </td>
-                  <td className="px-4 py-2 text-sm text-neutral-700">
-                    {formatPercent(bLookup.get(symbol))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <CompareTable sectionLabel="Holdings" rows={rows} />
         <NormalizationCaption />
       </>
     );
@@ -403,42 +335,7 @@ export default function CompareView({ mixA, mixB }: CompareViewProps) {
 
   return (
     <section className="mt-6 rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm sm:p-6">
-      <div className="flex flex-col gap-4 border-b border-neutral-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
-          <div className="flex items-start gap-2">
-            <span className="mt-[2px] inline-flex h-6 w-6 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white">
-              A
-            </span>
-            <div className="space-y-0.5">
-              <p className="text-sm font-semibold text-neutral-900">
-                {mixA.selection.label}
-              </p>
-              <p className="text-xs text-neutral-500">
-                <MixLine positions={mixA.selection.positions} />
-              </p>
-            </div>
-          </div>
 
-          <div className="hidden text-[11px] font-medium uppercase tracking-[0.18em] text-neutral-400 sm:block">
-            vs
-          </div>
-
-          <div className="flex items-start gap-2">
-            <span className="mt-[2px] inline-flex h-6 w-6 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white">
-              B
-            </span>
-            <div className="space-y-0.5">
-              <p className="text-sm font-semibold text-neutral-900">
-                {mixB.selection.label}
-              </p>
-              <p className="text-xs text-neutral-500">
-                <MixLine positions={mixB.selection.positions} />
-              </p>
-            </div>
-          </div>
-        </div>
-
-      </div>
 
       <div className="mt-4 flex gap-2 rounded-2xl bg-neutral-50 p-1">
         {TABS.map((tab) => (
