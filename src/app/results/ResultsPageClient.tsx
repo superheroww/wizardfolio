@@ -292,6 +292,14 @@ export default function ResultsPageClient({
     setShowSaveForm(true);
   };
 
+  const handleCompareFromResults = () => {
+    capture("compare_from_results_clicked", {
+      source: "results",
+      benchmark_symbol: benchmarkSymbol,
+    });
+    router.push("/compare?from=results");
+  };
+
   const handleSaveSubmit = async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
     if (!hasValidPositions || !user) {
@@ -839,14 +847,23 @@ const handleTryTopMix = (mixId: string) => {
               Save this mix to your dashboard
             </h3>
           </div>
-          <button
-            type="button"
-            onClick={handleSaveClick}
-            disabled={isSaving}
-            className="rounded-full border border-transparent bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
-          >
-            Save this mix
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={handleSaveClick}
+              disabled={isSaving}
+              className="rounded-full border border-transparent bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
+            >
+              Save this mix
+            </button>
+            <button
+              type="button"
+              onClick={handleCompareFromResults}
+              className="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-300 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-200 focus-visible:ring-offset-0"
+            >
+              Compare your mixes
+            </button>
+          </div>
         </div>
 
         {showSaveForm && (

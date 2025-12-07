@@ -4,21 +4,21 @@ import { useEffect, useRef, useState } from "react";
 import { usePostHogSafe } from "@/lib/usePostHogSafe";
 import { UserPosition } from "@/lib/exposureEngine";
 
-type QuickStartTemplatesProps = {
-  onTemplateSelect: (positions: UserPosition[], template: Template) => void;
-};
-
-type Template = {
+export type QuickStartTemplate = {
   id: string;
   emoji: string;
   name: string;
   description: string;
   positions: UserPosition[];
-  type: "template" | "custom";
+  type: "standard" | "flash" | "custom";
   isDefaultTemplate: boolean;
 };
 
-const QUICK_START_TEMPLATES: Template[] = [
+type QuickStartTemplatesProps = {
+  onTemplateSelect: (positions: UserPosition[], template: QuickStartTemplate) => void;
+};
+
+export const QUICK_START_TEMPLATES: QuickStartTemplate[] = [
   {
     id: "us_core_tech_boost",
     emoji: "🎯",
@@ -28,7 +28,7 @@ const QUICK_START_TEMPLATES: Template[] = [
       { symbol: "VOO", weightPct: 80 },
       { symbol: "QQQ", weightPct: 20 },
     ],
-    type: "template",
+    type: "standard",
     isDefaultTemplate: true,
   },
   {
@@ -40,7 +40,7 @@ const QUICK_START_TEMPLATES: Template[] = [
       { symbol: "XEQT.TO", weightPct: 80 },
       { symbol: "VCN.TO", weightPct: 20 }, // replaced ZAG.TO (bond ETF)
     ],
-    type: "template",
+    type: "standard",
     isDefaultTemplate: false,
   },
   {
@@ -50,7 +50,7 @@ const QUICK_START_TEMPLATES: Template[] = [
     description:
       "Simple global all-equity portfolio with XEQT only. Great as a clean benchmark.",
     positions: [{ symbol: "XEQT.TO", weightPct: 100 }],
-    type: "template",
+    type: "standard",
     isDefaultTemplate: true,
   },
   {
@@ -60,7 +60,7 @@ const QUICK_START_TEMPLATES: Template[] = [
     description:
       "Global all-equity one-ticket using VEQT only. Helpful to compare its regional tilt against others.",
     positions: [{ symbol: "VEQT.TO", weightPct: 100 }],
-    type: "template",
+    type: "standard",
     isDefaultTemplate: true,
   },
   {
@@ -73,7 +73,7 @@ const QUICK_START_TEMPLATES: Template[] = [
       { symbol: "VOO", weightPct: 60 },
       { symbol: "VXUS", weightPct: 40 },
     ],
-    type: "template",
+    type: "standard",
     isDefaultTemplate: false,
   },
   {
@@ -83,7 +83,7 @@ const QUICK_START_TEMPLATES: Template[] = [
     description:
       "100% S&P 500 exposure, useful as a simple US benchmark against more diversified mixes.",
     positions: [{ symbol: "VOO", weightPct: 100 }],
-    type: "template",
+    type: "standard",
     isDefaultTemplate: false,
   },
 
@@ -98,7 +98,7 @@ const QUICK_START_TEMPLATES: Template[] = [
       { symbol: "QQQ", weightPct: 60 },
       { symbol: "VUG", weightPct: 40 },
     ],
-    type: "template",
+    type: "standard",
     isDefaultTemplate: false,
   },
   {
@@ -111,7 +111,7 @@ const QUICK_START_TEMPLATES: Template[] = [
       { symbol: "VCN.TO", weightPct: 20 },
       { symbol: "VFV.TO", weightPct: 20 },
     ],
-    type: "template",
+    type: "standard",
     isDefaultTemplate: false,
   },
   {
@@ -124,7 +124,7 @@ const QUICK_START_TEMPLATES: Template[] = [
       { symbol: "VXUS", weightPct: 30 },
       { symbol: "VT", weightPct: 30 },
     ],
-    type: "template",
+    type: "standard",
     isDefaultTemplate: false,
   },
   {
@@ -136,7 +136,7 @@ const QUICK_START_TEMPLATES: Template[] = [
       { symbol: "VTI", weightPct: 60 },
       { symbol: "VXUS", weightPct: 40 },
     ],
-    type: "template",
+    type: "standard",
     isDefaultTemplate: true,
   },
   {
@@ -149,7 +149,7 @@ const QUICK_START_TEMPLATES: Template[] = [
       { symbol: "VDY.TO", weightPct: 30 },
       { symbol: "ZDV.TO", weightPct: 30 },
     ],
-    type: "template",
+    type: "standard",
     isDefaultTemplate: false,
   },
   {
@@ -170,6 +170,16 @@ export default function QuickStartTemplates({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const { capture } = usePostHogSafe();
+  const [page, setPage] = useState(0);
+  const pageSize = 16;
+  const standardTemplates = QUICK_START_TEMPLATES.filter(
+    (template) => template.type === "standard"
+  );
+  const totalPages = Math.ceil(standardTemplates.length / pageSize);
+  const lastPageIndex = totalPages > 0 ? totalPages - 1 : 0;
+  const startIndex = page * pageSize;
+  const pageItems = standardTemplates.slice(startIndex, startIndex + pageSize);
+  const placeholderCount = Math.max(pageSize - pageItems.length, 0);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -201,7 +211,36 @@ export default function QuickStartTemplates({
     };
   }, []);
 
-  const handleTryTemplate = (template: Template, index: number) => {
+  useEffect(() => {
+    if (totalPages === 0) {
+      if (page !== 0) {
+        setPage(0);
+      }
+      return;
+    }
+
+    if (page > lastPageIndex) {
+      setPage(lastPageIndex);
+    }
+  }, [page, totalPages, lastPageIndex]);
+
+  const goToPage = (targetPage: number) => {
+    if (targetPage < 0 || targetPage > lastPageIndex) {
+      return;
+    }
+
+    setPage(targetPage);
+  };
+
+  const handlePreviousPage = () => {
+    goToPage(page - 1);
+  };
+
+  const handleNextPage = () => {
+    goToPage(page + 1);
+  };
+
+  const handleTryTemplate = (template: QuickStartTemplate, index: number) => {
     setActiveIndex(index);
     capture("starting_point_selected", {
       starting_point_id: template.id,
@@ -219,75 +258,175 @@ export default function QuickStartTemplates({
 
   return (
     <div className="space-y-3">
-      <div
-        ref={containerRef}
-        className="
-          flex gap-3 overflow-x-auto pb-1 pt-2 scroll-smooth snap-x snap-mandatory
-          md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:snap-none
-        "
-        style={{ scrollbarWidth: "none" }}
-      >
-        {QUICK_START_TEMPLATES.map((template, index) => (
-          <div
-            key={template.name}
-            data-index={index}
-            ref={(el) => {
-              cardRefs.current[index] = el;
-            }}
-            className="
-              min-w-[80%] max-w-[85%] snap-center sm:min-w-[320px] sm:max-w-[360px]
-              md:min-w-0 md:max-w-none md:snap-none
-            "
-          >
-            <div className="flex h-full flex-col justify-between rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm shadow-neutral-200 backdrop-blur">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{template.emoji}</span>
-                  <p className="text-base font-semibold text-neutral-900">
-                    {template.name}
+      <div className="block lg:hidden space-y-3">
+        <div
+          ref={containerRef}
+          className="
+            flex gap-3 overflow-x-auto pb-1 pt-2 scroll-smooth snap-x snap-mandatory
+            md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:snap-none
+          "
+          style={{ scrollbarWidth: "none" }}
+        >
+          {QUICK_START_TEMPLATES.map((template, index) => (
+            <div
+              key={template.name}
+              data-index={index}
+              ref={(el) => {
+                cardRefs.current[index] = el;
+              }}
+              className="
+                min-w-[80%] max-w-[85%] snap-center sm:min-w-[320px] sm:max-w-[360px]
+                md:min-w-0 md:max-w-none md:snap-none
+              "
+            >
+              <div className="flex h-full flex-col justify-between rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm shadow-neutral-200 backdrop-blur">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{template.emoji}</span>
+                    <p className="text-base font-semibold text-neutral-900">
+                      {template.name}
+                    </p>
+                  </div>
+                  <p className="text-sm text-neutral-700">
+                    {template.description}
+                  </p>
+                  <p className="text-sm text-neutral-700">
+                    {template.positions.length
+                      ? template.positions
+                          .map(
+                            (position) =>
+                              `${position.weightPct}% ${position.symbol}`
+                          )
+                          .join(" · ")
+                      : "Empty slate ready for your ideas."}
                   </p>
                 </div>
-                <p className="text-sm text-neutral-700">
-                  {template.description}
-                </p>
-                <p className="text-sm text-neutral-700">
-                  {template.positions.length
-                    ? template.positions
-                        .map(
-                          (position) =>
-                            `${position.weightPct}% ${position.symbol}`
-                        )
-                        .join(" · ")
-                    : "Empty slate ready for your ideas."}
-                </p>
+                <button
+                  type="button"
+                  onClick={() => handleTryTemplate(template, index)}
+                  className="mt-4 inline-flex items-center justify-center rounded-full border border-neutral-200 px-3 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+                >
+                  Try this →
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => handleTryTemplate(template, index)}
-                className="mt-4 inline-flex items-center justify-center rounded-full border border-neutral-200 px-3 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
-              >
-                Try this →
-              </button>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        <div
+          aria-label="Quick start templates progress"
+          className="flex items-center gap-2 md:hidden"
+        >
+          {QUICK_START_TEMPLATES.map((_, index) => (
+            <span
+              key={index}
+              className={`h-1.5 rounded-full transition-all duration-200 ${
+                index === activeIndex ? "w-3.5 bg-neutral-900" : "w-2 bg-neutral-300"
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
-      <div
-        aria-label="Quick start templates progress"
-        className="flex items-center gap-2 md:hidden"
-      >
-        {QUICK_START_TEMPLATES.map((_, index) => (
-          <span
-            key={index}
-            className={`h-1.5 rounded-full transition-all duration-200 ${
-              index === activeIndex
-                ? "w-3.5 bg-neutral-900"
-                : "w-2 bg-neutral-300"
-            }`}
-          />
-        ))}
-      </div>
+      {standardTemplates.length > 0 && (
+        <div className="hidden lg:flex flex-col gap-6">
+          <div className="grid w-full grid-cols-4 gap-4 auto-rows-[minmax(0,1fr)]">
+            {pageItems.map((template, index) => (
+              <div key={template.id} className="flex h-full">
+                <div className="flex h-full w-full flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm shadow-neutral-200 transition duration-200 hover:-translate-y-[1px] hover:border-neutral-300 hover:shadow-md">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{template.emoji}</span>
+                      <p className="text-base font-semibold text-neutral-900">
+                        {template.name}
+                      </p>
+                    </div>
+                    <p className="text-sm text-neutral-700">
+                      {template.description}
+                    </p>
+                    <p className="text-sm text-neutral-700">
+                      {template.positions.length
+                        ? template.positions
+                            .map(
+                              (position) =>
+                                `${position.weightPct}% ${position.symbol}`
+                            )
+                            .join(" · ")
+                        : "Empty slate ready for your ideas."}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleTryTemplate(template, startIndex + index)
+                    }
+                    className="mt-4 inline-flex items-center justify-center rounded-full border border-neutral-200 px-3 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+                  >
+                    Try this →
+                  </button>
+                </div>
+              </div>
+            ))}
+            {Array.from({ length: placeholderCount }).map((_, placeholderIndex) => (
+              <div
+                key={`placeholder-${placeholderIndex}`}
+                className="flex h-full"
+                aria-hidden="true"
+              >
+                <div className="flex h-full w-full flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm shadow-neutral-200 opacity-0 pointer-events-none">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">&nbsp;</span>
+                      <p className="text-base font-semibold text-neutral-900">&nbsp;</p>
+                    </div>
+                    <p className="text-sm text-neutral-700">&nbsp;</p>
+                    <p className="text-sm text-neutral-700">&nbsp;</p>
+                  </div>
+                  <span className="mt-4 inline-flex h-8 w-20 items-center justify-center rounded-full border border-neutral-200 px-3 py-1 text-sm font-medium text-neutral-700">
+                    &nbsp;
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden lg:flex items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={handlePreviousPage}
+              disabled={page === 0}
+              className="inline-flex h-9 items-center justify-center rounded-full border border-neutral-200 bg-neutral-100 px-4 py-1 text-sm font-medium text-neutral-900 transition disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {Array.from({ length: totalPages }).map((_, pageIndex) => (
+                <button
+                  key={`page-${pageIndex}`}
+                  type="button"
+                  onClick={() => goToPage(pageIndex)}
+                  className={`inline-flex h-9 items-center justify-center rounded-full border px-3 text-sm transition ${
+                    page === pageIndex
+                      ? "border-neutral-900 bg-neutral-900 text-white"
+                      : "border-neutral-200 bg-neutral-100 text-neutral-900 hover:border-neutral-300"
+                  }`}
+                  aria-current={page === pageIndex ? "page" : undefined}
+                >
+                  {pageIndex + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={handleNextPage}
+              disabled={page === lastPageIndex}
+              className="inline-flex h-9 items-center justify-center rounded-full border border-neutral-200 bg-neutral-100 px-4 py-1 text-sm font-medium text-neutral-900 transition disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

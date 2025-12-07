@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Menu } from "lucide-react";
 import { AuthDialog } from "@/components/auth/AuthDialog";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
+import { usePostHogSafe } from "@/lib/usePostHogSafe";
 import { signOut } from "@/lib/supabaseBrowser";
 
 export function Header() {
@@ -14,6 +15,7 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const { capture } = usePostHogSafe();
 
   useEffect(() => {
     const handler = (event: MouseEvent) => {
@@ -45,6 +47,11 @@ export function Header() {
     router.push("/");
   };
 
+  const handleCompareNavClick = () => {
+    setMenuOpen(false);
+    capture("compare_nav_clicked");
+  };
+
   return (
     <>
       <header className="border-b border-neutral-200 bg-white">
@@ -59,6 +66,13 @@ export function Header() {
           </Link>
           <div ref={menuRef} className="relative flex items-center gap-3">
             <nav className="hidden items-center gap-3 md:flex">
+              <Link
+                href="/compare"
+                onClick={handleCompareNavClick}
+                className="text-sm font-medium text-neutral-700 transition hover:text-neutral-900"
+              >
+                Compare ETFs
+              </Link>
               {user && (
                 <Link
                   href="/dashboard"
@@ -95,7 +109,14 @@ export function Header() {
               <Menu className="h-4 w-4 text-neutral-700" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg">
+                <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg">
+                <Link
+                  href="/compare"
+                  onClick={handleCompareNavClick}
+                  className="block w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100"
+                >
+                  Compare ETFs
+                </Link>
                 {user ? (
                   <>
                     <button
