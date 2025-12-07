@@ -10,6 +10,7 @@ type MixPositionsEditorProps = {
   onChange: (positions: UserPosition[]) => void;
   actionSlot?: ReactNode;
   maxAssets?: number;
+  disableAddWhenFull?: boolean;
 };
 
 const DEFAULT_MAX_ASSETS = 5;
@@ -20,9 +21,17 @@ export default function MixPositionsEditor({
   onChange,
   actionSlot,
   maxAssets = DEFAULT_MAX_ASSETS,
+  disableAddWhenFull = false,
 }: MixPositionsEditorProps) {
   const canAddMore = positions.length < maxAssets;
   const lastWeightByRow = useRef<Record<number, number>>({});
+  const currentTotalWeight = positions.reduce(
+    (sum, position) =>
+      sum + (Number.isFinite(position.weightPct) ? position.weightPct : 0),
+    0,
+  );
+  const isFull =
+    currentTotalWeight >= 100 - TOTAL_WEIGHT_TOLERANCE;
 
   useEffect(() => {
     positions.forEach((position, index) => {
@@ -127,7 +136,7 @@ export default function MixPositionsEditor({
   );
 
   const addRow = () => {
-    if (!canAddMore) return;
+    if (!canAddMore || (disableAddWhenFull && isFull)) return;
     const next = [...positions, { symbol: "", weightPct: 0 }];
     onChange(next);
     posthog.capture("add_position", {
@@ -211,7 +220,7 @@ export default function MixPositionsEditor({
           <button
             type="button"
             onClick={addRow}
-            disabled={!canAddMore}
+            disabled={!canAddMore || (disableAddWhenFull && isFull)}
             className="inline-flex items-center rounded-full border border-neutral-200 px-3 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {canAddMore ? "+ Add asset" : `Max ${maxAssets} assets`}

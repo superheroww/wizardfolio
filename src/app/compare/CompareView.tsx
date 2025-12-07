@@ -33,9 +33,9 @@ type CompareViewProps = {
 };
 
 const SOURCE_LABEL: Record<CompareSelectionSource, string> = {
-  mixes: "Saved mix",
-  benchmarks: "Benchmark",
-  templates: "Template",
+  saved: "Saved mix",
+  benchmark: "Benchmark",
+  template: "Template",
   scratch: "Scratch mix",
 };
 

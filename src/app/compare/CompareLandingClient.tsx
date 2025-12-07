@@ -20,6 +20,8 @@ import type {
   CompareSelectorTabId,
   CompareSlotId,
 } from "./types";
+import { deriveSlotState, prepareScratchPositions } from "./slotState";
+import type { CompareSlotState } from "./slotState";
 
 type SlotExposureState = {
   exposures: ApiExposureRow[];
@@ -60,14 +62,6 @@ export default function CompareLandingClient() {
     A: createEmptyExposureState(),
     B: createEmptyExposureState(),
   });
-  const [editingScratchSlot, setEditingScratchSlot] =
-    useState<CompareSlotId | null>(null);
-  const [scratchDraftPositions, setScratchDraftPositions] = useState<
-    Record<CompareSlotId, UserPosition[]>
-  >(() => ({
-    A: [{ symbol: "", weightPct: 0 }],
-    B: [{ symbol: "", weightPct: 0 }],
-  }));
   const exposureCacheRef = useRef(new Map<string, ApiExposureRow[]>());
 
   const defaultSelectorTab = useMemo<CompareSelectorTabId>(() => {
@@ -148,34 +142,27 @@ export default function CompareLandingClient() {
   };
 
   const handleModalSelect = (selection: CompareSelection) => {
-    if (selection.source === "scratch") {
-      const draftPositions = scratchDraftPositions[activeSlot];
-      setSelectedMixes((prev) => ({
-        ...prev,
-        [activeSlot]: {
-          ...selection,
-          positions:
-            draftPositions && draftPositions.length
-              ? draftPositions
-              : [{ symbol: "", weightPct: 0 }],
-        },
-      }));
-      setEditingScratchSlot(activeSlot);
-      capture("compare_slot_selected", {
-        slot: activeSlot,
-        source: selection.source,
-      });
-      setModalOpen(false);
-      return;
-    }
+    const currentSelection = selectedMixes[activeSlot];
+    const reuseScratchPositions =
+      selection.source === "scratch" &&
+      currentSelection?.source === "scratch" &&
+      currentSelection.positions.length > 0;
+
+    const scratchPositions = reuseScratchPositions
+      ? currentSelection!.positions
+      : selection.positions && selection.positions.length
+      ? selection.positions
+      : [{ symbol: "", weightPct: 0 }];
+
+    const nextSelection =
+      selection.source === "scratch"
+        ? { ...selection, positions: scratchPositions }
+        : selection;
 
     setSelectedMixes((prev) => ({
       ...prev,
-      [activeSlot]: selection,
+      [activeSlot]: nextSelection,
     }));
-    if (editingScratchSlot === activeSlot) {
-      setEditingScratchSlot(null);
-    }
     capture("compare_slot_selected", {
       slot: activeSlot,
       source: selection.source,
@@ -267,12 +254,6 @@ export default function CompareLandingClient() {
   }, [selectedMixes.B]);
 
   const handleChangeMixClick = (slot: CompareSlotId) => {
-    const current = selectedMixes[slot];
-    if (current?.source === "scratch") {
-      setEditingScratchSlot(slot);
-      return;
-    }
-
     handleSlotClick(slot);
   };
 
@@ -280,10 +261,7 @@ export default function CompareLandingClient() {
     slot: CompareSlotId,
     positions: UserPosition[],
   ) => {
-    setScratchDraftPositions((prev) => ({
-      ...prev,
-      [slot]: positions,
-    }));
+    const normalized = prepareScratchPositions(positions);
 
     setSelectedMixes((prev) => {
       const current = prev[slot];
@@ -295,17 +273,40 @@ export default function CompareLandingClient() {
         ...prev,
         [slot]: {
           ...current,
-          positions,
+          positions: normalized,
         },
       };
     });
   };
 
-  const handleFinishScratchEditing = (slot: CompareSlotId) => {
-    setEditingScratchSlot((current) => (current === slot ? null : current));
-  };
+  const slotStates = useMemo<Record<CompareSlotId, CompareSlotState>>(
+    () => ({
+      A: deriveSlotState(selectedMixes.A),
+      B: deriveSlotState(selectedMixes.B),
+    }),
+    [selectedMixes],
+  );
 
-  const readyToCompare = Boolean(selectedMixes.A && selectedMixes.B);
+  const bothReady = slotStates.A.isReady && slotStates.B.isReady;
+
+  const incompleteSlots = slotOrder.filter(
+    (slotId) => !slotStates[slotId].isReady,
+  );
+  const singleIncompleteSlot =
+    incompleteSlots.length === 1 ? incompleteSlots[0] : null;
+  const allocationHint =
+    singleIncompleteSlot &&
+    slotStates[singleIncompleteSlot].source === "scratch"
+      ? `Mix ${singleIncompleteSlot} is ${Math.round(
+          Math.max(
+            0,
+            Math.min(
+              100,
+              slotStates[singleIncompleteSlot].allocationPercent,
+            ),
+          ),
+        )}% allocated. Finish it to 100% to unlock the comparison.`
+      : null;
 
   return (
     <div className="space-y-5">
@@ -339,15 +340,12 @@ export default function CompareLandingClient() {
             ) : isSignedIn ? (
               <CompareSlot
                 slotId={slotId}
-                selection={selectedMixes[slotId]}
+                slotState={slotStates[slotId]}
                 onSlotClick={() => handleSlotClick(slotId)}
                 onChangeMixClick={() => handleChangeMixClick(slotId)}
-                isEditingScratch={editingScratchSlot === slotId}
-                scratchPositions={scratchDraftPositions[slotId]}
                 onScratchPositionsChange={(positions) =>
                   handleScratchPositionsChange(slotId, positions)
                 }
-                onScratchEditingDone={() => handleFinishScratchEditing(slotId)}
               />
             ) : (
               <LoginRequiredCard onSignIn={() => setAuthDialogOpen(true)} />
@@ -357,7 +355,7 @@ export default function CompareLandingClient() {
       </div>
 
       {isSignedIn ? (
-        readyToCompare ? (
+        bothReady ? (
           <CompareView
             mixA={{
               selection: selectedMixes.A!,
@@ -374,8 +372,14 @@ export default function CompareLandingClient() {
           />
         ) : (
           <div className="rounded-3xl border border-dashed border-neutral-200 bg-white/80 p-5 text-sm text-neutral-600 shadow-sm shadow-black/5">
-            Select two mixes to reveal the comparison view. Tap any slot above
-            to begin.
+            <p>Select two mixes to reveal the comparison.</p>
+            {allocationHint ? (
+              <p className="mt-2 text-sm text-neutral-500">{allocationHint}</p>
+            ) : (
+              <p className="mt-2 text-sm text-neutral-500">
+                Tap any slot above to begin.
+              </p>
+            )}
           </div>
         )
       ) : null}

@@ -1,4 +1,4 @@
-import type { UserPosition } from "@/lib/exposureEngine";
+"import type { UserPosition } from "@/lib/exposureEngine";
 
 export type CompareSavedMix = {
   id: string;
@@ -6,11 +6,9 @@ export type CompareSavedMix = {
   positions: UserPosition[];
 };
 
-export type CompareSelectionSource =
-  | "mixes"
-  | "benchmarks"
-  | "templates"
-  | "scratch";
+export type CompareSlotSource = "saved" | "benchmark" | "template" | "scratch";
+
+export type CompareSelectionSource = CompareSlotSource;
 
 export type CompareSelection = {
   id: string;

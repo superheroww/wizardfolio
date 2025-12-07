@@ -121,7 +121,7 @@ export default function CompareSelectorModal({
                 id: mix.id,
                 label: mix.name,
                 positions: mix.positions,
-                source: "mixes",
+                source: "saved",
               })
             }
             className="w-full rounded-2xl border border-neutral-200 bg-white/70 p-4 text-left shadow-sm transition hover:border-blue-500/40 hover:shadow-md"
@@ -155,7 +155,7 @@ export default function CompareSelectorModal({
               id: benchmark.id,
               label: benchmark.label,
               positions: benchmark.positions,
-              source: "benchmarks",
+              source: "benchmark",
             })
           }
           className="w-full rounded-2xl border border-neutral-200 bg-white/80 p-4 text-left shadow-sm transition hover:border-blue-500/40 hover:shadow-md"
@@ -187,7 +187,7 @@ export default function CompareSelectorModal({
               id: template.id,
               label: template.name,
               positions: template.positions,
-              source: "templates",
+              source: "template",
             })
           }
           className="flex w-full flex-col rounded-2xl border border-neutral-200 bg-white/80 p-4 text-left shadow-sm transition hover:border-blue-500/40 hover:shadow-md"
