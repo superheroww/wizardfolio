@@ -20,13 +20,19 @@ export async function getTopLovedTemplates(
   try {
     const supabase = createServerSupabaseClient();
 
+    // 💡 FIX: Calculate the cutoff date in Node.js and format it as an ISO 8601 string.
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffDateISO = cutoffDate.toISOString();
+
     // Simple approach: fetch recent template events and aggregate counts in JS.
     let query = supabase
       .from("mix_events")
       .select("template_key")
       .eq("source", "template")
       .not("template_key", "is", null)
-      .gte("created_at", `now() - interval '${days} days'`)
+      // Use the calculated ISO string instead of the raw SQL function
+      .gte("created_at", cutoffDateISO)
       .limit(1000);
 
     if (countryCode) {
@@ -36,6 +42,7 @@ export async function getTopLovedTemplates(
     const { data, error } = await query;
 
     if (error || !data) {
+      // This will now only log if the query truly failed, not due to the date syntax error
       console.error("[top-loved] query error", error);
       return [];
     }
