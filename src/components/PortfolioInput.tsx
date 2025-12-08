@@ -26,7 +26,7 @@ export default function PortfolioInput({
 }: PortfolioInputProps) {
   // 🚨 Ignore empty rows (symbol "" AND weight 0)
   const validRows = positions.filter(
-    (p) => p.symbol.trim() !== "" && p.weightPct > 0
+    (p) => p.symbol.trim() !== "" && p.weightPct > 0,
   );
 
   // SUM ONLY VALID ROWS
@@ -63,7 +63,7 @@ export default function PortfolioInput({
   const updatePosition = useCallback(
     (index: number, patch: Partial<UserPosition>) => {
       const next = positions.map((p, i) =>
-        i === index ? { ...p, ...patch } : p
+        i === index ? { ...p, ...patch } : p,
       );
 
       onChange(next);
@@ -78,13 +78,17 @@ export default function PortfolioInput({
         lastRow.symbol.trim() === "" && lastRow.weightPct === 0;
 
       const canAdd = next.length < MAX_ASSETS;
+      // Only add new row if totalWeight < 100
+      const totalWeight = next.reduce(
+        (acc, p) => acc + p.weightPct,
+        0,
+      );
 
-      // If this row is complete AND the form has no empty row at the bottom → add one
-      if (rowIsComplete && !lastRowIsEmpty && canAdd) {
+      if (rowIsComplete && !lastRowIsEmpty && canAdd && totalWeight < 100) {
         onChange([...next, { symbol: "", weightPct: 0 }]);
       }
     },
-    [positions, onChange]
+    [positions, onChange],
   );
 
   const handleSymbolCommit = useCallback(
@@ -101,7 +105,7 @@ export default function PortfolioInput({
         had_previous_symbol: !!prevSymbol.trim(),
       });
     },
-    [positions, updatePosition]
+    [positions, updatePosition],
   );
 
   const handleWeightCommit = useCallback(
@@ -119,11 +123,11 @@ export default function PortfolioInput({
       lastWeightByRow.current[index] = normalized;
 
       const nextPositions = positions.map((position, i) =>
-        i === index ? { ...position, weightPct: normalized } : position
+        i === index ? { ...position, weightPct: normalized } : position,
       );
       const totalWeightAfter = nextPositions.reduce(
         (sum, position) => sum + (position.weightPct ?? 0),
-        0
+        0,
       );
 
       posthog.capture("change_weight", {
@@ -131,7 +135,7 @@ export default function PortfolioInput({
         positions_count: nextPositions.length,
       });
     },
-    [positions]
+    [positions],
   );
 
   const addRow = () => {
@@ -185,25 +189,51 @@ export default function PortfolioInput({
               <input
                 className="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-base text-neutral-900 outline-none ring-0 focus:border-neutral-400 sm:text-sm"
                 type="number"
+                inputMode="numeric"
                 min={0}
                 max={100}
-                step={0.1}
+                step={1}
                 value={pos.weightPct === 0 ? "" : pos.weightPct}
-                onChange={(e) =>
-                  updatePosition(index, {
-                    weightPct: Number(e.target.value || 0),
-                  })
-                }
-                onBlur={(event) =>
-                  handleWeightCommit(index, Number(event.currentTarget.value || 0))
-                }
+                onChange={(e) => {
+                  let value = e.target.value;
+                  let num = parseFloat(value);
+
+                  if (isNaN(num)) num = 0;
+
+                  num = Math.round(num);
+
+                  if (num < 0) num = 0;
+                  if (num > 100) num = 100;
+
+                  updatePosition(index, { weightPct: num });
+                }}
+                onBlur={(event) => {
+                  let value = event.currentTarget.value;
+                  let num = parseFloat(value);
+
+                  if (isNaN(num)) num = 0;
+
+                  num = Math.round(num);
+
+                  if (num < 0) num = 0;
+                  if (num > 100) num = 100;
+
+                  handleWeightCommit(index, num);
+                }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
-                    handleWeightCommit(
-                      index,
-                      Number(event.currentTarget.value || 0)
-                    );
+                    let value = event.currentTarget.value;
+                    let num = parseFloat(value);
+
+                    if (isNaN(num)) num = 0;
+
+                    num = Math.round(num);
+
+                    if (num < 0) num = 0;
+                    if (num > 100) num = 100;
+
+                    handleWeightCommit(index, num);
                     event.currentTarget.blur();
                   }
                 }}
@@ -221,8 +251,6 @@ export default function PortfolioInput({
       </div>
 
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    
-
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
