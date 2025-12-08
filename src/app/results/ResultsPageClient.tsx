@@ -5,7 +5,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type FormEvent,
   type TouchEvent,
 } from "react";
 import BenchmarkComparisonCard from "@/components/BenchmarkComparisonCard";
@@ -37,12 +36,6 @@ import type { MixComparisonResult } from "@/lib/benchmarkEngine";
 import { formatMixSummary } from "@/lib/mixFormatting";
 import { getBenchmarkLabel } from "@/lib/benchmarkUtils";
 import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
-import {
-  DEFAULT_SAVED_MIX_NAME,
-  SAVED_MIX_NAME_ERROR_MESSAGE,
-  SAVED_MIX_NAME_MAX_LENGTH,
-  SAVED_MIX_NAME_REQUIRED_MESSAGE,
-} from "@/lib/savedMixes";
 
 type SlideIndex = 0 | 1 | 2 | 3 | 4;
 
@@ -200,34 +193,10 @@ export default function ResultsPageClient({
   const user = useSupabaseUser();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [pendingSave, setPendingSave] = useState(false);
-  const [showSaveForm, setShowSaveForm] = useState(false);
-  const [saveName, setSaveName] = useState(
-    mixName || DEFAULT_SAVED_MIX_NAME,
-  );
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<
     { type: "success" | "error"; message: string } | null
   >(null);
-  const trimmedSaveName = saveName.trim();
-  const isSaveNameValid = trimmedSaveName.length > 0;
-
-  useEffect(() => {
-    if (!showSaveForm) {
-      setSaveName(mixName || DEFAULT_SAVED_MIX_NAME);
-    }
-  }, [mixName, showSaveForm]);
-
-  useEffect(() => {
-    if (user && pendingSave) {
-      setPendingSave(false);
-      setShowSaveForm(true);
-      return;
-    }
-
-    if (!user) {
-      setShowSaveForm(false);
-    }
-  }, [user, pendingSave]);
 
   const [selectedBenchmarkId, setSelectedBenchmarkId] = useState(
     defaultBenchmark.id,
@@ -283,61 +252,10 @@ export default function ResultsPageClient({
     has_valid_positions: hasValidPositions,
   };
 
-  // CTA click: "Save this mix"
-  const handleSaveClick = () => {
-    // 🔹 Track click on the big CTA
-    capture("save_this_mix_clicked", baseSaveProps);
-
-    if (!hasValidPositions) {
-      setStatusMessage({
-        type: "error",
-        message: EMPTY_POSITIONS_ERROR,
-      });
-      return;
-    }
-
-    if (!user) {
-      setPendingSave(true);
-      setAuthDialogOpen(true);
-      return;
-    }
-
-    // User is logged in → behave like "Save mix" button
-    handleSaveSubmit(undefined, "cta");
-  };
-
-  // source: where the submit is coming from ("cta" auto-save vs "form" button)
-  const handleSaveSubmit = async (
-    event?: FormEvent<HTMLFormElement>,
-    source: "cta" | "form" = "form",
-  ) => {
-    event?.preventDefault();
-
-    // 🔹 Track click on the "Save mix" button (form only)
-    if (source === "form") {
-      capture("save_mix_clicked", baseSaveProps);
-    }
-
-    if (!hasValidPositions || !user) {
-      return;
-    }
+  const saveMix = async (source: "cta" | "auth") => {
+    if (!hasValidPositions || !user) return;
 
     setStatusMessage(null);
-    const trimmedName = saveName.trim();
-    if (!trimmedName) {
-      setStatusMessage({
-        type: "error",
-        message: SAVED_MIX_NAME_REQUIRED_MESSAGE,
-      });
-      return;
-    }
-    if (trimmedName.length > SAVED_MIX_NAME_MAX_LENGTH) {
-      setStatusMessage({
-        type: "error",
-        message: SAVED_MIX_NAME_ERROR_MESSAGE,
-      });
-      return;
-    }
     setIsSaving(true);
 
     try {
@@ -357,7 +275,8 @@ export default function ResultsPageClient({
         headers,
         credentials: "same-origin",
         body: JSON.stringify({
-          name: trimmedName,
+          // Let backend handle fallback naming if mixName is empty
+          name: mixName || undefined,
           positions: sanitizedPositions,
         }),
       });
@@ -374,11 +293,12 @@ export default function ResultsPageClient({
         type: "success",
         message: "Mix saved to your dashboard.",
       });
-      setShowSaveForm(false);
+
       capture("mix_saved", {
-        mix_name: trimmedName,
+        mix_name: mixName,
         positions_count: positionsCount,
         source_page: "results",
+        source,
       });
     } catch (error: any) {
       setStatusMessage({
@@ -391,11 +311,36 @@ export default function ResultsPageClient({
     }
   };
 
-  const handleAuthSuccess = () => {
-    if (pendingSave) {
-      setPendingSave(false);
-      setShowSaveForm(true);
+  // CTA click: "Save this mix" (no rename UI)
+  const handleSaveClick = () => {
+    capture("save_this_mix_clicked", baseSaveProps);
+
+    if (!hasValidPositions) {
+      setStatusMessage({
+        type: "error",
+        message: EMPTY_POSITIONS_ERROR,
+      });
+      return;
     }
+
+    if (!user) {
+      setPendingSave(true);
+      setAuthDialogOpen(true);
+      return;
+    }
+
+    // User is logged in → save immediately
+    void saveMix("cta");
+  };
+
+  const handleAuthSuccess = () => {
+    if (!pendingSave) return;
+
+    setPendingSave(false);
+    setAuthDialogOpen(false);
+
+    // After successful auth from this CTA, auto-save
+    void saveMix("auth");
   };
 
   const [exposure, setExposure] = useState<ApiExposureRow[]>([]);
@@ -867,44 +812,9 @@ export default function ResultsPageClient({
               disabled={isSaving}
               className="rounded-full border border-transparent bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
             >
-              Save this mix
+              {isSaving ? "Saving…" : "Save this mix"}
             </button>
           </div>
-
-          {showSaveForm && (
-            <form
-              onSubmit={(event) => handleSaveSubmit(event, "form")}
-              className="mt-4 space-y-3"
-            >
-              <label className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
-                Mix name
-                <input
-                  type="text"
-                  value={saveName}
-                  onChange={(event) => setSaveName(event.target.value)}
-                  placeholder="My saved mix"
-                  maxLength={SAVED_MIX_NAME_MAX_LENGTH}
-                  className="mt-2 w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
-                />
-              </label>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="submit"
-                  disabled={!isSaveNameValid || isSaving}
-                  className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isSaving ? "Saving…" : "Save mix"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowSaveForm(false)}
-                  className="inline-flex items-center justify-center rounded-2xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:border-neutral-300"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
 
           {statusMessage && (
             <p
