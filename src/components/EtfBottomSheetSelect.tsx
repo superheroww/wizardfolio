@@ -226,7 +226,7 @@ export default function EtfBottomSheetSelect({
         onClick={openSheet}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        className="mt-1 flex w-full items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2 text-left text-base text-neutral-900 transition hover:border-neutral-400"
+        className="mt-1 flex w-full items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-left text-base text-neutral-900 transition hover:border-neutral-400 sm:text-sm focus-visible:outline-none focus:border-neutral-400"
       >
         <span>{value || "ETF"}</span>
         <svg

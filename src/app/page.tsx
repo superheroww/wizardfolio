@@ -41,13 +41,13 @@ const sendMixAnalyzeEvent = async (
         : "$direct",
     anonId: getAnonId(),
   };
+
   try {
-    // Try to include Authorization header for signed-in users.
-    const { data: sessionData } = await getSupabaseBrowserClient().auth.getSession();
+    const { data: sessionData } =
+      await getSupabaseBrowserClient().auth.getSession();
     const token = sessionData?.session?.access_token;
 
     if (token) {
-      // Use fetch so we can attach a Bearer token.
       await fetch("/api/mix-events", {
         method: "POST",
         headers: {
@@ -60,12 +60,10 @@ const sendMixAnalyzeEvent = async (
       return;
     }
 
-    // Fallback for anonymous users: use sendBeacon when available.
     if (navigator.sendBeacon) {
       const blob = new Blob([JSON.stringify(payload)], {
         type: "application/json",
       });
-
       navigator.sendBeacon("/api/mix-events", blob);
     }
   } catch (error) {
@@ -76,6 +74,7 @@ const sendMixAnalyzeEvent = async (
 export default function HomePage() {
   const router = useRouter();
   const step2Ref = useRef<HTMLDivElement | null>(null);
+
   const [positions, setPositions] = useState<UserPosition[]>(
     DEFAULT_POSITIONS as UserPosition[],
   );
@@ -104,28 +103,12 @@ export default function HomePage() {
 
     const cleanedPositions = normalizePositions(sourcePositions);
     if (!cleanedPositions.length) {
-      posthog.capture("analyze_failed", {
-        reason: "no_positions",
-        source_page: "home",
-        source: resolvedOptions.source ?? "scratch",
-        template_key: resolvedOptions.templateKey ?? null,
-        anon_id: getAnonId(),
-      });
-
       setFeedbackMessage("Please add some ETFs and try again.");
       return;
     }
 
     const params = buildPositionsSearchParams(cleanedPositions);
     if (!params) {
-      posthog.capture("analyze_failed", {
-        reason: "param_build_failed",
-        source_page: "home",
-        source: resolvedOptions.source ?? "scratch",
-        template_key: resolvedOptions.templateKey ?? null,
-        anon_id: getAnonId(),
-      });
-
       setFeedbackMessage("Please add some ETFs and try again.");
       return;
     }
@@ -140,7 +123,7 @@ export default function HomePage() {
       mix_name: mixName,
       positions_count: cleanedPositions.length,
       source_page: "home",
-      source: resolvedOptions.source ?? "scratch",
+      source: resolvedOptions.source,
       template_key: resolvedOptions.templateKey ?? null,
       anon_id: getAnonId(),
     });
@@ -154,6 +137,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
       <div className="mx-auto max-w-2xl space-y-6">
+        {/* HERO */}
         <section className="space-y-2">
           <h1 className="text-2xl font-semibold text-neutral-900 md:text-3xl">
             ETF Look-Through
@@ -164,23 +148,23 @@ export default function HomePage() {
           </p>
         </section>
 
+        {/* QUICK START CARD */}
         <section className="space-y-3 rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm">
-          <div className="flex flex-col gap-1">
-            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
-              Step 1 · Pick a starting point
-            </p>
+          <header className="mb-3">
+            <h2 className="text-base font-semibold text-neutral-900">
+              Choose a starting mix
+            </h2>
             <p className="text-sm text-neutral-700">
-              Tap a preset or start from a fresh mix.
+              Pick a preset below or begin with your own ETF mix.
             </p>
-          </div>
+          </header>
 
           <QuickStartTemplates
             onTemplateSelect={(templatePositions, template) => {
               const isBuildYourOwn =
-                template.name === "Build Your Own Mix" ||
-                template.id === "build-your-own";
+                template.id === "build-your-own" ||
+                template.name === "Build Your Own Mix";
 
-              // Track template selection (even if it doesn't auto-analyze)
               posthog.capture("template_selected", {
                 template_key: template.id,
                 template_name: template.name,
@@ -193,12 +177,10 @@ export default function HomePage() {
                 setMixEventContext(null);
                 setFeedbackMessage(null);
 
-                if (step2Ref.current) {
-                  step2Ref.current.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
-                }
+                step2Ref.current?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
 
                 return;
               }
@@ -235,35 +217,26 @@ export default function HomePage() {
               setFeedbackMessage(null);
               setMixEventContext(null);
 
-              if (step2Ref.current) {
-                step2Ref.current.scrollIntoView({
-                  behavior: "smooth",
-                  block: "start",
-                });
-              }
+              step2Ref.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
             }}
             className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm font-medium text-neutral-900 shadow-sm transition hover:bg-white active:scale-[0.98]"
           >
-            <span>Start from a fresh mix</span>
+            Start from a fresh mix
           </button>
         </section>
 
-        <section
-          ref={step2Ref}
-          className="space-y-3 rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm"
-        >
-          <div className="flex flex-col gap-1">
-            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
-              Step 2 · Adjust your mix
-            </p>
-          </div>
-
+        {/* PORTFOLIO INPUT — single strong card, title lives inside component */}
+        <section ref={step2Ref} className="space-y-3">
           <PortfolioInput
             positions={positions}
             onChange={setPositions}
             onAnalyze={() => handleAnalyze()}
           />
 
+          {/* TOTAL ALLOCATION */}
           <div className="mt-3 space-y-1">
             <div className="flex items-center justify-between text-xs text-neutral-500">
               <span>Total allocation</span>
@@ -274,9 +247,7 @@ export default function HomePage() {
             <div className="h-1.5 overflow-hidden rounded-full bg-neutral-200">
               <div
                 className={`h-full rounded-full ${
-                  totalWeight === 100
-                    ? "bg-emerald-500"
-                    : "bg-neutral-500"
+                  totalWeight === 100 ? "bg-emerald-500" : "bg-neutral-500"
                 }`}
                 style={{ width: `${totalClamped}%` }}
               />
@@ -284,17 +255,15 @@ export default function HomePage() {
           </div>
 
           {feedbackMessage && (
-            <p className="text-xs text-rose-500">
-              {feedbackMessage}
-            </p>
+            <p className="text-xs text-rose-500">{feedbackMessage}</p>
           )}
 
           <div className="mt-3 space-y-1 text-[11px] text-neutral-500">
             <p>
-              Step 3 · Tap “See my breakdown →” to view your stocks, sectors,
-              and regions.
+              When you&apos;re ready, tap &quot;See my breakdown →&quot; to
+              view your stocks, sectors, and regions.
             </p>
-            <p>For education only. This isn’t investment advice.</p>
+            <p>For education only. This isn&apos;t investment advice.</p>
           </div>
         </section>
       </div>
