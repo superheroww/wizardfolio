@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
+import { getOptionalUserFromRequest } from "@/lib/serverAuth";
 
 type MixEventPosition = { symbol: string; weightPct: number };
 
@@ -34,6 +35,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Best-effort user lookup from Authorization: Bearer <token>
+    const user = await getOptionalUserFromRequest(req);
+    const userId = user?.id ?? null;
+
+    // Country from Vercel's geo header (e.g., "CA", "US")
+    const countryCode = req.headers.get("x-vercel-ip-country") ?? null;
+
     const supabase = createServerSupabaseClient();
 
     const { error } = await supabase.from("mix_events").insert({
@@ -43,6 +51,8 @@ export async function POST(req: NextRequest) {
       template_key: body.templateKey ?? null,
       referrer: body.referrer ?? null,
       anon_id: body.anonId ?? null,
+      user_id: userId,
+      country_code: countryCode,
     });
 
     if (error) {

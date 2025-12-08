@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
+import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
 import PortfolioInput from "@/components/PortfolioInput";
 import QuickStartTemplates from "@/components/QuickStartTemplates";
 import { DEFAULT_POSITIONS } from "@/data/defaultPositions";
@@ -21,7 +22,7 @@ type AnalyzeEventOptions = {
   templateKey?: string | null;
 };
 
-const sendMixAnalyzeEvent = (
+const sendMixAnalyzeEvent = async (
   positions: UserPosition[],
   options?: AnalyzeEventOptions,
 ) => {
@@ -40,17 +41,33 @@ const sendMixAnalyzeEvent = (
         : "$direct",
     anonId: getAnonId(),
   };
-
-  if (!navigator.sendBeacon) {
-    return;
-  }
-
   try {
-    const blob = new Blob([JSON.stringify(payload)], {
-      type: "application/json",
-    });
+    // Try to include Authorization header for signed-in users.
+    const { data: sessionData } = await getSupabaseBrowserClient().auth.getSession();
+    const token = sessionData?.session?.access_token;
 
-    navigator.sendBeacon("/api/mix-events", blob);
+    if (token) {
+      // Use fetch so we can attach a Bearer token.
+      await fetch("/api/mix-events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "same-origin",
+        body: JSON.stringify(payload),
+      });
+      return;
+    }
+
+    // Fallback for anonymous users: use sendBeacon when available.
+    if (navigator.sendBeacon) {
+      const blob = new Blob([JSON.stringify(payload)], {
+        type: "application/json",
+      });
+
+      navigator.sendBeacon("/api/mix-events", blob);
+    }
   } catch (error) {
     console.error("error: ", error);
   }

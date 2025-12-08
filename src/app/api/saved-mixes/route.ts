@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import {
+  getOptionalUserFromRequest,
+  getBearerToken,
+  createSupabaseClientWithToken,
+} from "@/lib/serverAuth";
 import {
   DEFAULT_SAVED_MIX_NAME,
   SAVED_MIX_NAME_ERROR_MESSAGE,
@@ -23,41 +27,7 @@ type DeleteSavedMixPayload = {
   id?: string;
 };
 
-function requireEnv(key: "SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY") {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`Missing ${key} environment variable`);
-  }
 
-  return value;
-}
-
-const supabaseUrl = requireEnv("SUPABASE_URL");
-const supabaseAnonKey = requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
-
-function getBearerToken(req: NextRequest) {
-  const authorization = req.headers.get("authorization");
-  if (!authorization) {
-    return null;
-  }
-
-  const [scheme, value] = authorization.split(" ");
-  if (scheme?.toLowerCase() !== "bearer" || !value) {
-    return null;
-  }
-
-  return value.trim();
-}
-
-function createSupabaseClientWithToken(token: string) {
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
-}
 
 type ValidateMixNameOptions = {
   allowFallback?: boolean;
