@@ -25,7 +25,7 @@ export default function OffersCard({
   const renderBrokerTile = () => {
     if (broker === "wealthsimple") {
       return (
-        <div className="flex flex-col justify-between rounded-2xl border border-sky-100 bg-white/80 p-3 text-sm shadow-sm">
+        <div className="flex flex-col gap-6 md:gap-8 md:justify-start rounded-2xl border border-sky-100 bg-white/80 p-3 text-sm shadow-sm">
           <div className="space-y-1">
             <p className="text-sm font-semibold text-neutral-900">
               Wealthsimple

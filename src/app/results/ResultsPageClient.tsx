@@ -274,7 +274,20 @@ export default function ResultsPageClient({
     setSelectedBenchmarkId(newBenchmarkId);
   };
 
+  // Helper to centralize PostHog props for save actions
+  const baseSaveProps = {
+    source_page: "results" as const,
+    mix_name: mixName,
+    positions_count: positionsCount,
+    has_user: Boolean(user),
+    has_valid_positions: hasValidPositions,
+  };
+
+  // CTA click: "Save this mix"
   const handleSaveClick = () => {
+    // 🔹 Track click on the big CTA
+    capture("save_this_mix_clicked", baseSaveProps);
+
     if (!hasValidPositions) {
       setStatusMessage({
         type: "error",
@@ -289,11 +302,22 @@ export default function ResultsPageClient({
       return;
     }
 
-    setShowSaveForm(true);
+    // User is logged in → behave like "Save mix" button
+    handleSaveSubmit(undefined, "cta");
   };
 
-  const handleSaveSubmit = async (event?: FormEvent<HTMLFormElement>) => {
+  // source: where the submit is coming from ("cta" auto-save vs "form" button)
+  const handleSaveSubmit = async (
+    event?: FormEvent<HTMLFormElement>,
+    source: "cta" | "form" = "form",
+  ) => {
     event?.preventDefault();
+
+    // 🔹 Track click on the "Save mix" button (form only)
+    if (source === "form") {
+      capture("save_mix_clicked", baseSaveProps);
+    }
+
     if (!hasValidPositions || !user) {
       return;
     }
@@ -354,6 +378,7 @@ export default function ResultsPageClient({
       capture("mix_saved", {
         mix_name: trimmedName,
         positions_count: positionsCount,
+        source_page: "results",
       });
     } catch (error: any) {
       setStatusMessage({
@@ -402,9 +427,8 @@ export default function ResultsPageClient({
       .slice(0, 10);
   }, [exposure]);
 
-  // Track slide views only when the user actually changes slides
   const trackSlideView = (nextSlide: SlideIndex) => {
-    if (!exposure.length) return; // only log once data is ready
+    if (!exposure.length) return;
 
     const slideName = SLIDE_ANALYTICS[nextSlide];
 
@@ -558,24 +582,22 @@ export default function ResultsPageClient({
     }
   };
 
-const handleTryTopMix = (mixId: string) => {
-  const mix = TOP_LOVED_MIXES.find((m) => m.id === mixId);
-  if (!mix) return;
+  const handleTryTopMix = (mixId: string) => {
+    const mix = TOP_LOVED_MIXES.find((m) => m.id === mixId);
+    if (!mix) return;
 
-  // This already returns something like: "positions=%5B{...}%5D"
-  const positionsParam = buildPositionsSearchParams(mix.positions);
+    const positionsParam = buildPositionsSearchParams(mix.positions);
 
-  capture("top_mix_try_clicked", {
-    template_key: mix.id,
-    source_page: "results",
-    source_slide: "top_mixes",
-    mix_name: mixName,
-    positions_count: positionsCount,
-  });
+    capture("top_mix_try_clicked", {
+      template_key: mix.id,
+      source_page: "results",
+      source_slide: "top_mixes",
+      mix_name: mixName,
+      positions_count: positionsCount,
+    });
 
-  // ✅ Don't re-wrap in `positions=` and don't re-encode
-  router.push(`/results?${positionsParam}`);
-};
+    router.push(`/results?${positionsParam}`);
+  };
 
   const handleShare = async () => {
     if (!cardRef.current || isSharing) return;
@@ -826,91 +848,94 @@ const handleTryTopMix = (mixId: string) => {
             ))}
           </div>
         </div>
-    </div>
+      </div>
 
-    {hasValidPositions && (
-      <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-sm transition hover:shadow-md">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
-              Personalization
-            </p>
-            <h3 className="text-base font-semibold text-neutral-900">
-              Save this mix to your dashboard
-            </h3>
-          </div>
-          <button
-            type="button"
-            onClick={handleSaveClick}
-            disabled={isSaving}
-            className="rounded-full border border-transparent bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
-          >
-            Save this mix
-          </button>
-        </div>
-
-        {showSaveForm && (
-          <form onSubmit={handleSaveSubmit} className="mt-4 space-y-3">
-            <label className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
-              Mix name
-              <input
-                type="text"
-                value={saveName}
-                onChange={(event) => setSaveName(event.target.value)}
-                placeholder="My saved mix"
-                maxLength={SAVED_MIX_NAME_MAX_LENGTH}
-                className="mt-2 w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
-              />
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="submit"
-                disabled={!isSaveNameValid || isSaving}
-                className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSaving ? "Saving…" : "Save mix"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowSaveForm(false)}
-                className="inline-flex items-center justify-center rounded-2xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:border-neutral-300"
-              >
-                Cancel
-              </button>
+      {hasValidPositions && (
+        <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-sm transition hover:shadow-md">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
+                Personalization
+              </p>
+              <h3 className="text-base font-semibold text-neutral-900">
+                Save this mix to your dashboard
+              </h3>
             </div>
-          </form>
-        )}
+            <button
+              type="button"
+              onClick={handleSaveClick}
+              disabled={isSaving}
+              className="rounded-full border border-transparent bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
+            >
+              Save this mix
+            </button>
+          </div>
 
-        {statusMessage && (
-          <p
-            className={`mt-3 text-sm ${
-              statusMessage.type === "success"
-                ? "text-emerald-600"
-                : "text-rose-500"
-            }`}
-          >
-            {statusMessage.message}
-          </p>
-        )}
-      </section>
-    )}
+          {showSaveForm && (
+            <form
+              onSubmit={(event) => handleSaveSubmit(event, "form")}
+              className="mt-4 space-y-3"
+            >
+              <label className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
+                Mix name
+                <input
+                  type="text"
+                  value={saveName}
+                  onChange={(event) => setSaveName(event.target.value)}
+                  placeholder="My saved mix"
+                  maxLength={SAVED_MIX_NAME_MAX_LENGTH}
+                  className="mt-2 w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+                />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="submit"
+                  disabled={!isSaveNameValid || isSaving}
+                  className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSaving ? "Saving…" : "Save mix"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSaveForm(false)}
+                  className="inline-flex items-center justify-center rounded-2xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:border-neutral-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
 
-    {hasValidPositions && (
-      <BenchmarkComparisonCard
-        userLabel="Your mix"
-        benchmark={selectedBenchmark}
-        comparison={benchmarkComparison}
-        benchmarks={BENCHMARK_MIXES}
-        onBenchmarkChange={handleBenchmarkChange}
-        exposure={exposure}
-        userExposureMix={userExposureMix}
-        singleSymbol={singleETFSymbol}
-        mixName={mixName}
-        positionsCount={positionsCount}
-        benchmarkSymbol={benchmarkSymbol}
-        hasBenchmarkComparison={Boolean(benchmarkComparison)}
-      />
-    )}
+          {statusMessage && (
+            <p
+              className={`mt-3 text-sm ${
+                statusMessage.type === "success"
+                  ? "text-emerald-600"
+                  : "text-rose-500"
+              }`}
+            >
+              {statusMessage.message}
+            </p>
+          )}
+        </section>
+      )}
+
+      {hasValidPositions && (
+        <BenchmarkComparisonCard
+          userLabel="Your mix"
+          benchmark={selectedBenchmark}
+          comparison={benchmarkComparison}
+          benchmarks={BENCHMARK_MIXES}
+          onBenchmarkChange={handleBenchmarkChange}
+          exposure={exposure}
+          userExposureMix={userExposureMix}
+          singleSymbol={singleETFSymbol}
+          mixName={mixName}
+          positionsCount={positionsCount}
+          benchmarkSymbol={benchmarkSymbol}
+          hasBenchmarkComparison={Boolean(benchmarkComparison)}
+        />
+      )}
 
       <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between">
@@ -946,6 +971,7 @@ const handleTryTopMix = (mixId: string) => {
           Based on the mix you entered on the previous step.
         </p>
       </section>
+
       <AuthDialog
         open={authDialogOpen}
         onOpenChange={setAuthDialogOpen}
