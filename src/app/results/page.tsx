@@ -63,7 +63,8 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
     countryCode,
   });
 
-  if (!topLoved || topLoved.length === 0) {
+  // If we have too little country-specific data, fallback to global templates
+  if (!topLoved || topLoved.length <= 2) {
     topLoved = QUICK_START_TEMPLATES.slice(0, 4);
   }
 
