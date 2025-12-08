@@ -1,6 +1,9 @@
 // src/app/results/page.tsx
 import ResultsPageClient from "./ResultsPageClient";
 import { UserPosition } from "@/lib/exposureEngine";
+import { headers } from "next/headers";
+import { getTopLovedTemplates } from "@/lib/getTopLovedTemplates";
+import { QUICK_START_TEMPLATES, type Template } from "@/lib/quickStartTemplates";
 // import { DEFAULT_POSITIONS } from "@/data/defaultPositions"; // optional fallback
 
 type ResultsPageSearchParams = {
@@ -51,11 +54,25 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
   //   initialPositions = DEFAULT_POSITIONS;
   // }
 
+  const headerStore = await headers();
+  const countryCode = headerStore.get("x-vercel-ip-country") ?? null;
+
+  let topLoved: Template[] = await getTopLovedTemplates({
+    limit: 4,
+    days: 30,
+    countryCode,
+  });
+
+  if (!topLoved || topLoved.length === 0) {
+    topLoved = QUICK_START_TEMPLATES.slice(0, 4);
+  }
+
   return (
     <ResultsPageClient
       initialPositions={initialPositions}
       positionsQueryString={positionsQueryString}
       hasPositionsParam={hasPositionsParam}
+      topLoved={topLoved}
     />
   );
 }

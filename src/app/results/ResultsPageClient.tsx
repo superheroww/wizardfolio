@@ -26,6 +26,8 @@ import type { ApiExposureRow, UserPosition } from "@/lib/exposureEngine";
 import { useImageShare } from "@/hooks/useImageShare";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { BENCHMARK_MIXES } from "@/lib/benchmarkPresets";
+import { TopLovedMixes } from "@/components/TopLovedMixes";
+import { type Template } from "@/lib/quickStartTemplates";
 import {
   compareMixes,
   pickDefaultBenchmark,
@@ -70,58 +72,13 @@ const DOT_LABELS = TAB_VIEWS.reduce<Record<SlideIndex, string>>((acc, view) => {
 
 const SLIDE_INDICES: SlideIndex[] = [0, 1, 2, 3, 4];
 
-type TopLovedMix = {
-  id: string;
-  label: string;
-  description: string;
-  positions: UserPosition[];
-};
 
-const TOP_LOVED_MIXES: TopLovedMix[] = [
-  {
-    id: "us_core_tech_boost",
-    label: "🎯 U.S. Core Tech Boost",
-    description: "Core U.S. exposure with a tech tilt.",
-    positions: [
-      { symbol: "VOO", weightPct: 80 },
-      { symbol: "QQQ", weightPct: 20 },
-    ],
-  },
-  {
-    id: "couch-potato",
-    label: "🥔 Couch Potato",
-    description: "Simple, balanced Canadian-friendly mix.",
-    positions: [
-      { symbol: "XEQT.TO", weightPct: 80 },
-      { symbol: "VCN.TO", weightPct: 20 },
-    ],
-  },
-  {
-    id: "maple-growth-mix",
-    label: "🍁 Maple Growth Mix",
-    description: "Canada, U.S., and global in 3 ETFs.",
-    positions: [
-      { symbol: "XEQT.TO", weightPct: 60 },
-      { symbol: "VCN.TO", weightPct: 20 },
-      { symbol: "VFV.TO", weightPct: 20 },
-    ],
-  },
-  {
-    id: "global-three-fund",
-    label: "🌍 Global Three-Fund",
-    description: "Simple global diversification in one glance.",
-    positions: [
-      { symbol: "VTI", weightPct: 40 },
-      { symbol: "VXUS", weightPct: 30 },
-      { symbol: "VT", weightPct: 30 },
-    ],
-  },
-];
 
 type ResultsPageClientProps = {
   initialPositions: UserPosition[];
   positionsQueryString: string;
   hasPositionsParam: boolean;
+  topLoved?: Template[];
 };
 
 const EMPTY_POSITIONS_ERROR =
@@ -139,6 +96,7 @@ export default function ResultsPageClient({
   initialPositions,
   positionsQueryString,
   hasPositionsParam,
+  topLoved = [],
 }: ResultsPageClientProps) {
   const router = useRouter();
   const { capture } = usePostHogSafe();
@@ -311,7 +269,6 @@ export default function ResultsPageClient({
     }
   };
 
-  // CTA click: "Save this mix" (no rename UI)
   const handleSaveClick = () => {
     capture("save_this_mix_clicked", baseSaveProps);
 
@@ -527,22 +484,8 @@ export default function ResultsPageClient({
     }
   };
 
-  const handleTryTopMix = (mixId: string) => {
-    const mix = TOP_LOVED_MIXES.find((m) => m.id === mixId);
-    if (!mix) return;
-
-    const positionsParam = buildPositionsSearchParams(mix.positions);
-
-    capture("top_mix_try_clicked", {
-      template_key: mix.id,
-      source_page: "results",
-      source_slide: "top_mixes",
-      mix_name: mixName,
-      positions_count: positionsCount,
-    });
-
-    router.push(`/results?${positionsParam}`);
-  };
+  // topLoved passed from server; client-side fallback is empty array
+  const topLovedTemplates = (typeof ({} as any) !== "undefined" && ({} as any)) || [] as Template[];
 
   const handleShare = async () => {
     if (!cardRef.current || isSharing) return;
@@ -728,40 +671,22 @@ export default function ResultsPageClient({
                   )}
 
                   {slide === 4 && (
-                    <div className="flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-4 text-left text-xs shadow-sm sm:text-sm">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
-                        Top loved mixes
-                      </p>
-                      <h3 className="mt-1 text-sm font-semibold text-neutral-900">
-                        Tap a mix below to load it into WizardFolio.
-                      </h3>
+                    <TopLovedMixes
+                      mixes={topLoved}
+                      onSelect={(positions, template) => {
+                        const positionsParam = buildPositionsSearchParams(positions);
 
-                      <div className="mt-3 space-y-2">
-                        {TOP_LOVED_MIXES.map((mix) => (
-                          <button
-                            key={mix.id}
-                            type="button"
-                            onClick={() => handleTryTopMix(mix.id)}
-                            className="group flex w-full flex-col items-start rounded-2xl border border-neutral-200 bg-white px-3 py-2 text-left transition hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-sm"
-                          >
-                            <span className="flex items-center gap-1 text-xs font-semibold text-neutral-900">
-                              {mix.label}
-                              <span className="text-[11px] text-neutral-400 transition-transform group-hover:translate-x-0.5">
-                                ›
-                              </span>
-                            </span>
-                            <span className="mt-0.5 text-[11px] text-neutral-500">
-                              {mix.description}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
+                        capture("top_mix_try_clicked", {
+                          template_key: template.id,
+                          source_page: "results",
+                          source_slide: "top_mixes",
+                          mix_name: mixName,
+                          positions_count: positionsCount,
+                        });
 
-                      <p className="mt-3 text-[11px] text-neutral-500">
-                        We’ll reload WizardFolio with your chosen mix prefilled so you can see its
-                        true exposure in one tap.
-                      </p>
-                    </div>
+                        router.push(`/results?${positionsParam}`);
+                      }}
+                    />
                   )}
                 </>
               )}
