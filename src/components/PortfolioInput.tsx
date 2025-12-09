@@ -203,9 +203,7 @@ export default function PortfolioInput({
                   type="button"
                   onClick={() => removeRow(index)}
                   aria-label="Remove this ETF"
-                  className="inline-flex h-8 w-8 flex-none items-center justify-center 
-                             rounded-full border border-neutral-200 bg-white text-neutral-500 
-                             hover:bg-neutral-100 active:bg-neutral-200 transition"
+                  className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-500 hover:bg-neutral-100 active:bg-neutral-200 transition"
                 >
                   <Trash2 size={16} strokeWidth={1.75} />
                 </button>
@@ -218,9 +216,7 @@ export default function PortfolioInput({
                 Allocation (%)
               </label>
               <input
-                className="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-1.5 
-                           text-base text-neutral-900 outline-none ring-0 focus:border-neutral-400 
-                           sm:text-sm"
+                className="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-base text-neutral-900 outline-none ring-0 focus:border-neutral-400 sm:text-sm"
                 type="number"
                 inputMode="numeric"
                 min={0}

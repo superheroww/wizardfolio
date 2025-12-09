@@ -1,21 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdminClient } from "@/lib/supabase";
 import { UserPosition } from "@/lib/exposureEngine";
 import { normalizePositions } from "@/lib/positionsQuery";
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  throw new Error("Supabase configuration is required for /api/etf-exposure");
-}
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: { persistSession: false },
-});
-
 const CACHE_HEADERS = { "Cache-Control": "no-store" };
 const MAX_ETFS = 5;
+const RPC_TIMEOUT_MS = 7000;
 
 type EtfExposureRequest = {
   positions?: unknown;
@@ -77,31 +67,66 @@ export async function POST(req: NextRequest) {
     const etfs = cleanedPositions.map((item) => item.symbol);
     const weights = cleanedPositions.map((item) => item.weightPct);
 
-    const { data, error } = await supabase.rpc("calculate_exposure", {
-      etfs,
-      weights,
-    });
+    const supabase = getSupabaseAdminClient();
 
-    if (error) {
-      console.error("calculate_exposure error", error);
+    try {
+      const { data, error } = await supabase.rpc("calculate_exposure", {
+        etfs,
+        weights,
+      });
+
+      if (error) {
+        console.error("[etf-exposure] Supabase RPC error", {
+          message: error.message,
+          code: error.code,
+        });
+        return NextResponse.json(
+          { error: "Failed to calculate exposure", code: "RPC_FAILED" },
+          { status: 502, headers: CACHE_HEADERS },
+        );
+      }
+
+      const response: EtfExposureResponse = {
+        exposure: (data ?? []) as ExposureRow[],
+      };
+
+      return NextResponse.json(response, {
+        status: 200,
+        headers: CACHE_HEADERS,
+      });
+    } catch (rpcError) {
+      const err = rpcError as Error;
+      if (err.message.includes("fetch failed") || err.message.includes("ECONNRESET")) {
+        console.error("[etf-exposure] Network error", {
+          message: err.message,
+          name: err.name,
+        });
+        return NextResponse.json(
+          { error: "Failed to load ETF exposure", code: "NETWORK_ERROR" },
+          { status: 502, headers: CACHE_HEADERS },
+        );
+      }
+      throw rpcError;
+    }
+  } catch (error) {
+    const err = error as Error;
+    if (err.message.includes("fetch failed") || err.message.includes("ECONNRESET")) {
+      console.error("[etf-exposure] Network error", {
+        message: err.message,
+        name: err.name,
+      });
       return NextResponse.json(
-        { error: "Internal error" },
-        { status: 500, headers: CACHE_HEADERS },
+        { error: "Failed to load ETF exposure", code: "NETWORK_ERROR" },
+        { status: 502, headers: CACHE_HEADERS },
       );
     }
-
-    const response: EtfExposureResponse = {
-      exposure: (data ?? []) as ExposureRow[],
-    };
-
-    return NextResponse.json(response, {
-      status: 200,
-      headers: CACHE_HEADERS,
+    console.error("[etf-exposure] Unexpected error", {
+      message: err.message,
+      name: err.name,
+      stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
     });
-  } catch (error) {
-    console.error("ETF exposure handler failed", error);
     return NextResponse.json(
-      { error: "Internal error" },
+      { error: "Failed to load ETF exposure", code: "INTERNAL_ERROR" },
       { status: 500, headers: CACHE_HEADERS },
     );
   }

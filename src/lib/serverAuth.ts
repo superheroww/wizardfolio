@@ -1,16 +1,5 @@
 import { NextRequest } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-function requireEnv(key: "SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY") {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`Missing ${key} environment variable`);
-  }
-  return value;
-}
-
-const supabaseUrl = requireEnv("SUPABASE_URL");
-const supabaseAnonKey = requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+import { createSupabaseClientWithToken } from "@/lib/supabase";
 
 export function getBearerToken(req: NextRequest): string | null {
   const authorization = req.headers.get("authorization");
@@ -22,15 +11,7 @@ export function getBearerToken(req: NextRequest): string | null {
   return value.trim();
 }
 
-export function createSupabaseClientWithToken(token: string) {
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
-}
+export { createSupabaseClientWithToken } from "@/lib/supabase";
 
 /**
  * Best-effort user lookup from a NextRequest.

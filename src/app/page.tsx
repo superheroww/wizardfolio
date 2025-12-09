@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
-import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
 import PortfolioInput from "@/components/PortfolioInput";
 import QuickStartTemplates from "@/components/QuickStartTemplates";
 import { DEFAULT_POSITIONS } from "@/data/defaultPositions";

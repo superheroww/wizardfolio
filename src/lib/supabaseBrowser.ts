@@ -1,42 +1,31 @@
-import { createClient } from "@supabase/supabase-js";
+/**
+ * @deprecated This module is deprecated. Import from @/lib/supabase instead.
+ * This file now serves as a compatibility layer re-exporting auth helpers.
+ */
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-if (!supabaseUrl) {
-  throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL environment variable");
-}
+export { getSupabaseBrowserClient } from "./supabase";
 
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-if (!supabaseAnonKey) {
-  throw new Error("Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable");
-}
-
-const supabaseBrowserClient = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    detectSessionInUrl: true,
-  },
-});
-
-export function getSupabaseBrowserClient() {
-  return supabaseBrowserClient;
-}
+import { getSupabaseBrowserClient } from "./supabase";
 
 export function signInWithEmail(email: string, password: string) {
-  return supabaseBrowserClient.auth.signInWithPassword({
+  const supabase = getSupabaseBrowserClient();
+  return supabase.auth.signInWithPassword({
     email,
     password,
   });
 }
 
 export function signUpWithEmail(email: string, password: string) {
-  return supabaseBrowserClient.auth.signUp({
+  const supabase = getSupabaseBrowserClient();
+  return supabase.auth.signUp({
     email,
     password,
   });
 }
 
 export function signOut() {
-  return supabaseBrowserClient.auth.signOut();
+  const supabase = getSupabaseBrowserClient();
+  return supabase.auth.signOut();
 }
 
 export async function sendMagicLink(email: string) {

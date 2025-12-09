@@ -14,7 +14,7 @@ import {
   SAVED_MIX_NAME_REQUIRED_MESSAGE,
   type SavedMix,
 } from "@/lib/savedMixes";
-import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { AuthPrompt } from "@/components/auth/AuthPrompt";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { MoreHorizontal } from "lucide-react";

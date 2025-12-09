@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
 
 export function useSupabaseUser() {
   const [user, setUser] = useState<User | null>(null);

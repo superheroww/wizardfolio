@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from "@/lib/supabaseServer";
+import { getSupabaseServerClient } from "@/lib/supabase";
 import { TEMPLATE_BY_ID, type Template } from "@/lib/quickStartTemplates";
 
 type TopLovedRow = {
@@ -18,7 +18,7 @@ export async function getTopLovedTemplates(
   const { limit = 4, days = 30, countryCode } = options;
 
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await getSupabaseServerClient();
 
     // 💡 FIX: Calculate the cutoff date in Node.js and format it as an ISO 8601 string.
     const cutoffDate = new Date();

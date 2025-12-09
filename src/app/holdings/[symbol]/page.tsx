@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { createServerSupabaseClient } from "@/lib/supabaseServer";
+import { getSupabaseServerClient } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +47,7 @@ export default async function HoldingsPage({ params }: HoldingsPageProps) {
     notFound();
   }
 
-  const supabase = createServerSupabaseClient();
+  const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase
     .from("etf_holdings")
     .select("holding_symbol,holding_name,country,sector,weight_pct")

@@ -37,7 +37,7 @@ import {
 import type { MixComparisonResult } from "@/lib/benchmarkEngine";
 import { formatMixSummary } from "@/lib/mixFormatting";
 import { getBenchmarkLabel } from "@/lib/benchmarkUtils";
-import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
 
 type SlideIndex = 0 | 1 | 2 | 3 | 4;
 

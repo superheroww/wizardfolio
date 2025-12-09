@@ -372,21 +372,7 @@ export default function ExposureSummary({
 
               {/* Right: Apple-like fixed-width % badge, using adjusted displayPercents */}
               <span
-                className="
-                  inline-flex
-                  min-w-[2.9rem]
-                  shrink-0
-                  justify-end
-                  px-2 py-1
-                  rounded-full
-                  text-[13px]
-                  leading-none
-                  font-medium
-                  text-white
-                  tabular-nums
-                  backdrop-blur-sm
-                  ring-1 ring-white/20
-                "
+                className="inline-flex min-w-[2.9rem] shrink-0 justify-end px-2 py-1 rounded-full text-[13px] leading-none font-medium text-white tabular-nums backdrop-blur-sm ring-1 ring-white/20"
                 style={{ backgroundColor: slice.color }}
               >
                 {(displayPercents[index] ?? Math.round(slice.weightPct ?? 0))}%

@@ -24,8 +24,6 @@ export default function QuickStartTemplates({
     ? (Object.values(QUICK_START_TEMPLATES) as Template[])
     : [];
 
-  console.log("QUICK_START_TEMPLATES runtime value:", QUICK_START_TEMPLATES);
-
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -84,11 +82,7 @@ export default function QuickStartTemplates({
     <div className="space-y-3">
       <div
         ref={containerRef}
-        className="
-          flex gap-3 overflow-x-auto pb-1 pt-2 scroll-smooth snap-x snap-mandatory
-          md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:snap-none
-          lg:grid-cols-4 xl:grid-cols-5
-        "
+        className="flex gap-3 overflow-x-auto pb-1 pt-2 scroll-smooth snap-x snap-mandatory md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:snap-none lg:grid-cols-4 xl:grid-cols-5"
         style={{ scrollbarWidth: "none" }}
       >
         {templates.map((template, index) => {
@@ -100,10 +94,7 @@ export default function QuickStartTemplates({
               ref={(el) => {
                 cardRefs.current[index] = el;
               }}
-              className="
-                min-w-[80%] max-w-[85%] snap-center sm:min-w-[320px] sm:max-w-[360px]
-                md:min-w-0 md:max-w-none md:snap-none
-              "
+              className="min-w-[80%] max-w-[85%] snap-center sm:min-w-[320px] sm:max-w-[360px] md:min-w-0 md:max-w-none md:snap-none"
             >
               <div className="flex h-full flex-col justify-between rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm shadow-neutral-200 backdrop-blur">
                 <div className="space-y-2">

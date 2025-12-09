@@ -1,26 +1,4 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
-let supabaseClient: SupabaseClient | null = null;
-
-function getSupabaseClient() {
-  if (supabaseClient) {
-    return supabaseClient;
-  }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("Supabase configuration missing for benchmark exposure RPC");
-    return null;
-  }
-
-  supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: false },
-  });
-
-  return supabaseClient;
-}
+import { getSupabaseBrowserClient } from "@/lib/supabase";
 
 export type BenchmarkExposureRow = {
   group_key: string;
@@ -31,7 +9,7 @@ export async function fetchBenchmarkExposure(
   benchmarkSymbol: string,
   groupBy: "stock" | "sector" | "region",
 ): Promise<BenchmarkExposureRow[]> {
-  const client = getSupabaseClient();
+  const client = getSupabaseBrowserClient();
 
   if (!client) {
     return [];
