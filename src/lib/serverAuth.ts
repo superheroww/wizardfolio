@@ -16,23 +16,54 @@ export { createSupabaseClientWithToken } from "@/lib/supabase";
 /**
  * Best-effort user lookup from a NextRequest.
  * - Returns the Supabase user object if there's a valid Bearer token.
- * - Returns null if there's no token or it's invalid.
- * - Never throws and never sends a response by itself.
+ * - Returns null if there's no token or it's invalid (including 401, 403, expired, user_not_found).
+ * - Never throws. Only logs truly unexpected errors (network, unrecognized API errors).
  */
 export async function getOptionalUserFromRequest(req: NextRequest) {
   const token = getBearerToken(req);
   if (!token) return null;
 
-  const supabase = createSupabaseClientWithToken(token);
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = createSupabaseClientWithToken(token);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
 
-  if (error || !user) {
-    console.error("[auth] getOptionalUserFromRequest error", error);
+    // Expected auth failures: invalid token, expired token, user not found, etc.
+    // These are normal for anonymous requests and should not be logged.
+    if (error) {
+      const status = (error as any).status;
+      const code = (error as any).code;
+
+      // Known auth-related error codes that are expected
+      const isExpectedAuthError =
+        status === 401 ||
+        status === 403 ||
+        code === "user_not_found" ||
+        code === "invalid_jwt" ||
+        code === "expired_token";
+
+      if (!isExpectedAuthError) {
+        // Only log truly unexpected errors
+        console.error("[auth] getOptionalUserFromRequest unexpected error", {
+          message: error.message,
+          status,
+          code,
+        });
+      }
+
+      return null;
+    }
+
+    return user ?? null;
+  } catch (err) {
+    // Network errors or other unexpected exceptions
+    const e = err as Error;
+    console.error("[auth] getOptionalUserFromRequest unexpected error", {
+      message: e.message,
+      name: e.name,
+    });
     return null;
   }
-
-  return user;
 }
