@@ -227,47 +227,51 @@ export default function BenchmarkComparisonCard({
     }
   };
 
-  const renderStockTables = () => {
-    const hasRows =
-      stockOverweights.length > 0 || stockUnderweights.length > 0;
+const renderStockTables = () => {
+  const hasRows =
+    stockOverweights.length > 0 || stockUnderweights.length > 0;
 
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs text-neutral-500">
-          <p className="text-base font-semibold text-neutral-900">
-            Tilts vs {benchmarkLabel} by stock
-          </p>
-          {loadingStocks && <span>Loading…</span>}
-        </div>
-        {stockError && (
-          <p className="text-[11px] text-rose-500">{stockError}</p>
-        )}
-        {hasRows ? (
-          <div className="space-y-4">
-            <BenchmarkComparisonTable
-              title="Overweight stocks"
-              rows={stockOverweights}
-              variant="stock"
-              hideEmpty
-            />
-            <BenchmarkComparisonTable
-              title="Underweight stocks"
-              rows={stockUnderweights}
-              variant="stock"
-              hideEmpty
-            />
-          </div>
-        ) : (
-          !loadingStocks &&
-          !stockError && (
-            <p className="text-xs text-neutral-500">
-              No meaningful tilts vs {benchmarkLabel}.
-            </p>
-          )
-        )}
+  return (
+    <div className="space-y-3">
+      {/* Updated title — now consistent with sectors & regions */}
+      <div className="flex items-center justify-between text-xs text-neutral-500">
+        <p className="text-[11px] text-neutral-500">
+          Your mix vs {benchmarkLabel} by stock
+        </p>
+        {loadingStocks && <span>Loading…</span>}
       </div>
-    );
-  };
+
+      {stockError && (
+        <p className="text-[11px] text-rose-500">{stockError}</p>
+      )}
+
+      {hasRows ? (
+        <div className="space-y-4">
+          <BenchmarkComparisonTable
+            title="Overweight stocks"
+            rows={stockOverweights}
+            variant="stock"
+            hideEmpty
+          />
+          <BenchmarkComparisonTable
+            title="Underweight stocks"
+            rows={stockUnderweights}
+            variant="stock"
+            hideEmpty
+          />
+        </div>
+      ) : (
+        !loadingStocks &&
+        !stockError && (
+          <p className="text-xs text-neutral-500">
+            No meaningful tilts vs {benchmarkLabel}.
+          </p>
+        )
+      )}
+    </div>
+  );
+};
+
 
   const renderGroupTable = (
     rows: BenchmarkRow[],
