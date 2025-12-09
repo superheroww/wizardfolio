@@ -21,12 +21,14 @@ type HoldingsTableProps = {
   exposure: ApiExposureRow[];
   showHeader?: boolean;
   className?: string;
+  variant?: "card" | "bare";
 };
 
 export default function HoldingsTable({
   exposure,
   showHeader = true,
   className = "",
+  variant = "card",
 }: HoldingsTableProps) {
   const [showAll, setShowAll] = useState(false);
 
@@ -51,7 +53,9 @@ export default function HoldingsTable({
   if (!normalized || normalized.length === 0) return null;
 
   const rootClassName =
-    "w-full rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm";
+    variant === "bare"
+      ? "w-full"
+      : "w-full rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm";
 
   return (
     <section className={`${rootClassName} ${className}`}>

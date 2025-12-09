@@ -556,7 +556,7 @@ export default function ResultsPageClient({
   const title = SLIDE_TITLES[slide];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 md:space-y-6">
       <div>
         <div className="mb-3 hidden items-center justify-between gap-3 text-sm md:flex">
           <div className="flex flex-wrap items-center gap-2">
@@ -570,37 +570,46 @@ export default function ResultsPageClient({
                   trackSlideView(view.id);
                 }}
                 className={[
-                  "rounded-full px-3 py-1.5 text-sm font-medium transition",
-                  view.id === slide
-                    ? "bg-neutral-900 text-white"
-                    : "bg-transparent text-neutral-600 hover:bg-neutral-100",
+                  "rounded-full px-3 py-1.5 text-xs font-semibold transition",
+                  slide === view.id
+                    ? "bg-neutral-900 text-white shadow-sm"
+                    : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200",
                 ].join(" ")}
               >
                 {view.label}
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handlePrevSlide}
-              aria-label="Previous result view"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-sm transition hover:bg-neutral-50"
-            >
-              <span aria-hidden="true">‹</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleNextSlide}
-              aria-label="Next result view"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-sm transition hover:bg-neutral-50"
-            >
-              <span aria-hidden="true">›</span>
-            </button>
+
+          <div className="flex items-center gap-2 text-xs text-neutral-500">
+            <span className="hidden md:inline">
+              View:{" "}
+              <span className="font-medium text-neutral-800">
+                {SLIDE_TITLES[slide]}
+              </span>
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={handlePrevSlide}
+                aria-label="Previous result view"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-sm transition hover:bg-neutral-50"
+              >
+                <span aria-hidden="true">‹</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleNextSlide}
+                aria-label="Next result view"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-sm transition hover:bg-neutral-50"
+              >
+                <span aria-hidden="true">›</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="relative rounded-3xl border border-neutral-200 bg-white shadow-sm">
+        <div className="relative rounded-3xl border border-neutral-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
           <button
             type="button"
             onClick={handleShare}
@@ -616,7 +625,7 @@ export default function ResultsPageClient({
 
           <div
             ref={cardRef}
-            className="flex flex-col gap-4 rounded-3xl bg-white p-5"
+            className="flex flex-col gap-4 rounded-3xl bg-white p-5 md:p-6 lg:p-8"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex flex-col gap-1">
@@ -624,20 +633,22 @@ export default function ResultsPageClient({
                   {title}
                 </h2>
                 <MixLine positions={sanitizedPositions} />
-                <p className="text-xs text-neutral-500">
+                <p className="text-[11px] text-neutral-500">
                   Powered by WizardFolio
                 </p>
               </div>
             </div>
 
             <div
-              className="flex min-h-[320px] flex-col justify-center rounded-2xl border border-neutral-200 bg-neutral-50 p-4"
+              className="flex min-h-[320px] flex-col justify-center rounded-2xl border border-neutral-100 bg-neutral-50/80 p-4"
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
               {isLoading && (
-                <div className="flex h-full items-center justify-center text-sm text-neutral-700">
-                  Crunching your ETF mix…
+                <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-neutral-700">
+                  <div className="h-24 w-24 rounded-full bg-neutral-100 animate-pulse" />
+                  <div className="h-3 w-32 rounded-full bg-neutral-100 animate-pulse" />
+                  <p>Crunching your ETF mix…</p>
                 </div>
               )}
 
@@ -662,12 +673,20 @@ export default function ResultsPageClient({
                     <ExposureSummary exposure={exposure} showHeader={false} />
                   )}
 
-                  {slide === 1 && <RegionExposureChart exposure={exposure} />}
+                  {slide === 1 && (
+                    <RegionExposureChart exposure={exposure} variant="bare" />
+                  )}
 
-                  {slide === 2 && <SectorBreakdownCard exposure={exposure} />}
+                  {slide === 2 && (
+                    <SectorBreakdownCard exposure={exposure} variant="bare" />
+                  )}
 
                   {slide === 3 && (
-                    <HoldingsTable exposure={top10} showHeader={false} />
+                    <HoldingsTable
+                      exposure={top10}
+                      showHeader={false}
+                      variant="bare"
+                    />
                   )}
 
                   {slide === 4 && (
@@ -711,7 +730,7 @@ export default function ResultsPageClient({
                     "block h-1.5 rounded-full transition-all",
                     slide === idx
                       ? "w-4 bg-neutral-900"
-                      : "w-1.5 bg-neutral-300",
+                      : "w-1.5 bg-neutral-300 group-hover:bg-neutral-400",
                   ].join(" ")}
                 />
               </button>
@@ -721,7 +740,7 @@ export default function ResultsPageClient({
       </div>
 
       {hasValidPositions && (
-        <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-sm transition hover:shadow-md">
+        <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 md:p-5 lg:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition hover:shadow-[0_10px_32px_rgba(0,0,0,0.08)]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
@@ -772,7 +791,7 @@ export default function ResultsPageClient({
         />
       )}
 
-      <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-sm">
+      <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 md:p-5 lg:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-base font-semibold text-neutral-900">
             Your mix

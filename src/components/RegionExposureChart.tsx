@@ -13,6 +13,7 @@ export type ApiExposureRow = {
 
 type RegionExposureChartProps = {
   exposure?: ApiExposureRow[];
+  variant?: "card" | "bare";
 };
 
 // Simple color palette (matches your vibe)
@@ -53,6 +54,7 @@ function isBond(assetClassRaw: string | null | undefined): boolean {
 
 export default function RegionExposureChart({
   exposure,
+  variant = "card",
 }: RegionExposureChartProps) {
   const safeExposure = React.useMemo(
     () => (Array.isArray(exposure) ? exposure : []),
@@ -94,8 +96,13 @@ export default function RegionExposureChart({
 
   const hasData = regions.some((r) => r.value > 0.5);
 
+  const wrapperClass =
+    variant === "bare"
+      ? "space-y-3"
+      : "rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-sm";
+
   return (
-    <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-sm">
+    <section className={wrapperClass}>
       <div className="mb-3 flex flex-col gap-1">
         <h3 className="text-base font-semibold text-neutral-900">
           Where in the world you’re invested

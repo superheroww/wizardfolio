@@ -318,9 +318,6 @@ const renderStockTables = () => {
           <h3 className="text-base font-semibold text-neutral-900">
             {userLabel} vs {benchmark.label}
           </h3>
-          <p className="text-sm text-neutral-700">
-            {benchmark.description}
-          </p>
         </div>
 
         <div className="flex flex-col items-start gap-1 text-xs">

@@ -7,6 +7,7 @@ import { aggregateBySector } from "@/lib/exposureAggregations";
 
 type SectorBreakdownCardProps = {
   exposure: ApiExposureRow[];
+  variant?: "card" | "bare";
 };
 
 const VISIBLE_SECTORS_COUNT = 5;
@@ -20,7 +21,7 @@ const SECTOR_GRADIENTS = [
   "from-cyan-500 via-cyan-400 to-cyan-300",
 ];
 
-export function SectorBreakdownCard({ exposure }: SectorBreakdownCardProps) {
+export function SectorBreakdownCard({ exposure, variant = "card" }: SectorBreakdownCardProps) {
   const [showAllSectors, setShowAllSectors] = useState(false);
   const sectors = aggregateBySector(exposure);
   const visibleSectors = showAllSectors
@@ -34,15 +35,25 @@ export function SectorBreakdownCard({ exposure }: SectorBreakdownCardProps) {
   const maxWeight = sectors[0]?.weightPct ?? 0;
 
   if (!sectors.length) {
+    const wrapperClass =
+      variant === "bare"
+        ? "text-sm text-neutral-700"
+        : "rounded-2xl border border-neutral-200 bg-white/80 p-4 text-sm text-neutral-700 shadow-sm";
+
     return (
-      <section className="rounded-2xl border border-neutral-200 bg-white/80 p-4 text-sm text-neutral-700 shadow-sm">
+      <section className={wrapperClass}>
         <p>No sector data available for this mix.</p>
       </section>
     );
   }
 
+  const wrapperClass =
+    variant === "bare"
+      ? "space-y-3"
+      : "rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm";
+
   return (
-    <section className="rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm">
+    <section className={wrapperClass}>
       <div className="mb-3 flex flex-col gap-1">
         <h3 className="text-base font-semibold text-neutral-900">
           The industries you are most exposed to
