@@ -9,7 +9,10 @@ import type { MixComparisonResult } from "@/lib/benchmarkEngine";
 import { aggregateByRegion, aggregateBySector } from "@/lib/exposureAggregations";
 import { useBenchmarkExposure } from "@/hooks/useBenchmarkExposure";
 import type { BenchmarkExposureRow } from "@/lib/benchmarkExposure";
-import ExposureComparisonRow from "@/components/ExposureComparisonRow";
+import BenchmarkComparisonTable, {
+  type BenchmarkRow,
+} from "@/components/BenchmarkComparisonTable";
+import { buildBenchmarkRows, type RawExposureRow } from "@/lib/benchmarkDiffs";
 import type { GroupExposure } from "@/lib/benchmarkTilts";
 
 type ExposureTab = "stock" | "sector" | "region";
@@ -40,39 +43,35 @@ const formatPercent = (value: number | null | undefined) => {
   return `${value.toFixed(1)}%`;
 };
 
-const DIFF_THRESHOLD = 5;
-const STOCK_TILT_LIMIT = 5;
 const MIN_TILT_DELTA = 0.05;
 
 const normalizeKey = (value?: string) => value?.trim().toLowerCase() || "other";
 const friendlyLabel = (value?: string) => value?.trim() || "Other";
 
-type GroupDetailRow = {
-  label: string;
-  userPct: number;
-  benchmarkPct: number;
-  delta: number;
+type BuildGroupOptions = {
+  includeSymbol?: boolean;
 };
 
-function buildGroupRows(
-  userGroups: GroupExposure[],
-  benchmarkGroups: BenchmarkExposureRow[],
-): GroupDetailRow[] {
-  const rows = new Map<string, GroupDetailRow>();
+function buildGroupBenchmarkRows(
+  userGroups: GroupExposure[] = [],
+  benchmarkGroups: BenchmarkExposureRow[] = [],
+  options: BuildGroupOptions = {},
+): BenchmarkRow[] {
+  const rows = new Map<string, RawExposureRow>();
 
   for (const entry of userGroups ?? []) {
     const key = normalizeKey(entry.label);
     if (!rows.has(key)) {
       rows.set(key, {
         label: friendlyLabel(entry.label),
-        userPct: 0,
-        benchmarkPct: 0,
-        delta: 0,
+        symbol: options.includeSymbol ? friendlyLabel(entry.label) : undefined,
+        yourWeightPct: 0,
+        benchmarkWeightPct: 0,
       });
     }
 
     const current = rows.get(key)!;
-    current.userPct = entry.weightPct ?? 0;
+    current.yourWeightPct = entry.weightPct ?? 0;
   }
 
   for (const row of benchmarkGroups ?? []) {
@@ -80,24 +79,23 @@ function buildGroupRows(
     if (!rows.has(key)) {
       rows.set(key, {
         label: friendlyLabel(row.group_key),
-        userPct: 0,
-        benchmarkPct: 0,
-        delta: 0,
+        symbol: options.includeSymbol ? friendlyLabel(row.group_key) : undefined,
+        yourWeightPct: 0,
+        benchmarkWeightPct: 0,
       });
     }
 
     const current = rows.get(key)!;
-    current.benchmarkPct = row.weight_pct ?? 0;
+    current.benchmarkWeightPct = row.weight_pct ?? 0;
   }
 
-  for (const entry of rows.values()) {
-    entry.delta = entry.userPct - entry.benchmarkPct;
-  }
-
-  return Array.from(rows.values()).sort(
+  const combined = Array.from(rows.values()).sort(
     (a, b) =>
-      Math.max(b.userPct, b.benchmarkPct) - Math.max(a.userPct, a.benchmarkPct),
+      Math.max(b.yourWeightPct, b.benchmarkWeightPct) -
+      Math.max(a.yourWeightPct, a.benchmarkWeightPct),
   );
+
+  return buildBenchmarkRows(combined);
 }
 
 export default function BenchmarkComparisonCard({
@@ -182,36 +180,44 @@ export default function BenchmarkComparisonCard({
     }));
   }, [exposure]);
 
-  const stockRows = useMemo(() => {
-    const rows = buildGroupRows(userStockExposure, stockRowsData);
-    return rows.filter((row) => Math.abs(row.delta) >= MIN_TILT_DELTA);
-  }, [userStockExposure, stockRowsData]);
+  const stockRows = useMemo(
+    () =>
+      buildGroupBenchmarkRows(userStockExposure, stockRowsData, {
+        includeSymbol: true,
+      }).filter((row) => Math.abs(row.diffPct) >= MIN_TILT_DELTA),
+    [userStockExposure, stockRowsData],
+  );
+
+  const stockRowsSorted = useMemo(
+    () =>
+      [...stockRows].sort(
+        (a, b) => Math.abs(b.diffPct) - Math.abs(a.diffPct),
+      ),
+    [stockRows],
+  );
+
+  const topFiveStockRows = useMemo(
+    () => stockRowsSorted.slice(0, 5),
+    [stockRowsSorted],
+  );
 
   const stockOverweights = useMemo(
-    () =>
-      stockRows
-        .filter((row) => row.delta > 0)
-        .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
-        .slice(0, STOCK_TILT_LIMIT),
-    [stockRows],
+    () => topFiveStockRows.filter((row) => row.diffPct > 0.0001),
+    [topFiveStockRows],
   );
 
   const stockUnderweights = useMemo(
-    () =>
-      stockRows
-        .filter((row) => row.delta < 0)
-        .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
-        .slice(0, STOCK_TILT_LIMIT),
-    [stockRows],
+    () => topFiveStockRows.filter((row) => row.diffPct < -0.0001),
+    [topFiveStockRows],
   );
 
   const sectorRows = useMemo(
-    () => buildGroupRows(userSectorExposure, sectorRowsData),
+    () => buildGroupBenchmarkRows(userSectorExposure, sectorRowsData),
     [userSectorExposure, sectorRowsData],
   );
 
   const regionRows = useMemo(
-    () => buildGroupRows(userRegionExposure, regionRowsData),
+    () => buildGroupBenchmarkRows(userRegionExposure, regionRowsData),
     [userRegionExposure, regionRowsData],
   );
 
@@ -221,101 +227,82 @@ export default function BenchmarkComparisonCard({
     }
   };
 
-  const renderStockList = () => (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between text-xs text-neutral-500">
-        <p className="text-base font-semibold text-neutral-900">
-          Tilts vs {benchmarkLabel} by stock
-        </p>
-        {loadingStocks && <span>Loading…</span>}
-      </div>
-      {stockError && (
-        <p className="text-[11px] text-rose-500">
-          {stockError}
-        </p>
-      )}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <TiltColumn
-          title="Overweights"
-          rows={stockOverweights}
-          emptyText={`No meaningful overweights vs ${benchmarkLabel}.`}
-        />
-        <TiltColumn
-          title="Underweights"
-          rows={stockUnderweights}
-          emptyText={`No meaningful underweights vs ${benchmarkLabel}.`}
-        />
-      </div>
-    </div>
-  );
+  const renderStockTables = () => {
+    const hasRows =
+      stockOverweights.length > 0 || stockUnderweights.length > 0;
 
-  const renderGroupList = (
-    rows: GroupDetailRow[],
-    loading: boolean,
-    error: string | null,
-    header: string,
-    dimension: string,
-  ) => (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between text-xs text-neutral-500">
-        <p className="text-base font-semibold text-neutral-900">
-          {header}
-        </p>
-        {loading && <span>Loading…</span>}
-      </div>
-      <p className="text-[11px] text-neutral-500">
-        Your mix vs {benchmarkLabel} by {dimension}
-      </p>
-      {error && (
-        <p className="text-[11px] text-rose-500">{error}</p>
-      )}
-      {!rows.length && !loading ? (
-        <p className="text-xs text-neutral-500">
-          No benchmark data available.
-        </p>
-      ) : (
-        <div className="space-y-3">
-          {rows.map(renderTiltRow)}
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between text-xs text-neutral-500">
+          <p className="text-base font-semibold text-neutral-900">
+            Tilts vs {benchmarkLabel} by stock
+          </p>
+          {loadingStocks && <span>Loading…</span>}
         </div>
-      )}
-
-    </div>
-  );
-
-  const renderTiltRow = (row: GroupDetailRow) => (
-    <div
-      key={row.label}
-      className="rounded-2xl border border-neutral-100 bg-white/70 px-3 py-2 shadow-sm"
-    >
-      <ExposureComparisonRow
-        label={row.label}
-        yourPct={row.userPct}
-        benchmarkPct={row.benchmarkPct}
-        diffPct={row.delta}
-      />
-    </div>
-  );
-
-  type TiltColumnProps = {
-    title: string;
-    rows: GroupDetailRow[];
-    emptyText: string;
+        {stockError && (
+          <p className="text-[11px] text-rose-500">{stockError}</p>
+        )}
+        {hasRows ? (
+          <div className="space-y-4">
+            <BenchmarkComparisonTable
+              title="Overweight stocks"
+              rows={stockOverweights}
+              variant="stock"
+              hideEmpty
+            />
+            <BenchmarkComparisonTable
+              title="Underweight stocks"
+              rows={stockUnderweights}
+              variant="stock"
+              hideEmpty
+            />
+          </div>
+        ) : (
+          !loadingStocks &&
+          !stockError && (
+            <p className="text-xs text-neutral-500">
+              No meaningful tilts vs {benchmarkLabel}.
+            </p>
+          )
+        )}
+      </div>
+    );
   };
 
-  const TiltColumn = ({ title, rows, emptyText }: TiltColumnProps) => (
-    <div className="space-y-2">
-      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
-        {title}
-      </p>
-      {rows.length ? (
-        <div className="space-y-2">
-          {rows.map(renderTiltRow)}
+  const renderGroupTable = (
+    rows: BenchmarkRow[],
+    loading: boolean,
+    error: string | null,
+    dimension: string,
+  ) => {
+    const hasRows = rows.length > 0;
+
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs text-neutral-500">
+          <p className="text-[11px] text-neutral-500">
+            Your mix vs {benchmarkLabel} by {dimension}
+          </p>
+          {loading && <span>Loading…</span>}
         </div>
-      ) : (
-        <p className="text-xs text-neutral-500">{emptyText}</p>
-      )}
-    </div>
-  );
+        {error && <p className="text-[11px] text-rose-500">{error}</p>}
+        {hasRows ? (
+          <BenchmarkComparisonTable
+            rows={rows}
+            variant="default"
+            hideEmpty
+          />
+        ) : (
+          !loading &&
+          !error && (
+            <p className="text-xs text-neutral-500">
+              No benchmark data available.
+            </p>
+          )
+        )}
+      </div>
+    );
+  };
 
   return (
     <section className="space-y-4 rounded-3xl border border-neutral-200 bg-white/90 p-5 shadow-sm">
@@ -340,26 +327,26 @@ export default function BenchmarkComparisonCard({
               onChange={handleChange}
               className="w-full appearance-none bg-transparent text-left text-sm font-semibold text-neutral-900 outline-none"
             >
-                {benchmarks.map((option) => {
-                  const optionSymbol =
-                    option.positions?.[0]?.symbol?.trim().toUpperCase() ??
-                    option.id.toUpperCase();
-                  const isDisabled = Boolean(
-                    normalizedSingleSymbol &&
-                      optionSymbol === normalizedSingleSymbol,
-                  );
+              {benchmarks.map((option) => {
+                const optionSymbol =
+                  option.positions?.[0]?.symbol?.trim().toUpperCase() ??
+                  option.id.toUpperCase();
+                const isDisabled = Boolean(
+                  normalizedSingleSymbol &&
+                    optionSymbol === normalizedSingleSymbol,
+                );
 
-                  return (
-                    <option
-                      key={option.id}
-                      value={option.id}
-                      disabled={isDisabled}
-                    >
-                      {option.label}
-                    </option>
-                  );
-                })}
-              </select>
+                return (
+                  <option
+                    key={option.id}
+                    value={option.id}
+                    disabled={isDisabled}
+                  >
+                    {option.label}
+                  </option>
+                );
+              })}
+            </select>
             <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">
               ▾
             </span>
@@ -382,7 +369,7 @@ export default function BenchmarkComparisonCard({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-neutral-100 bg-white/90 p-4">
+      <div className="rounded-2xl border border-neutral-100 bg.white/90 p-4">
         <div className="flex flex-wrap gap-2">
           {EXPOSURE_TABS.map((tab) => (
             <button
@@ -402,21 +389,19 @@ export default function BenchmarkComparisonCard({
         </div>
 
         <div className="mt-4 space-y-4">
-          {activeTab === "stock" && renderStockList()}
+          {activeTab === "stock" && renderStockTables()}
           {activeTab === "sector" &&
-            renderGroupList(
+            renderGroupTable(
               sectorRows,
               loadingSectors,
               sectorError,
-              `Tilts vs ${benchmarkLabel} by sector`,
               "sector",
             )}
           {activeTab === "region" &&
-            renderGroupList(
+            renderGroupTable(
               regionRows,
               loadingRegions,
               regionError,
-              `Tilts vs ${benchmarkLabel} by region`,
               "region",
             )}
         </div>
@@ -470,7 +455,9 @@ function ComparisonList({
                   isPositive ? "text-emerald-600" : "text-rose-600",
                 ].join(" ")}
               >
-                {item.deltaPct > 0 ? `+${item.deltaPct.toFixed(1)}%` : `${item.deltaPct.toFixed(1)}%`}
+                {item.deltaPct > 0
+                  ? `+${item.deltaPct.toFixed(1)}%`
+                  : `${item.deltaPct.toFixed(1)}%`}
               </span>
             </li>
           ))}
