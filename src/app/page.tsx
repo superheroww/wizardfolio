@@ -152,11 +152,8 @@ export default function HomePage() {
         <section className="space-y-3 rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm">
           <header className="mb-3">
             <h2 className="text-base font-semibold text-neutral-900">
-              Choose a starting mix
+              Try a preset — results load instantly
             </h2>
-            <p className="text-sm text-neutral-700">
-              Pick a preset below or begin with your own ETF mix.
-            </p>
           </header>
 
           <QuickStartTemplates

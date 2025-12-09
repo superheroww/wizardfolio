@@ -170,7 +170,7 @@ export default function PortfolioInput({
     <section className="w-full rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm">
       <header className="mb-3 space-y-1">
         <h2 className="text-base font-semibold text-neutral-900">
-          Your mix
+          Build your own Mix
         </h2>
         <p className="text-sm text-neutral-700">
           Add ETFs until you reach 100%.
