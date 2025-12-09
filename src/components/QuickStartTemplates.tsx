@@ -87,6 +87,7 @@ export default function QuickStartTemplates({
         className="
           flex gap-3 overflow-x-auto pb-1 pt-2 scroll-smooth snap-x snap-mandatory
           md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:snap-none
+          lg:grid-cols-4 xl:grid-cols-5
         "
         style={{ scrollbarWidth: "none" }}
       >

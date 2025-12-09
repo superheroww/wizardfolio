@@ -173,10 +173,7 @@ export default function PortfolioInput({
           Build your own Mix
         </h2>
         <p className="text-sm text-neutral-700">
-          Add ETFs until you reach 100%.
-        </p>
-        <p className="text-xs text-neutral-500">
-          Start by typing a ticker below.
+          Add ETFs until your mix adds up to 100%.
         </p>
       </header>
 

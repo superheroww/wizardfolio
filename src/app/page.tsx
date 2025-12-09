@@ -136,7 +136,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
-      <div className="mx-auto max-w-2xl space-y-6">
+      <div className="mx-auto w-full max-w-3xl md:max-w-4xl lg:max-w-5xl space-y-6">
         {/* HERO */}
         <section className="space-y-2">
           <h1 className="text-2xl font-semibold text-neutral-900 md:text-3xl">
