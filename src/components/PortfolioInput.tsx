@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import posthog from "posthog-js";
 import EtfBottomSheetSelect from "@/components/EtfBottomSheetSelect";
+import { Trash2 } from "lucide-react";
 
 type UserPosition = {
   symbol: string;
@@ -18,16 +19,24 @@ type PortfolioInputProps = {
 
 const MAX_ASSETS = 5;
 
+function isValidPosition(p: UserPosition) {
+  return p.symbol.trim() !== "" && p.weightPct > 0;
+}
+
 export default function PortfolioInput({
   positions,
   onChange,
   onAnalyze,
   analyzeLabel = "See my breakdown →",
 }: PortfolioInputProps) {
+  // If there are no positions yet, show a single blank row in the UI
+  const displayPositions: UserPosition[] =
+    positions.length === 0 ? [{ symbol: "", weightPct: 0 }] : positions;
+
+  const showDeleteButton = displayPositions.length > 1;
+
   // 🚨 Ignore empty rows (symbol "" AND weight 0)
-  const validRows = positions.filter(
-    (p) => p.symbol.trim() !== "" && p.weightPct > 0,
-  );
+  const validRows = positions.filter(isValidPosition);
 
   // SUM ONLY VALID ROWS
   const totalWeight = validRows.reduce((acc, p) => acc + p.weightPct, 0);
@@ -62,31 +71,16 @@ export default function PortfolioInput({
 
   const updatePosition = useCallback(
     (index: number, patch: Partial<UserPosition>) => {
-      const next = positions.map((p, i) =>
+      // Use real positions if we have them; otherwise treat the single
+      // displayed row as the first real row.
+      const base: UserPosition[] =
+        positions.length === 0 ? [{ symbol: "", weightPct: 0 }] : positions;
+
+      const next = base.map((p, i) =>
         i === index ? { ...p, ...patch } : p,
       );
 
       onChange(next);
-
-      // AUTO-ADD NEW ROW LOGIC
-      const row = next[index];
-      const rowIsComplete =
-        row.symbol.trim() !== "" && row.weightPct > 0;
-
-      const lastRow = next[next.length - 1];
-      const lastRowIsEmpty =
-        lastRow.symbol.trim() === "" && lastRow.weightPct === 0;
-
-      const canAdd = next.length < MAX_ASSETS;
-      // Only add new row if totalWeight < 100
-      const totalWeight = next.reduce(
-        (acc, p) => acc + p.weightPct,
-        0,
-      );
-
-      if (rowIsComplete && !lastRowIsEmpty && canAdd && totalWeight < 100) {
-        onChange([...next, { symbol: "", weightPct: 0 }]);
-      }
     },
     [positions, onChange],
   );
@@ -122,7 +116,10 @@ export default function PortfolioInput({
 
       lastWeightByRow.current[index] = normalized;
 
-      const nextPositions = positions.map((position, i) =>
+      const base: UserPosition[] =
+        positions.length === 0 ? [{ symbol: "", weightPct: 0 }] : positions;
+
+      const nextPositions = base.map((position, i) =>
         i === index ? { ...position, weightPct: normalized } : position,
       );
       const totalWeightAfter = nextPositions.reduce(
@@ -140,7 +137,12 @@ export default function PortfolioInput({
 
   const addRow = () => {
     if (!canAddMore) return;
-    const next = [...positions, { symbol: "", weightPct: 0 }];
+
+    const next =
+      positions.length === 0
+        ? [{ symbol: "", weightPct: 0 }]
+        : [...positions, { symbol: "", weightPct: 0 }];
+
     onChange(next);
     posthog.capture("add_position", {
       positions_count_after: next.length,
@@ -149,45 +151,79 @@ export default function PortfolioInput({
   };
 
   const removeRow = (index: number) => {
-    const next = positions.filter((_, i) => i !== index);
-    onChange(next);
+    const base: UserPosition[] =
+      positions.length === 0 ? [{ symbol: "", weightPct: 0 }] : positions;
+
+    const next = base.filter((_, i) => i !== index);
+
+    // If we removed the only row and there were no real positions,
+    // keep state as [] — the guard will render a blank row again.
+    const final = positions.length === 0 ? [] : next;
+
+    onChange(final);
     posthog.capture("remove_position", {
-      positions_count_after: next.length,
+      positions_count_after: final.length,
     });
   };
 
   return (
     <section className="w-full rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm">
-      <header className="mb-3">
+      <header className="mb-3 space-y-1">
         <h2 className="text-base font-semibold text-neutral-900">
-          Your portfolio mix
+          Your mix
         </h2>
         <p className="text-sm text-neutral-700">
-          Add ETFs and their weights until you reach 100%.
+          Add ETFs until you reach 100%.
+        </p>
+        <p className="text-xs text-neutral-500">
+          Start by typing a ticker below.
         </p>
       </header>
 
       <div className="space-y-2">
-        {positions.map((pos, index) => (
+        {displayPositions.map((pos, index) => (
           <div
             key={index}
-            className="flex w-full flex-nowrap items-end gap-3 rounded-xl border border-neutral-200 bg-neutral-50/70 p-3"
+            className="flex w-full flex-col gap-3 rounded-xl border border-neutral-200 bg-neutral-50/70 p-3"
           >
-            <div className="min-w-0 flex-1">
-              <label className="block text-xs font-medium text-neutral-500">
-                Symbol
-              </label>
-              <EtfBottomSheetSelect
-                value={pos.symbol.trim() ? pos.symbol : null}
-                onChange={(symbol) => handleSymbolCommit(index, symbol)}
-              />
+            {/* ETF ticker label */}
+            <label className="block text-xs font-medium text-neutral-500">
+              ETF ticker
+            </label>
+
+            {/* ETF selector + delete aligned */}
+            <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <EtfBottomSheetSelect
+                  value={pos.symbol.trim() ? pos.symbol : null}
+                  onChange={(symbol) => handleSymbolCommit(index, symbol)}
+                />
+              </div>
+
+              {/* Delete button (trash icon) – only when more than one row */}
+              {showDeleteButton && (
+                <button
+                  type="button"
+                  onClick={() => removeRow(index)}
+                  aria-label="Remove this ETF"
+                  className="inline-flex h-8 w-8 flex-none items-center justify-center 
+                             rounded-full border border-neutral-200 bg-white text-neutral-500 
+                             hover:bg-neutral-100 active:bg-neutral-200 transition"
+                >
+                  <Trash2 size={16} strokeWidth={1.75} />
+                </button>
+              )}
             </div>
-            <div className="flex min-w-[80px] w-24 flex-col gap-1">
+
+            {/* Allocation */}
+            <div className="flex min-w-[80px] flex-col gap-1 sm:w-24">
               <label className="block text-xs font-medium text-neutral-500">
-                Weight %
+                Allocation (%)
               </label>
               <input
-                className="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-base text-neutral-900 outline-none ring-0 focus:border-neutral-400 sm:text-sm"
+                className="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-1.5 
+                           text-base text-neutral-900 outline-none ring-0 focus:border-neutral-400 
+                           sm:text-sm"
                 type="number"
                 inputMode="numeric"
                 min={0}
@@ -195,57 +231,29 @@ export default function PortfolioInput({
                 step={1}
                 value={pos.weightPct === 0 ? "" : pos.weightPct}
                 onChange={(e) => {
-                  let value = e.target.value;
-                  let num = parseFloat(value);
-
+                  let num = parseFloat(e.target.value);
                   if (isNaN(num)) num = 0;
-
-                  num = Math.round(num);
-
-                  if (num < 0) num = 0;
-                  if (num > 100) num = 100;
-
+                  num = Math.round(Math.min(100, Math.max(0, num)));
                   updatePosition(index, { weightPct: num });
                 }}
                 onBlur={(event) => {
-                  let value = event.currentTarget.value;
-                  let num = parseFloat(value);
-
+                  let num = parseFloat(event.currentTarget.value);
                   if (isNaN(num)) num = 0;
-
-                  num = Math.round(num);
-
-                  if (num < 0) num = 0;
-                  if (num > 100) num = 100;
-
+                  num = Math.round(Math.min(100, Math.max(0, num)));
                   handleWeightCommit(index, num);
                 }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
-                    let value = event.currentTarget.value;
-                    let num = parseFloat(value);
-
+                    let num = parseFloat(event.currentTarget.value);
                     if (isNaN(num)) num = 0;
-
-                    num = Math.round(num);
-
-                    if (num < 0) num = 0;
-                    if (num > 100) num = 100;
-
+                    num = Math.round(Math.min(100, Math.max(0, num)));
                     handleWeightCommit(index, num);
                     event.currentTarget.blur();
                   }
                 }}
               />
             </div>
-            <button
-              type="button"
-              onClick={() => removeRow(index)}
-              className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full border border-neutral-200 text-sm text-neutral-500 hover:bg-neutral-100"
-            >
-              ×
-            </button>
           </div>
         ))}
       </div>
@@ -258,8 +266,9 @@ export default function PortfolioInput({
             disabled={!canAddMore}
             className="inline-flex items-center rounded-full border border-neutral-200 px-3 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {canAddMore ? "+ Add asset" : `Max ${MAX_ASSETS} assets`}
+            {canAddMore ? "+ Add ETF" : `Max ${MAX_ASSETS} ETFs`}
           </button>
+
           <button
             type="button"
             onClick={onAnalyze}
@@ -270,6 +279,12 @@ export default function PortfolioInput({
           </button>
         </div>
       </div>
+
+      <p className="mt-2 text-xs text-neutral-600">
+        {totalWeight < 100
+          ? `You still have ${Math.max(0, 100 - totalWeight)}% remaining.`
+          : "Your mix is ready."}
+      </p>
     </section>
   );
 }

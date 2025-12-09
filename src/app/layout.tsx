@@ -75,7 +75,7 @@ export default function RootLayout({
             <div className="flex min-h-screen flex-col">
               <Header />
               <main className="flex-1">
-                <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-6">
+                <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-3">
                   {children}
                 </div>
               </main>

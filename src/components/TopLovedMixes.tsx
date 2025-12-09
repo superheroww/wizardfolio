@@ -13,11 +13,6 @@ export function TopLovedMixes({ mixes, onSelect }: TopLovedMixesProps) {
 
   return (
     <section className="space-y-2">
-      <h2 className="text-sm font-medium text-neutral-900">Top loved mixes</h2>
-      <p className="text-xs text-neutral-500">
-        Tap a mix below to load it into WizardFolio.
-      </p>
-
       <div className="mt-3 space-y-2">
         {mixes.map((mix) => (
           <button

@@ -135,7 +135,7 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
+    <main className="min-h-screen px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <div className="mx-auto max-w-2xl space-y-6">
         {/* HERO */}
         <section className="space-y-2">
@@ -235,34 +235,11 @@ export default function HomePage() {
             onChange={setPositions}
             onAnalyze={() => handleAnalyze()}
           />
-
-          {/* TOTAL ALLOCATION */}
-          <div className="mt-3 space-y-1">
-            <div className="flex items-center justify-between text-xs text-neutral-500">
-              <span>Total allocation</span>
-              <span className="font-medium text-neutral-900">
-                {totalWeight.toFixed(0)}% of 100%
-              </span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-neutral-200">
-              <div
-                className={`h-full rounded-full ${
-                  totalWeight === 100 ? "bg-emerald-500" : "bg-neutral-500"
-                }`}
-                style={{ width: `${totalClamped}%` }}
-              />
-            </div>
-          </div>
-
           {feedbackMessage && (
             <p className="text-xs text-rose-500">{feedbackMessage}</p>
           )}
 
           <div className="mt-3 space-y-1 text-[11px] text-neutral-500">
-            <p>
-              When you&apos;re ready, tap &quot;See my breakdown →&quot; to
-              view your stocks, sectors, and regions.
-            </p>
             <p>For education only. This isn&apos;t investment advice.</p>
           </div>
         </section>
