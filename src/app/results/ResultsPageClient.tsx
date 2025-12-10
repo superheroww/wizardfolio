@@ -18,6 +18,7 @@ import RegionExposureChart from "@/components/RegionExposureChart";
 import { SectorBreakdownCard } from "@/components/SectorBreakdownCard";
 import { aggregateHoldingsBySymbol } from "@/lib/exposureAggregations";
 import { useRouter } from "next/navigation";
+import { ChevronUp } from "lucide-react";
 import { AppleShareIcon } from "@/components/icons/AppleShareIcon";
 import { usePostHogSafe } from "@/lib/usePostHogSafe";
 import {
@@ -150,6 +151,10 @@ export default function ResultsPageClient({
 
   const positionsCount = normalizedPositions.length;
   const hasValidPositions = positionsCount > 0;
+
+  const [isInputCollapsed, setIsInputCollapsed] = useState(
+    () => hasPositionsParam && hasValidPositions,
+  );
 
   const totalWeight = useMemo(
     () =>
@@ -700,10 +705,8 @@ export default function ResultsPageClient({
     hasExposure &&
     (hasInteractedWithMix || hasPositionsParam);
   const shouldShowStickySave =
-    hasValidPositions && hasExposure && !isLoading && !error;
+  !isAuthenticated && hasValidPositions && hasExposure && !isLoading && !error;
 
-  const shouldShowCollapsedInput =
-    hasPositionsParam && !hasInteractedWithMix && hasValidPositions;
 
   // Fire once when exposure data is available
   useEffect(() => {
@@ -888,6 +891,11 @@ export default function ResultsPageClient({
   };
 
   const handleExpandInput = () => {
+    capture("results_input_expanded_manual", {
+      source_page: "results",
+      positions_count: positionsCount,
+    });
+
     if (!hasInteractedWithMix) {
       capture("results_input_expanded", {
         source_page: "results",
@@ -896,6 +904,17 @@ export default function ResultsPageClient({
       });
       setHasInteractedWithMix(true);
     }
+
+    setIsInputCollapsed(false);
+  };
+
+  const handleCollapseInput = () => {
+    capture("results_input_collapsed", {
+      source_page: "results",
+      positions_count: positionsCount,
+    });
+
+    setIsInputCollapsed(true);
   };
 
   const handleSelectRecentMix = (mix: RecentMix) => {
@@ -903,6 +922,7 @@ export default function ResultsPageClient({
     setHasInteractedWithMix(true);
     setMixSource("scratch");
     setMixTemplateKey(null);
+    setIsInputCollapsed(false);
     capture("recent_mix_loaded_from_chip", {
       mix_id: mix.id,
       source: mix.source,
@@ -920,15 +940,15 @@ export default function ResultsPageClient({
       )}
 
       <div className="space-y-5 md:space-y-6">
-        {shouldShowCollapsedInput ? (
+        {isInputCollapsed ? (
           <section className="flex flex-col gap-2 rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-col">
                 <h2 className="text-base font-semibold text-neutral-900">
                   Your mix
                 </h2>
-                <p className="text-[11px] text-neutral-600">
-                  This is the mix we're analyzing below.
+                <p className="mt-1 text-xs font-medium text-neutral-800">
+                  {mixSummaryLine}
                 </p>
               </div>
               <button
@@ -939,18 +959,9 @@ export default function ResultsPageClient({
                 Edit mix
               </button>
             </div>
-
-            <p className="mt-1 text-xs font-medium text-neutral-800">
-              {mixSummaryLine}
-            </p>
-
-            <p className="mt-1 text-[11px] text-neutral-500">
-              Tap "Edit mix" to change ETFs or weights. Results update in real
-              time.
-            </p>
           </section>
         ) : (
-          <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+          <section className="relative rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
             <div className="mb-2 flex items-center gap-2 text-[11px] font-medium text-neutral-700">
               <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 text-[10px] font-semibold text-white">
                 i
@@ -960,6 +971,17 @@ export default function ResultsPageClient({
                 instantly.
               </span>
             </div>
+            {hasValidPositions && (
+              <button
+                type="button"
+                onClick={handleCollapseInput}
+                aria-label="Collapse mix input"
+                title="Collapse mix input"
+                className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm hover:bg-neutral-50"
+              >
+                <ChevronUp className="h-3.5 w-3.5" />
+              </button>
+            )}
             <PortfolioInput
               positions={positions}
               onChange={handlePositionsChange}
