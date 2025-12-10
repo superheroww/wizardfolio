@@ -13,11 +13,15 @@ const SaveMixStickyBar: FC<SaveMixStickyBarProps> = ({
   isSaving,
   hasSaved,
 }) => {
-  const label = hasSaved ? "Saved" : isSaving ? "Saving..." : "Save";
-  const title = hasSaved ? "Mix saved" : "Save this mix";
+  const label = hasSaved
+    ? "Saved"
+    : isSaving
+      ? "Saving..."
+      : "Save mix";
+  const title = hasSaved ? "Mix saved" : "Save this mix to compare";
   const subtitle = hasSaved
     ? "It’s now in your dashboard."
-    : "Keep it in your dashboard to revisit later.";
+    : "Keep it to revisit or stack against another mix.";
 
   return (
     <div className="fixed inset-x-0 bottom-3 z-40 flex justify-center px-3 md:hidden">

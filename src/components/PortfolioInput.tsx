@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import posthog from "posthog-js";
 import EtfBottomSheetSelect from "@/components/EtfBottomSheetSelect";
 import { Trash2 } from "lucide-react";
@@ -16,6 +16,7 @@ type PortfolioInputProps = {
   onAnalyze: () => void; // parent will call the API
   analyzeLabel?: string;
   hideAnalyzeButton?: boolean;
+  chipsSlot?: ReactNode;
 };
 
 const MAX_ASSETS = 5;
@@ -30,6 +31,7 @@ export default function PortfolioInput({
   onAnalyze,
   analyzeLabel = "See my breakdown →",
   hideAnalyzeButton = false,
+  chipsSlot,
 }: PortfolioInputProps) {
   // If there are no positions yet, show a single blank row in the UI
   const displayPositions: UserPosition[] =
@@ -178,6 +180,8 @@ export default function PortfolioInput({
           Add ETFs until your mix adds up to 100%.
         </p>
       </header>
+
+      {chipsSlot ?? null}
 
       <div className="space-y-2">
         {displayPositions.map((pos, index) => (

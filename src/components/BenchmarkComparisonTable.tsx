@@ -134,7 +134,7 @@ export default function BenchmarkComparisonTable({
                 <th className="px-3 pb-2 font-medium">Name</th>
                 <th className="px-3 pb-2 text-right font-medium">Your mix</th>
                 <th className="px-3 pb-2 text-right font-medium">Benchmark</th>
-                <th className="px-3 pb-2 text-right font-medium">Diff</th>
+                <th className="px-3 pb-2 text-right font-medium">Difference</th>
               </tr>
             </thead>
 
