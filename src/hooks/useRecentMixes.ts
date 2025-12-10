@@ -14,6 +14,29 @@ export type RecentMix = {
 const LOCAL_STORAGE_KEY = "wizardfolio_recent_mixes_v1";
 const MAX_LOCAL_MIXES = 5;
 
+function buildNormalizedMixKey(positions: UserPosition[]): string | null {
+  if (!positions || positions.length === 0) return null;
+
+  const entries = positions
+    .map((p) => ({
+      symbol: (p as any).symbol?.trim().toUpperCase?.() ?? "",
+      weight:
+        typeof (p as any).weightPct === "number"
+          ? (p as any).weightPct
+          : typeof (p as any).weight_pct === "number"
+            ? (p as any).weight_pct
+            : 0,
+    }))
+    .filter((p) => p.symbol && p.weight > 0)
+    .sort((a, b) => a.symbol.localeCompare(b.symbol));
+
+  if (entries.length === 0) return null;
+
+  return entries
+    .map((p) => `${p.symbol}:${p.weight.toFixed(1)}`)
+    .join("|");
+}
+
 function safeParseRecentMixes(raw: string | null): RecentMix[] {
   if (!raw) return [];
   try {
@@ -62,6 +85,9 @@ export type UseRecentMixesOptions = {
 export type UseRecentMixesResult = {
   recentMixes: RecentMix[];
   addLocalMix: (positions: UserPosition[]) => void;
+  addLocalMixSnapshot: (
+    positions: UserPosition[],
+  ) => { didAdd: boolean; mixId: string | null; key: string | null };
   hydrateFromRemote: (
     remoteMixes: UseRecentMixesOptions["remoteMixes"],
   ) => void;
@@ -126,41 +152,56 @@ export function useRecentMixes(
     );
   }, []);
 
-  const addLocalMix = useCallback(
+  const addLocalMixSnapshot = useCallback(
     (positions: UserPosition[]) => {
-      if (!positions || positions.length === 0) return;
+      if (!positions || positions.length === 0) {
+        return { didAdd: false, mixId: null, key: null };
+      }
 
-      const label = buildLabelFromPositions(positions);
-      const newMix: RecentMix = {
-        id: crypto.randomUUID?.() ?? `${Date.now()}`,
-        label,
-        positions,
-        source: "local",
-        createdAt: new Date().toISOString(),
-      };
+      const normalizedKey = buildNormalizedMixKey(positions);
+      let didAdd = false;
+      let mixId: string | null = null;
 
       setRecentMixes((prev) => {
         const localOnly = prev.filter((m) => m.source === "local");
-        const newLocal = [newMix, ...localOnly];
+        const lastLocal = localOnly[0];
+        const lastKey = lastLocal ? buildNormalizedMixKey(lastLocal.positions) : null;
 
-        const seenLabels = new Set<string>();
-        const dedupedLocal: RecentMix[] = [];
-        for (const mix of newLocal) {
-          if (seenLabels.has(mix.label)) continue;
-          seenLabels.add(mix.label);
-          dedupedLocal.push(mix);
+        if (lastKey && normalizedKey && lastKey === normalizedKey) {
+          return prev;
         }
 
-        const trimmedLocal = dedupedLocal.slice(0, MAX_LOCAL_MIXES);
+        const label = buildLabelFromPositions(positions);
+        const newMix: RecentMix = {
+          id: crypto.randomUUID?.() ?? `${Date.now()}`,
+          label,
+          positions,
+          source: "local",
+          createdAt: new Date().toISOString(),
+        };
 
+        didAdd = true;
+        mixId = newMix.id;
+
+        const newLocal = [newMix, ...localOnly];
+        const trimmedLocal = newLocal.slice(0, MAX_LOCAL_MIXES);
         const remote = prev.filter((m) => m.source === "remote");
         const combined = [...trimmedLocal, ...remote];
 
         persistLocal(trimmedLocal);
         return combined;
       });
+
+      return { didAdd, mixId, key: normalizedKey };
     },
     [persistLocal],
+  );
+
+  const addLocalMix = useCallback(
+    (positions: UserPosition[]) => {
+      void addLocalMixSnapshot(positions);
+    },
+    [addLocalMixSnapshot],
   );
 
   const clearLocalMixes = useCallback(() => {
@@ -205,5 +246,11 @@ export function useRecentMixes(
     [],
   );
 
-  return { recentMixes, addLocalMix, hydrateFromRemote, clearLocalMixes };
+  return {
+    recentMixes,
+    addLocalMix,
+    addLocalMixSnapshot,
+    hydrateFromRemote,
+    clearLocalMixes,
+  };
 }

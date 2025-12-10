@@ -39,9 +39,14 @@ import type { MixComparisonResult } from "@/lib/benchmarkEngine";
 import { formatMixSummary } from "@/lib/mixFormatting";
 import { getBenchmarkLabel } from "@/lib/benchmarkUtils";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
+import { getAnonId } from "@/lib/analytics/anonId";
+import { snapshotPreviousMix } from "@/lib/previousMixSnapshot";
 import SaveMixCta from "./SaveMixCta";
 import SaveMixStickyBar from "./SaveMixStickyBar";
-import { useRecentMixes, type RecentMix } from "@/hooks/useRecentMixes";
+import {
+  useRecentMixes,
+  type RecentMix,
+} from "@/hooks/useRecentMixes";
 import RecentMixesChips from "@/components/results/RecentMixesChips";
 
 type SlideIndex = 0 | 1 | 2 | 3 | 4;
@@ -101,11 +106,18 @@ export default function ResultsPageClient({
 }: ResultsPageClientProps) {
   const router = useRouter();
   const { capture } = usePostHogSafe();
-  const { recentMixes, addLocalMix, hydrateFromRemote } = useRecentMixes();
+  const { recentMixes, addLocalMix, addLocalMixSnapshot, hydrateFromRemote } =
+    useRecentMixes();
 
   const [positions, setPositions] = useState<UserPosition[]>(initialPositions);
   const [hasSaved, setHasSaved] = useState(false);
   const [hasInteractedWithMix, setHasInteractedWithMix] = useState(false);
+  const [anonId, setAnonId] = useState<string | null>(null);
+  const initialMixSource = hasPositionsParam ? "url" : "scratch";
+  const [mixSource, setMixSource] = useState<"scratch" | "template" | "url">(
+    initialMixSource,
+  );
+  const [mixTemplateKey, setMixTemplateKey] = useState<string | null>(null);
 
   const validPositions = useMemo(
     () =>
@@ -214,6 +226,13 @@ export default function ResultsPageClient({
       total_weight: totalWeight,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const id = getAnonId();
+    if (id) {
+      setAnonId(id);
+    }
   }, []);
 
   const selectedBenchmark = useMemo(
@@ -393,6 +412,7 @@ export default function ResultsPageClient({
   const { shareElementAsImage, isSharing } = useImageShare();
   const exposureLoadedRef = useRef(false);
   const stickyImpressionRef = useRef(false);
+  const initialSnapshotRef = useRef(false);
 
   const top10 = useMemo(() => {
     const aggregated = aggregateHoldingsBySymbol(exposure);
@@ -689,7 +709,71 @@ export default function ResultsPageClient({
     }
   }, [shouldShowStickySave, capture, positionsCount]);
 
-  const handlePositionsChange = (next: UserPosition[]) => {
+  const isRoughlyComplete = (total: number) => total >= 99 && total <= 101;
+
+  useEffect(() => {
+    if (initialSnapshotRef.current) return;
+    if (!anonId) return;
+
+    const total = initialPositions.reduce(
+      (acc, p) => acc + (p.weightPct ?? 0),
+      0,
+    );
+
+    const normalizedInitial = normalizePositions(initialPositions);
+
+    if (!normalizedInitial.length || !isRoughlyComplete(total)) return;
+
+    initialSnapshotRef.current = true;
+
+    void snapshotPreviousMix(normalizedInitial, {
+      source: initialMixSource,
+      templateKey: mixTemplateKey,
+      benchmarkSymbol: benchmarkSymbol ?? null,
+      anonId,
+      userId: user?.id ?? null,
+    }, addLocalMixSnapshot);
+  }, [
+    initialPositions,
+    anonId,
+    initialMixSource,
+    mixTemplateKey,
+    benchmarkSymbol,
+    user?.id,
+    addLocalMixSnapshot,
+  ]);
+
+  useEffect(() => {
+    if (!anonId) return;
+    if (!normalizedPositions.length) return;
+    if (!isRoughlyComplete(totalWeight)) return;
+
+    const timer = window.setTimeout(() => {
+      void snapshotPreviousMix(normalizedPositions, {
+        source: mixSource,
+        templateKey: mixTemplateKey,
+        benchmarkSymbol: benchmarkSymbol ?? null,
+        anonId,
+        userId: user?.id ?? null,
+      }, addLocalMixSnapshot);
+    }, 2500);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    normalizedPositions,
+    totalWeight,
+    anonId,
+    mixSource,
+    mixTemplateKey,
+    benchmarkSymbol,
+    user?.id,
+    addLocalMixSnapshot,
+  ]);
+
+  const handlePositionsChange = (
+    next: UserPosition[],
+    meta?: { source?: "scratch" | "template" | "url"; templateKey?: string | null },
+  ) => {
     const nextValid = next.filter(
       (p) => p.symbol.trim() !== "" && (p.weightPct ?? 0) > 0,
     );
@@ -708,6 +792,9 @@ export default function ResultsPageClient({
     // Reset inline success/error messages
     setStatusMessage(null);
 
+  setMixSource(meta?.source ?? "scratch");
+  setMixTemplateKey(meta?.templateKey ?? null);
+
     if (!hasInteractedWithMix) {
       setHasInteractedWithMix(true);
     }
@@ -718,8 +805,6 @@ export default function ResultsPageClient({
       total_weight: nextTotalWeight,
       source_page: "results",
     });
-
-    addLocalMix(nextNormalized);
   };
 
   const handleExpandInput = () => {
@@ -736,6 +821,8 @@ export default function ResultsPageClient({
   const handleSelectRecentMix = (mix: RecentMix) => {
     setPositions(mix.positions);
     setHasInteractedWithMix(true);
+    setMixSource("scratch");
+    setMixTemplateKey(null);
     capture("recent_mix_loaded_from_chip", {
       mix_id: mix.id,
       source: mix.source,
@@ -805,6 +892,7 @@ export default function ResultsPageClient({
                     capture("recent_mix_signin_chip_navigate", {});
                   }}
                   showTitle={false}
+                  maxChips={3}
                   className="mb-3"
                 />
               }
@@ -961,7 +1049,10 @@ export default function ResultsPageClient({
                           const positionsParam =
                             buildPositionsSearchParams(nextPositions);
 
-                          handlePositionsChange(nextPositions);
+                          handlePositionsChange(nextPositions, {
+                            source: "template",
+                            templateKey: template.id,
+                          });
 
                           capture("top_mix_try_clicked", {
                             template_key: template.id,

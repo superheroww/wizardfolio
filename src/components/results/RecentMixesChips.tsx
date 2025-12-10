@@ -9,6 +9,7 @@ type RecentMixesChipsProps = {
   onSelectMix: (mix: RecentMix) => void;
   onSignInClick?: () => void;
   showTitle?: boolean;
+  maxChips?: number;
   className?: string;
 };
 
@@ -18,15 +19,16 @@ export default function RecentMixesChips({
   onSelectMix,
   onSignInClick,
   showTitle = true,
+  maxChips = 3,
   className,
 }: RecentMixesChipsProps) {
   const { capture } = usePostHogSafe();
 
-  const hasMixes = Boolean(recentMixes && recentMixes.length > 0);
-
-  if (!hasMixes && isAuthenticated) {
+  if (!recentMixes || recentMixes.length === 0) {
     return null;
   }
+
+  const visibleMixes = recentMixes.slice(0, maxChips);
 
   return (
     <div className={["mb-3", className].filter(Boolean).join(" ")}>
@@ -35,9 +37,9 @@ export default function RecentMixesChips({
           <p className="text-xs font-medium text-neutral-500">Recent mixes</p>
         </div>
       )}
-      <div className="flex flex-wrap items-center gap-2">
-        {hasMixes &&
-          recentMixes.slice(0, 4).map((mix) => (
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {visibleMixes.map((mix) => (
             <button
               key={mix.id}
               type="button"
@@ -45,6 +47,7 @@ export default function RecentMixesChips({
                 capture("recent_mix_chip_clicked", {
                   mix_id: mix.id,
                   source: mix.source,
+                  surface: "results_editor_header",
                 });
                 onSelectMix(mix);
               }}
@@ -53,17 +56,20 @@ export default function RecentMixesChips({
               <span className="truncate">{mix.label}</span>
             </button>
           ))}
+        </div>
 
         {!isAuthenticated && (
           <button
             type="button"
             onClick={() => {
-              capture("recent_mix_signin_chip_clicked", {});
+              capture("recent_mix_create_account_clicked", {
+                surface: "results_editor_header",
+              });
               onSignInClick?.();
             }}
-            className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-[11px] font-medium text-neutral-700 hover:bg-neutral-50 active:bg-neutral-100"
+            className="inline-flex items-center rounded-full border border-neutral-900 bg-neutral-900 px-3 py-1 text-[11px] font-medium text-white hover:bg-black active:bg-black/80"
           >
-            <span>Sign in to save your mixes</span>
+            Create free account
           </button>
         )}
       </div>
