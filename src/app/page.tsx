@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
-import { getSupabaseBrowserClient } from "@/lib/supabase";
 import PortfolioInput from "@/components/PortfolioInput";
 import QuickStartTemplates from "@/components/QuickStartTemplates";
 import { DEFAULT_POSITIONS } from "@/data/defaultPositions";
@@ -20,55 +19,6 @@ type MixEventSource = "scratch" | "template" | "url";
 type AnalyzeEventOptions = {
   source?: MixEventSource;
   templateKey?: string | null;
-};
-
-const sendMixAnalyzeEvent = async (
-  positions: UserPosition[],
-  options?: AnalyzeEventOptions,
-) => {
-  if (typeof navigator === "undefined" || typeof window === "undefined") {
-    return;
-  }
-
-  const payload = {
-    positions,
-    benchmarkSymbol: null,
-    source: options?.source ?? "scratch",
-    templateKey: options?.templateKey ?? null,
-    referrer:
-      typeof document !== "undefined" && document.referrer
-        ? document.referrer
-        : "$direct",
-    anonId: getAnonId(),
-  };
-
-  try {
-    const { data: sessionData } =
-      await getSupabaseBrowserClient().auth.getSession();
-    const token = sessionData?.session?.access_token;
-
-    if (token) {
-      await fetch("/api/mix-events", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "same-origin",
-        body: JSON.stringify(payload),
-      });
-      return;
-    }
-
-    if (navigator.sendBeacon) {
-      const blob = new Blob([JSON.stringify(payload)], {
-        type: "application/json",
-      });
-      navigator.sendBeacon("/api/mix-events", blob);
-    }
-  } catch (error) {
-    console.error("error: ", error);
-  }
 };
 
 export default function HomePage() {
@@ -115,6 +65,7 @@ export default function HomePage() {
 
     const mixName = formatMixSummary(cleanedPositions);
 
+    // ✅ PostHog only – NO Supabase logging here anymore
     posthog.capture("analyze_clicked", {
       positions: cleanedPositions.map((position) => ({
         symbol: position.symbol.trim(),
@@ -128,9 +79,10 @@ export default function HomePage() {
       anon_id: getAnonId(),
     });
 
+    // Still keep context for next Analyze calls
     setMixEventContext(resolvedOptions);
-    sendMixAnalyzeEvent(cleanedPositions, resolvedOptions);
 
+    // Navigate to results – snapshotPreviousMix handles DB logging there
     router.push(`/results?${params}`);
   };
 
@@ -147,22 +99,22 @@ export default function HomePage() {
             regions underneath.
           </p>
           <p className="text-xs text-neutral-500 md:text-sm">
-            Built for long-term ETF investors who want to see what they actually own.
+            Built for long-term ETF investors who want to see what they
+            actually own.
           </p>
 
           {/* “Designed for” chips */}
-        <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-neutral-600">
-          <span className="inline-flex items-center rounded-full bg-neutral-100 px-3 py-1">
-            Made for Canadian &amp; U.S. investors
-          </span>
-          <span className="inline-flex items-center rounded-full bg-neutral-100 px-3 py-1">
-            Works with any ETF mix
-          </span>
-          <span className="inline-flex items-center rounded-full bg-neutral-100 px-3 py-1">
-            Simple, long-term investing tools
-          </span>
-        </div>
-
+          <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-neutral-600">
+            <span className="inline-flex items-center rounded-full bg-neutral-100 px-3 py-1">
+              Made for Canadian &amp; U.S. investors
+            </span>
+            <span className="inline-flex items-center rounded-full bg-neutral-100 px-3 py-1">
+              Works with any ETF mix
+            </span>
+            <span className="inline-flex items-center rounded-full bg-neutral-100 px-3 py-1">
+              Simple, long-term investing tools
+            </span>
+          </div>
         </section>
 
         {/* QUICK START CARD */}
@@ -172,7 +124,8 @@ export default function HomePage() {
               Try a preset — results load instantly
             </h2>
             <p className="text-xs text-neutral-600">
-              Click any mix and we&apos;ll show you the stocks, sectors, and regions inside it.
+              Click any mix and we&apos;ll show you the stocks, sectors, and
+              regions inside it.
             </p>
           </header>
 
@@ -254,7 +207,10 @@ export default function HomePage() {
             <ol className="space-y-1 text-[11px] text-neutral-600">
               <li>1. Add your ETFs and their allocations.</li>
               <li>2. We look through all the underlying holdings.</li>
-              <li>3. You see the real stocks, sectors, regions, and benchmark tilts.</li>
+              <li>
+                3. You see the real stocks, sectors, regions, and benchmark
+                tilts.
+              </li>
             </ol>
           </div>
 
@@ -270,7 +226,10 @@ export default function HomePage() {
 
           <div className="mt-3 space-y-1 text-[11px] text-neutral-500">
             <p>For education only. This isn&apos;t investment advice.</p>
-            <p>No login required to try it. We don&apos;t manage money or trade — we just analyze what&apos;s inside your ETFs.</p>
+            <p>
+              No login required to try it. We don&apos;t manage money or trade —
+              we just analyze what&apos;s inside your ETFs.
+            </p>
           </div>
         </section>
       </div>
