@@ -15,15 +15,21 @@ const SaveMixCta: FC<SaveMixCtaProps> = ({
   hasSaved,
   statusMessage,
 }) => {
-  const label = hasSaved ? "Mix saved" : isSaving ? "Saving..." : "Save this mix";
+  const label = hasSaved
+    ? "Mix saved"
+    : isSaving
+      ? "Saving..."
+      : "Save this mix to compare later";
 
   return (
     <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 px-4 py-3 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
       <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1 text-sm text-neutral-700">
-          <p className="font-medium text-neutral-900">Save this mix for later</p>
+          <p className="font-medium text-neutral-900">
+            Save this mix to compare later
+          </p>
           <p className="text-xs text-neutral-600">
-            Keep this combination in your dashboard so you can revisit or compare it anytime.
+            Keep this combination in your dashboard so you can revisit or stack it against another mix anytime.
           </p>
         </div>
         <button

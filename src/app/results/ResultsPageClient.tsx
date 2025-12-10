@@ -41,6 +41,8 @@ import { getBenchmarkLabel } from "@/lib/benchmarkUtils";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import SaveMixCta from "./SaveMixCta";
 import SaveMixStickyBar from "./SaveMixStickyBar";
+import { useRecentMixes, type RecentMix } from "@/hooks/useRecentMixes";
+import RecentMixesChips from "@/components/results/RecentMixesChips";
 
 type SlideIndex = 0 | 1 | 2 | 3 | 4;
 
@@ -99,6 +101,7 @@ export default function ResultsPageClient({
 }: ResultsPageClientProps) {
   const router = useRouter();
   const { capture } = usePostHogSafe();
+  const { recentMixes, addLocalMix, hydrateFromRemote } = useRecentMixes();
 
   const [positions, setPositions] = useState<UserPosition[]>(initialPositions);
   const [hasSaved, setHasSaved] = useState(false);
@@ -187,6 +190,7 @@ export default function ResultsPageClient({
   }, [normalizedPositions, singleETFSymbol]);
 
   const user = useSupabaseUser();
+  const isAuthenticated = Boolean(user);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [pendingSave, setPendingSave] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -306,6 +310,12 @@ export default function ResultsPageClient({
         message: "Mix saved to your dashboard.",
       });
       setHasSaved(true);
+
+      addLocalMix(positions);
+
+      capture("recent_mix_added_local", {
+        positions_count: positions.length,
+      });
 
       capture("results_save_success", {
         positions_count: positionsCount,
@@ -708,6 +718,8 @@ export default function ResultsPageClient({
       total_weight: nextTotalWeight,
       source_page: "results",
     });
+
+    addLocalMix(nextNormalized);
   };
 
   const handleExpandInput = () => {
@@ -719,6 +731,15 @@ export default function ResultsPageClient({
       });
       setHasInteractedWithMix(true);
     }
+  };
+
+  const handleSelectRecentMix = (mix: RecentMix) => {
+    setPositions(mix.positions);
+    setHasInteractedWithMix(true);
+    capture("recent_mix_loaded_from_chip", {
+      mix_id: mix.id,
+      source: mix.source,
+    });
   };
 
   return (
@@ -762,12 +783,31 @@ export default function ResultsPageClient({
           </section>
         ) : (
           <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+            <div className="mb-2 flex items-center gap-2 text-[11px] font-medium text-neutral-700">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 text-[10px] font-semibold text-white">
+                i
+              </span>
+              <span>Edit ETF weights or tickers below to see exposure update instantly.</span>
+            </div>
             <PortfolioInput
               positions={positions}
               onChange={handlePositionsChange}
               onAnalyze={() => {}}
               analyzeLabel="Update exposure"
               hideAnalyzeButton
+              chipsSlot={
+                <RecentMixesChips
+                  recentMixes={recentMixes}
+                  isAuthenticated={isAuthenticated}
+                  onSelectMix={handleSelectRecentMix}
+                  onSignInClick={() => {
+                    setAuthDialogOpen(true);
+                    capture("recent_mix_signin_chip_navigate", {});
+                  }}
+                  showTitle={false}
+                  className="mb-3"
+                />
+              }
             />
 
             <p className="mt-3 text-xs text-neutral-600">{helperText}</p>
