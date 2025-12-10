@@ -12,6 +12,7 @@ import ExposureSummary from "@/components/ExposureSummary";
 import HoldingsTable from "@/components/HoldingsTable";
 import MixLine from "@/components/MixLine";
 import { AuthDialog } from "@/components/auth/AuthDialog";
+import PortfolioInput from "@/components/PortfolioInput";
 import RegionExposureChart from "@/components/RegionExposureChart";
 import { SectorBreakdownCard } from "@/components/SectorBreakdownCard";
 import { aggregateHoldingsBySymbol } from "@/lib/exposureAggregations";
@@ -38,6 +39,8 @@ import type { MixComparisonResult } from "@/lib/benchmarkEngine";
 import { formatMixSummary } from "@/lib/mixFormatting";
 import { getBenchmarkLabel } from "@/lib/benchmarkUtils";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
+import SaveMixCta from "./SaveMixCta";
+import SaveMixStickyBar from "./SaveMixStickyBar";
 
 type SlideIndex = 0 | 1 | 2 | 3 | 4;
 
@@ -72,11 +75,8 @@ const DOT_LABELS = TAB_VIEWS.reduce<Record<SlideIndex, string>>((acc, view) => {
 
 const SLIDE_INDICES: SlideIndex[] = [0, 1, 2, 3, 4];
 
-
-
 type ResultsPageClientProps = {
   initialPositions: UserPosition[];
-  positionsQueryString: string;
   hasPositionsParam: boolean;
   topLoved?: Template[];
 };
@@ -94,40 +94,78 @@ const mapExposureRowsToMix = (rows: ApiExposureRow[]) =>
 
 export default function ResultsPageClient({
   initialPositions,
-  positionsQueryString,
   hasPositionsParam,
   topLoved = [],
 }: ResultsPageClientProps) {
   const router = useRouter();
   const { capture } = usePostHogSafe();
 
-  const sanitizedPositions = useMemo(
-    () => normalizePositions(initialPositions),
-    [initialPositions],
-  );
-  const hasValidPositions = sanitizedPositions.length > 0;
-  const positions = hasValidPositions ? sanitizedPositions : initialPositions;
-  const positionsCount = sanitizedPositions.length;
-  const mixName = useMemo(
-    () => formatMixSummary(sanitizedPositions),
-    [sanitizedPositions],
+  const [positions, setPositions] = useState<UserPosition[]>(initialPositions);
+  const [hasSaved, setHasSaved] = useState(false);
+  const [hasInteractedWithMix, setHasInteractedWithMix] = useState(false);
+
+  const validPositions = useMemo(
+    () =>
+      positions.filter(
+        (p) => p.symbol.trim() !== "" && (p.weightPct ?? 0) > 0,
+      ),
+    [positions],
   );
 
+  const normalizedPositions = useMemo(
+    () => normalizePositions(validPositions),
+    [validPositions],
+  );
+
+  const positionsCount = normalizedPositions.length;
+  const hasValidPositions = positionsCount > 0;
+
+  const totalWeight = useMemo(
+    () =>
+      validPositions.reduce(
+        (acc, p) => acc + (p.weightPct ?? 0),
+        0,
+      ),
+    [validPositions],
+  );
+
+  const mixName = useMemo(
+    () => formatMixSummary(normalizedPositions),
+    [normalizedPositions],
+  );
+
+  const mixSummaryLine = useMemo(() => {
+    if (!normalizedPositions.length) return "No ETFs yet.";
+
+    const parts = normalizedPositions.slice(0, 3).map((pos) => {
+      const symbol = pos.symbol.trim().toUpperCase();
+      const pct = Math.round(pos.weightPct ?? 0);
+      return `${symbol} ${pct}%`;
+    });
+
+    const remainingCount = normalizedPositions.length - parts.length;
+    if (remainingCount > 0) {
+      parts.push(`+ ${remainingCount} more`);
+    }
+
+    return parts.join(" · ");
+  }, [normalizedPositions]);
+
   const singleETFSymbol = useMemo(() => {
-    if (sanitizedPositions.length !== 1) {
+    if (normalizedPositions.length !== 1) {
       return null;
     }
 
-    const single = sanitizedPositions[0];
+    const single = normalizedPositions[0];
     if (single.weightPct === 100) {
       return single.symbol.trim().toUpperCase();
     }
 
     return null;
-  }, [sanitizedPositions]);
+  }, [normalizedPositions]);
 
   const defaultBenchmark = useMemo(() => {
-    const base = pickDefaultBenchmark(sanitizedPositions);
+    const base = pickDefaultBenchmark(normalizedPositions);
 
     if (!singleETFSymbol) {
       return base;
@@ -146,7 +184,7 @@ export default function ResultsPageClient({
     }
 
     return base;
-  }, [sanitizedPositions, singleETFSymbol]);
+  }, [normalizedPositions, singleETFSymbol]);
 
   const user = useSupabaseUser();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
@@ -164,12 +202,28 @@ export default function ResultsPageClient({
     setSelectedBenchmarkId(defaultBenchmark.id);
   }, [defaultBenchmark.id]);
 
+  // Track arrivals to results page
+  useEffect(() => {
+    capture("results_page_viewed", {
+      positions_count: positionsCount,
+      has_positions_param: hasPositionsParam,
+      total_weight: totalWeight,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const selectedBenchmark = useMemo(
     () =>
       BENCHMARK_MIXES.find((mix) => mix.id === selectedBenchmarkId) ??
       BENCHMARK_MIXES[0],
     [selectedBenchmarkId],
   );
+
+  useEffect(() => {
+    const searchParams = buildPositionsSearchParams(normalizedPositions);
+    const nextUrl = searchParams ? `/results?${searchParams}` : "/results";
+    window.history.replaceState(null, "", nextUrl);
+  }, [normalizedPositions]);
 
   const benchmarkSymbol =
     selectedBenchmark.positions?.[0]?.symbol ?? selectedBenchmark.id;
@@ -235,7 +289,7 @@ export default function ResultsPageClient({
         body: JSON.stringify({
           // Let backend handle fallback naming if mixName is empty
           name: mixName || undefined,
-          positions: sanitizedPositions,
+          positions: normalizedPositions,
         }),
       });
 
@@ -251,6 +305,11 @@ export default function ResultsPageClient({
         type: "success",
         message: "Mix saved to your dashboard.",
       });
+      setHasSaved(true);
+
+      capture("results_save_success", {
+        positions_count: positionsCount,
+      });
 
       capture("mix_saved", {
         mix_name: mixName,
@@ -263,6 +322,10 @@ export default function ResultsPageClient({
         type: "error",
         message:
           error?.message ?? "Something went wrong while saving your mix.",
+      });
+
+      capture("results_save_error", {
+        error_message: String(error?.message || "unknown"),
       });
     } finally {
       setIsSaving(false);
@@ -318,6 +381,8 @@ export default function ResultsPageClient({
   const cardRef = useRef<HTMLDivElement | null>(null);
   const resultsLoadedRef = useRef(false);
   const { shareElementAsImage, isSharing } = useImageShare();
+  const exposureLoadedRef = useRef(false);
+  const stickyImpressionRef = useRef(false);
 
   const top10 = useMemo(() => {
     const aggregated = aggregateHoldingsBySymbol(exposure);
@@ -337,12 +402,13 @@ export default function ResultsPageClient({
     capture("results_slide_viewed", {
       slide_index: nextSlide,
       slide_name: slideName,
-      has_exposure: true,
+      has_exposure: Boolean(exposure.length),
+      positions_count: positionsCount,
     });
   };
 
   useEffect(() => {
-    if (!sanitizedPositions.length) {
+    if (!hasValidPositions) {
       setExposure([]);
       setError(hasPositionsParam ? EMPTY_POSITIONS_ERROR : null);
       setIsLoading(false);
@@ -350,7 +416,9 @@ export default function ResultsPageClient({
       return;
     }
 
-    const fetchExposure = async () => {
+    const controller = new AbortController();
+
+    const timeoutId = window.setTimeout(async () => {
       setIsLoading(true);
       setError(null);
 
@@ -358,7 +426,8 @@ export default function ResultsPageClient({
         const res = await fetch("/api/etf-exposure", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ positions: sanitizedPositions }),
+          body: JSON.stringify({ positions: normalizedPositions }),
+          signal: controller.signal,
         });
 
         const body = (await res.json().catch(() => null)) as
@@ -369,10 +438,13 @@ export default function ResultsPageClient({
           throw new Error(body?.error || "Failed to analyze portfolio.");
         }
 
+        if (controller.signal.aborted) return;
+
         const holdings = body?.exposure ?? [];
 
         setExposure(holdings);
       } catch (err: any) {
+        if (controller.signal.aborted) return;
         console.error("Exposure API error:", err);
         setExposure([]);
         const message =
@@ -382,16 +454,21 @@ export default function ResultsPageClient({
 
         capture("exposure_error", {
           error_message: String(message).slice(0, 200),
-          num_etfs: sanitizedPositions.length,
+          num_etfs: normalizedPositions.length,
         });
       } finally {
-        setIsLoading(false);
-        setSlide(0);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+          setSlide(0);
+        }
       }
-    };
+    }, 400);
 
-    fetchExposure();
-  }, [sanitizedPositions, hasPositionsParam, capture]);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [hasValidPositions, normalizedPositions, hasPositionsParam, capture]);
 
   useEffect(() => {
     if (resultsLoadedRef.current) {
@@ -418,6 +495,7 @@ export default function ResultsPageClient({
     benchmarkSymbol,
     mixName,
   ]);
+
 
   useEffect(() => {
     if (isLoading || !userExposureMix.length || !selectedBenchmark) {
@@ -455,6 +533,11 @@ export default function ResultsPageClient({
 
         if (controller.signal.aborted) return;
         setBenchmarkComparison(comparison);
+
+        capture("results_benchmark_loaded", {
+          benchmark_symbol: benchmarkSymbol,
+          user_positions_count: positionsCount,
+        });
       } catch (err: any) {
         if (controller.signal.aborted) return;
         console.error("Benchmark exposure error:", err);
@@ -462,6 +545,11 @@ export default function ResultsPageClient({
           err?.message || "Unable to compare with the selected benchmark.",
         );
         setBenchmarkComparison(null);
+
+        capture("results_benchmark_error", {
+          error_message: String(err?.message || "unknown"),
+          benchmark_symbol: benchmarkSymbol,
+        });
       } finally {
         if (!controller.signal.aborted) {
           setIsBenchmarkLoading(false);
@@ -476,32 +564,30 @@ export default function ResultsPageClient({
     };
   }, [isLoading, selectedBenchmark, userExposureMix]);
 
-  const handleEditInputs = () => {
-    if (positionsQueryString) {
-      router.push(`/?positions=${encodeURIComponent(positionsQueryString)}`);
-    } else {
-      router.push("/");
-    }
-  };
-
-  // topLoved passed from server; client-side fallback is empty array
-  const topLovedTemplates = (typeof ({} as any) !== "undefined" && ({} as any)) || [] as Template[];
-
   const handleShare = async () => {
     if (!cardRef.current || isSharing) return;
+    try {
+      capture("results_share_clicked", {
+        mix_name: mixName,
+        positions_count: positionsCount,
+        share_target: "image",
+        source_card: "true_exposure_card",
+      });
 
-    await shareElementAsImage(cardRef.current, {
-      fileName: "wizardfolio-exposure.png",
-      title: "WizardFolio ETF exposure",
-      text: "ETF look-through powered by WizardFolio (wizardfolio.com)",
-    });
+      await shareElementAsImage(cardRef.current, {
+        fileName: "wizardfolio-exposure.png",
+        title: "WizardFolio ETF exposure",
+        text: "ETF look-through powered by WizardFolio (wizardfolio.com)",
+      });
 
-    capture("share_clicked", {
-      mix_name: mixName,
-      positions_count: positionsCount,
-      share_target: "image_share",
-      source_card: "true_exposure_card",
-    });
+      capture("results_share_success", {
+        positions_count: positionsCount,
+      });
+    } catch (error: any) {
+      capture("results_share_error", {
+        error_message: String(error?.message || "unknown"),
+      });
+    }
   };
 
   const handleTouchStart = (e: TouchEvent<HTMLDivElement>) =>
@@ -554,283 +640,412 @@ export default function ResultsPageClient({
   const handleNextSlide = () => cycleSlide(1);
 
   const title = SLIDE_TITLES[slide];
+  const totalIsHundred = Math.abs(totalWeight - 100) < 0.0001;
+  const helperText = hasValidPositions
+    ? totalIsHundred
+      ? "Nice -- you're at 100%. Results are shown exactly as entered."
+      : `Your mix totals ${Math.round(
+          totalWeight,
+        )}%. Results are shown proportionally.`
+    : "Add ETFs to see your breakdown.";
+  const hasExposure = exposure.length > 0;
+  const shouldShowSaveCta =
+    hasValidPositions && hasExposure && (hasInteractedWithMix || hasPositionsParam);
+  const shouldShowStickySave =
+    hasValidPositions && hasExposure && !isLoading && !error;
+
+  const shouldShowCollapsedInput =
+    hasPositionsParam && !hasInteractedWithMix && hasValidPositions;
+
+  // Fire once when exposure data is available
+  useEffect(() => {
+    if (exposureLoadedRef.current) return;
+    if (!hasExposure || isLoading || error) return;
+
+    exposureLoadedRef.current = true;
+    capture("results_exposure_loaded", {
+      holdings_count: exposure.length,
+      positions_count: positionsCount,
+    });
+  }, [capture, error, exposure.length, hasExposure, isLoading, positionsCount]);
+
+  // Fire once when sticky save CTA becomes visible
+  useEffect(() => {
+    if (shouldShowStickySave && !stickyImpressionRef.current) {
+      stickyImpressionRef.current = true;
+      capture("results_sticky_save_visible", {
+        positions_count: positionsCount,
+      });
+    }
+  }, [shouldShowStickySave, capture, positionsCount]);
+
+  const handlePositionsChange = (next: UserPosition[]) => {
+    const nextValid = next.filter(
+      (p) => p.symbol.trim() !== "" && (p.weightPct ?? 0) > 0,
+    );
+    const nextNormalized = normalizePositions(nextValid);
+    const nextCount = nextNormalized.length;
+    const nextTotalWeight = nextValid.reduce(
+      (acc, p) => acc + (p.weightPct ?? 0),
+      0,
+    );
+
+    setPositions(next);
+
+    // Reset saved state
+    setHasSaved(false);
+
+    // Reset inline success/error messages
+    setStatusMessage(null);
+
+    if (!hasInteractedWithMix) {
+      setHasInteractedWithMix(true);
+    }
+
+    // Track any edit to the mix (weights, add/remove)
+    capture("results_mix_edited", {
+      positions_count: nextCount,
+      total_weight: nextTotalWeight,
+      source_page: "results",
+    });
+  };
+
+  const handleExpandInput = () => {
+    if (!hasInteractedWithMix) {
+      capture("results_input_expanded", {
+        source_page: "results",
+        has_positions_param: hasPositionsParam,
+        positions_count: positionsCount,
+      });
+      setHasInteractedWithMix(true);
+    }
+  };
 
   return (
-    <div className="space-y-5 md:space-y-6">
-      <div>
-        <div className="mb-3 hidden items-center justify-between gap-3 text-sm md:flex">
-          <div className="flex flex-wrap items-center gap-2">
-            {TAB_VIEWS.map((view) => (
-              <button
-                key={view.id}
-                type="button"
-                onClick={() => {
-                  if (view.id === slide) return;
-                  setSlide(view.id);
-                  trackSlideView(view.id);
-                }}
-                className={[
-                  "rounded-full px-3 py-1.5 text-xs font-semibold transition",
-                  slide === view.id
-                    ? "bg-neutral-900 text-white shadow-sm"
-                    : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200",
-                ].join(" ")}
-              >
-                {view.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-neutral-500">
-            <span className="hidden md:inline">
-              View:{" "}
-              <span className="font-medium text-neutral-800">
-                {SLIDE_TITLES[slide]}
-              </span>
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={handlePrevSlide}
-                aria-label="Previous result view"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-sm transition hover:bg-neutral-50"
-              >
-                <span aria-hidden="true">‹</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleNextSlide}
-                aria-label="Next result view"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-sm transition hover:bg-neutral-50"
-              >
-                <span aria-hidden="true">›</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative rounded-3xl border border-neutral-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
-          <button
-            type="button"
-            onClick={handleShare}
-            disabled={isSharing}
-            aria-label="Share your ETF exposure"
-            title={
-              isSharing ? "Preparing your snapshot…" : "Share your exposure card"
-            }
-            className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white shadow-sm hover:bg-neutral-50 disabled:opacity-60 disabled:cursor-wait"
-          >
-            <AppleShareIcon className="h-4 w-4 text-neutral-700" />
-          </button>
-
-          <div
-            ref={cardRef}
-            className="flex flex-col gap-4 rounded-3xl bg-white p-5 md:p-6 lg:p-8"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex flex-col gap-1">
-                <h2 className="text-base font-semibold text-neutral-900">
-                  {title}
-                </h2>
-                <MixLine positions={sanitizedPositions} />
-                <p className="text-[11px] text-neutral-500">
-                  Powered by WizardFolio
-                </p>
-              </div>
-            </div>
-
-            <div
-              className="flex min-h-[320px] flex-col justify-center rounded-2xl border border-neutral-100 bg-neutral-50/80 p-4"
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-            >
-              {isLoading && (
-                <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-neutral-700">
-                  <div className="h-24 w-24 rounded-full bg-neutral-100 animate-pulse" />
-                  <div className="h-3 w-32 rounded-full bg-neutral-100 animate-pulse" />
-                  <p>Crunching your ETF mix…</p>
-                </div>
-              )}
-
-              {!isLoading && error && (
-                <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-rose-500">
-                  <p>{error}</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      router.refresh();
-                    }}
-                    className="rounded-full bg-neutral-900 px-3 py-1 text-[11px] font-semibold text-white"
-                  >
-                    Try again
-                  </button>
-                </div>
-              )}
-
-              {!isLoading && !error && (
-                <>
-                  {slide === 0 && (
-                    <ExposureSummary exposure={exposure} showHeader={false} />
-                  )}
-
-                  {slide === 1 && (
-                    <RegionExposureChart exposure={exposure} variant="bare" />
-                  )}
-
-                  {slide === 2 && (
-                    <SectorBreakdownCard exposure={exposure} variant="bare" />
-                  )}
-
-                  {slide === 3 && (
-                    <HoldingsTable
-                      exposure={top10}
-                      showHeader={false}
-                      variant="bare"
-                    />
-                  )}
-
-                  {slide === 4 && (
-                    <TopLovedMixes
-                      mixes={topLoved}
-                      onSelect={(positions, template) => {
-                        const positionsParam = buildPositionsSearchParams(positions);
-
-                        capture("top_mix_try_clicked", {
-                          template_key: template.id,
-                          source_page: "results",
-                          source_slide: "top_mixes",
-                          mix_name: mixName,
-                          positions_count: positionsCount,
-                        });
-
-                        router.push(`/results?${positionsParam}`);
-                      }}
-                    />
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="flex justify-center gap-2 pt-3 md:hidden">
-            {SLIDE_INDICES.map((idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  if (idx === slide) return;
-                  setSlide(idx);
-                  trackSlideView(idx);
-                }}
-                className="group"
-                aria-label={DOT_LABELS[idx]}
-              >
-                <span
-                  className={[
-                    "block h-1.5 rounded-full transition-all",
-                    slide === idx
-                      ? "w-4 bg-neutral-900"
-                      : "w-1.5 bg-neutral-300 group-hover:bg-neutral-400",
-                  ].join(" ")}
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {hasValidPositions && (
-        <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 md:p-5 lg:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition hover:shadow-[0_10px_32px_rgba(0,0,0,0.08)]">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
-                Personalization
-              </p>
-              <h3 className="text-base font-semibold text-neutral-900">
-                Save this mix to your dashboard
-              </h3>
-            </div>
-            <button
-              type="button"
-              onClick={handleSaveClick}
-              disabled={isSaving}
-              className="rounded-full border border-transparent bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
-            >
-              {isSaving ? "Saving…" : "Save this mix"}
-            </button>
-          </div>
-
-          {statusMessage && (
-            <p
-              className={`mt-3 text-sm ${
-                statusMessage.type === "success"
-                  ? "text-emerald-600"
-                  : "text-rose-500"
-              }`}
-            >
-              {statusMessage.message}
-            </p>
-          )}
-        </section>
-      )}
-
-      {hasValidPositions && (
-        <BenchmarkComparisonCard
-          userLabel="Your mix"
-          benchmark={selectedBenchmark}
-          comparison={benchmarkComparison}
-          benchmarks={BENCHMARK_MIXES}
-          onBenchmarkChange={handleBenchmarkChange}
-          exposure={exposure}
-          userExposureMix={userExposureMix}
-          singleSymbol={singleETFSymbol}
-          mixName={mixName}
-          positionsCount={positionsCount}
-          benchmarkSymbol={benchmarkSymbol}
-          hasBenchmarkComparison={Boolean(benchmarkComparison)}
+    <>
+      {shouldShowStickySave && (
+        <SaveMixStickyBar
+          onSaveClick={handleSaveClick}
+          isSaving={isSaving}
+          hasSaved={hasSaved}
         />
       )}
 
-      <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 md:p-5 lg:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-base font-semibold text-neutral-900">
-            Your mix
-          </h3>
-          <button
-            type="button"
-            onClick={handleEditInputs}
-            className="text-sm font-medium text-neutral-700 underline-offset-2 hover:text-neutral-900 hover:underline"
-          >
-            Edit inputs
-          </button>
+      <div className="space-y-5 md:space-y-6">
+        {shouldShowCollapsedInput ? (
+          <section className="flex flex-col gap-2 rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-col">
+                <h2 className="text-base font-semibold text-neutral-900">
+                  Your mix
+                </h2>
+                <p className="text-[11px] text-neutral-600">
+                  This is the mix we're analyzing below.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleExpandInput}
+                className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-[11px] font-semibold text-neutral-800 shadow-sm hover:bg-neutral-50"
+              >
+                Edit mix
+              </button>
+            </div>
+
+            <p className="mt-1 text-xs font-medium text-neutral-800">
+              {mixSummaryLine}
+            </p>
+
+            <p className="mt-1 text-[11px] text-neutral-500">
+              Tap "Edit mix" to change ETFs or weights. Results update in real time.
+            </p>
+          </section>
+        ) : (
+          <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+            <PortfolioInput
+              positions={positions}
+              onChange={handlePositionsChange}
+              onAnalyze={() => {}}
+              analyzeLabel="Update exposure"
+              hideAnalyzeButton
+            />
+
+            <p className="mt-3 text-xs text-neutral-600">{helperText}</p>
+          </section>
+        )}
+
+        <div>
+          <div className="mb-3 hidden items-center justify-between gap-3 text-sm md:flex">
+            <div className="flex flex-wrap items-center gap-2">
+              {TAB_VIEWS.map((view) => (
+                <button
+                  key={view.id}
+                  type="button"
+                  onClick={() => {
+                    if (view.id === slide) return;
+                    setSlide(view.id);
+                    trackSlideView(view.id);
+                  }}
+                  className={[
+                    "rounded-full px-3 py-1.5 text-xs font-semibold transition",
+                    slide === view.id
+                      ? "bg-neutral-900 text-white shadow-sm"
+                      : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200",
+                  ].join(" ")}
+                >
+                  {view.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-neutral-500">
+              <span className="hidden md:inline">
+                View:{" "}
+                <span className="font-medium text-neutral-800">
+                  {SLIDE_TITLES[slide]}
+                </span>
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handlePrevSlide}
+                  aria-label="Previous result view"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-sm transition hover:bg-neutral-50"
+                >
+                  <span aria-hidden="true">‹</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextSlide}
+                  aria-label="Next result view"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-sm transition hover:bg-neutral-50"
+                >
+                  <span aria-hidden="true">›</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative rounded-3xl border border-neutral-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+            <button
+              type="button"
+              onClick={handleShare}
+              disabled={isSharing}
+              aria-label="Share your ETF exposure"
+              title={
+                isSharing
+                  ? "Preparing your snapshot…"
+                  : "Share your exposure card"
+              }
+              className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white shadow-sm hover:bg-neutral-50 disabled:cursor-wait disabled:opacity-60"
+            >
+              <AppleShareIcon className="h-4 w-4 text-neutral-700" />
+            </button>
+
+            <div
+              ref={cardRef}
+              className="flex flex-col gap-4 rounded-3xl bg-white p-5 md:p-6 lg:p-8"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-col gap-1">
+                  <h2 className="text-base font-semibold text-neutral-900">
+                    {title}
+                  </h2>
+                  <MixLine positions={normalizedPositions} />
+                  <p className="text-[11px] text-neutral-500">
+                    Powered by WizardFolio
+                  </p>
+                </div>
+              </div>
+
+              <div
+                className="flex min-h-[320px] flex-col justify-center rounded-2xl border border-neutral-100 bg-neutral-50/80 p-4"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
+                {isLoading && (
+                  <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-neutral-700">
+                    <div className="h-24 w-24 animate-pulse rounded-full bg-neutral-100" />
+                    <div className="h-3 w-32 animate-pulse rounded-full bg-neutral-100" />
+                    <p>Crunching your ETF mix…</p>
+                  </div>
+                )}
+
+                {!isLoading && error && (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-rose-500">
+                    <p>{error}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        router.refresh();
+                      }}
+                      className="rounded-full bg-neutral-900 px-3 py-1 text-[11px] font-semibold text-white"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                )}
+
+                {!isLoading && !error && !hasExposure && (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-neutral-700">
+                    <p>Adjust your ETFs above to see the breakdown.</p>
+                  </div>
+                )}
+
+                {!isLoading && !error && hasExposure && (
+                  <>
+                    {slide === 0 && (
+                      <ExposureSummary exposure={exposure} showHeader={false} />
+                    )}
+
+                    {slide === 1 && (
+                      <RegionExposureChart exposure={exposure} variant="bare" />
+                    )}
+
+                    {slide === 2 && (
+                      <SectorBreakdownCard exposure={exposure} variant="bare" />
+                    )}
+
+                    {slide === 3 && (
+                      <HoldingsTable
+                        exposure={top10}
+                        showHeader={false}
+                        variant="bare"
+                      />
+                    )}
+
+                    {slide === 4 && (
+                      <TopLovedMixes
+                        mixes={topLoved}
+                        onSelect={(nextPositions, template) => {
+                          const positionsParam =
+                            buildPositionsSearchParams(nextPositions);
+
+                          handlePositionsChange(nextPositions);
+
+                          capture("top_mix_try_clicked", {
+                            template_key: template.id,
+                            source_page: "results",
+                            source_slide: "top_mixes",
+                            mix_name: mixName,
+                            positions_count: positionsCount,
+                          });
+
+                          const nextUrl = positionsParam
+                            ? `/results?${positionsParam}`
+                            : "/results";
+                          window.history.replaceState(null, "", nextUrl);
+                        }}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-center gap-2 pt-3 md:hidden">
+              {SLIDE_INDICES.map((idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    if (idx === slide) return;
+                    setSlide(idx);
+                    trackSlideView(idx);
+                  }}
+                  className="group"
+                  aria-label={DOT_LABELS[idx]}
+                >
+                  <span
+                    className={[
+                      "block h-1.5 rounded-full transition-all",
+                      slide === idx
+                        ? "w-4 bg-neutral-900"
+                        : "w-1.5 bg-neutral-300 group-hover:bg-neutral-400",
+                    ].join(" ")}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <ul className="divide-y divide-neutral-100 text-sm">
-          {positions.map((pos, idx) => (
-            <li
-              key={`${pos.symbol}-${idx}`}
-              className="flex items-center justify-between py-1.5"
-            >
-              <span className="font-medium text-neutral-900">
-                {pos.symbol || "—"}
-              </span>
-              <span className="tabular-nums text-neutral-700">
-                {(pos.weightPct ?? 0).toFixed(1).replace(/\.0$/, "")}%
-              </span>
-            </li>
-          ))}
-        </ul>
+        {shouldShowSaveCta && (
+          <SaveMixCta
+            onSaveClick={handleSaveClick}
+            isSaving={isSaving}
+            hasSaved={hasSaved}
+            statusMessage={statusMessage}
+          />
+        )}
 
-        <p className="mt-2 text-[11px] text-neutral-500">
-          Based on the mix you entered on the previous step.
-        </p>
-      </section>
+        {hasValidPositions && (
+          <BenchmarkComparisonCard
+            userLabel="Your mix"
+            benchmark={selectedBenchmark}
+            comparison={benchmarkComparison}
+            benchmarks={BENCHMARK_MIXES}
+            onBenchmarkChange={handleBenchmarkChange}
+            exposure={exposure}
+            userExposureMix={userExposureMix}
+            singleSymbol={singleETFSymbol}
+            mixName={mixName}
+            positionsCount={positionsCount}
+            benchmarkSymbol={benchmarkSymbol}
+            hasBenchmarkComparison={Boolean(benchmarkComparison)}
+          />
+        )}
 
-      <AuthDialog
-        open={authDialogOpen}
-        onOpenChange={setAuthDialogOpen}
-        onAuthSuccess={handleAuthSuccess}
-      />
-    </div>
+        <section className="rounded-3xl border border-neutral-200 bg-white/90 p-4 md:p-5 lg:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-base font-semibold text-neutral-900">
+              Your mix
+            </h3>
+          </div>
+
+          {positions.length === 0 && !hasValidPositions ? (
+            <p className="text-sm text-neutral-600">
+              Start adding ETFs above to see them listed here.
+            </p>
+          ) : (
+            <ul className="divide-y divide-neutral-100 text-sm">
+              {(validPositions.length ? validPositions : positions).map(
+                (pos, idx) => (
+                  <li
+                    key={`${pos.symbol}-${idx}`}
+                    className="flex items-center justify-between py-1.5"
+                  >
+                    <span className="font-medium text-neutral-900">
+                      {pos.symbol || "—"}
+                    </span>
+                    <span className="tabular-nums text-neutral-700">
+                      {(pos.weightPct ?? 0).toFixed(1).replace(/\.0$/, "")}%
+                    </span>
+                  </li>
+                ),
+              )}
+            </ul>
+          )}
+        </section>
+
+{/* Friendly orientation section (subtle helper style) */}
+<section className="mt-4 space-y-2 rounded-2xl border border-neutral-200 bg-neutral-50/70 p-4 text-[11px] text-neutral-600 shadow-sm">
+  <p className="font-medium text-neutral-800">What you can do here</p>
+  <ul className="list-disc space-y-1 pl-4">
+    <li>Adjust ETFs above and watch everything update in real time.</li>
+    <li>Save this mix to your dashboard to revisit later.</li>
+    <li>Compare your mix with benchmarks using the tabs above.</li>
+    <li>Try a popular template in “Top mixes”.</li>
+  </ul>
+</section>
+
+
+        <AuthDialog
+          open={authDialogOpen}
+          onOpenChange={setAuthDialogOpen}
+          onAuthSuccess={handleAuthSuccess}
+        />
+      </div>
+    </>
   );
 }

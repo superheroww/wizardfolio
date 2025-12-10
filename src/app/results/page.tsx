@@ -71,7 +71,6 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
   return (
     <ResultsPageClient
       initialPositions={initialPositions}
-      positionsQueryString={positionsQueryString}
       hasPositionsParam={hasPositionsParam}
       topLoved={topLoved}
     />

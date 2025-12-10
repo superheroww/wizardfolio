@@ -25,7 +25,9 @@ const REGION_COLORS: Record<string, string> = {
 
 type RegionKey = "US" | "Canada" | "International";
 
-function normalizeCountryToRegion(countryRaw: string | null | undefined): RegionKey {
+function normalizeCountryToRegion(
+  countryRaw: string | null | undefined,
+): RegionKey {
   if (!countryRaw) return "International";
 
   const c = countryRaw.trim().toLowerCase();
@@ -58,7 +60,7 @@ export default function RegionExposureChart({
 }: RegionExposureChartProps) {
   const safeExposure = React.useMemo(
     () => (Array.isArray(exposure) ? exposure : []),
-    [exposure]
+    [exposure],
   );
 
   const { usPct, caPct, intlPct } = React.useMemo(() => {
@@ -116,7 +118,7 @@ export default function RegionExposureChart({
       {hasData ? (
         <>
           {/* Stacked bar */}
-          <div className="mt-1 mb-3 h-3 w-full overflow-hidden rounded-full bg-neutral-100">
+          <div className="mt-1 mb-3 flex h-3 w-full overflow-hidden rounded-full bg-neutral-100">
             {regions.map((r) => (
               <div
                 key={r.key}
@@ -148,10 +150,6 @@ export default function RegionExposureChart({
               </li>
             ))}
           </ul>
-
-          <p className="mt-2 text-[11px] text-neutral-500">
-            Based on the countries tagged in the ETF holdings data.
-          </p>
         </>
       ) : (
         <p className="text-sm text-neutral-700">

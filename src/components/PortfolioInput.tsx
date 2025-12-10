@@ -15,6 +15,7 @@ type PortfolioInputProps = {
   onChange: (positions: UserPosition[]) => void;
   onAnalyze: () => void; // parent will call the API
   analyzeLabel?: string;
+  hideAnalyzeButton?: boolean;
 };
 
 const MAX_ASSETS = 5;
@@ -28,6 +29,7 @@ export default function PortfolioInput({
   onChange,
   onAnalyze,
   analyzeLabel = "See my breakdown →",
+  hideAnalyzeButton = false,
 }: PortfolioInputProps) {
   // If there are no positions yet, show a single blank row in the UI
   const displayPositions: UserPosition[] =
@@ -262,14 +264,16 @@ export default function PortfolioInput({
             {canAddMore ? "+ Add ETF" : `Max ${MAX_ASSETS} ETFs`}
           </button>
 
-          <button
-            type="button"
-            onClick={onAnalyze}
-            disabled={!canAnalyze}
-            className="inline-flex items-center rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
-          >
-            {analyzeLabel}
-          </button>
+          {!hideAnalyzeButton && (
+            <button
+              type="button"
+              onClick={onAnalyze}
+              disabled={!canAnalyze}
+              className="inline-flex items-center rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+            >
+              {analyzeLabel}
+            </button>
+          )}
         </div>
       </div>
 
