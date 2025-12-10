@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -75,10 +76,13 @@ const TAB_VIEWS: { id: SlideIndex; label: string }[] = [
   { id: 4, label: "Top mixes" },
 ];
 
-const DOT_LABELS = TAB_VIEWS.reduce<Record<SlideIndex, string>>((acc, view) => {
-  acc[view.id] = view.label;
-  return acc;
-}, {} as Record<SlideIndex, string>);
+const DOT_LABELS = TAB_VIEWS.reduce<Record<SlideIndex, string>>(
+  (acc, view) => {
+    acc[view.id] = view.label;
+    return acc;
+  },
+  {} as Record<SlideIndex, string>,
+);
 
 const SLIDE_INDICES: SlideIndex[] = [0, 1, 2, 3, 4];
 
@@ -91,13 +95,26 @@ type ResultsPageClientProps = {
 const EMPTY_POSITIONS_ERROR =
   "At least one ETF with a non-empty symbol and positive weight is required";
 
-const mapExposureRowsToMix = (rows: ApiExposureRow[]) =>
-  rows
-    .map((row) => ({
-      ticker: row.holding_symbol,
-      weightPct: row.total_weight_pct ?? 0,
-    }))
-    .filter((entry) => entry.ticker && entry.weightPct > 0);
+const mapExposureRowsToMix = (rows: ApiExposureRow[]) => {
+  const byTicker = new Map<string, number>();
+
+  for (const row of rows) {
+    const rawSymbol = (row as any).holding_symbol ?? "";
+    const symbol = String(rawSymbol).trim().toUpperCase();
+    if (!symbol) continue;
+
+    const rawWeight = (row as any).total_weight_pct ?? 0;
+    const weight = typeof rawWeight === "string" ? Number(rawWeight) : rawWeight;
+    if (!Number.isFinite(weight) || weight <= 0) continue;
+
+    byTicker.set(symbol, (byTicker.get(symbol) ?? 0) + weight);
+  }
+
+  return Array.from(byTicker.entries()).map(([ticker, weightPct]) => ({
+    ticker,
+    weightPct,
+  }));
+};
 
 export default function ResultsPageClient({
   initialPositions,
@@ -106,8 +123,7 @@ export default function ResultsPageClient({
 }: ResultsPageClientProps) {
   const router = useRouter();
   const { capture } = usePostHogSafe();
-  const { recentMixes, addLocalMix, addLocalMixSnapshot, hydrateFromRemote } =
-    useRecentMixes();
+  const { recentMixes, addLocalMix, addLocalMixSnapshot } = useRecentMixes();
 
   const [positions, setPositions] = useState<UserPosition[]>(initialPositions);
   const [hasSaved, setHasSaved] = useState(false);
@@ -473,6 +489,7 @@ export default function ResultsPageClient({
         const holdings = body?.exposure ?? [];
 
         setExposure(holdings);
+
       } catch (err: any) {
         if (controller.signal.aborted) return;
         console.error("Exposure API error:", err);
@@ -525,7 +542,6 @@ export default function ResultsPageClient({
     benchmarkSymbol,
     mixName,
   ]);
-
 
   useEffect(() => {
     if (isLoading || !userExposureMix.length || !selectedBenchmark) {
@@ -592,7 +608,7 @@ export default function ResultsPageClient({
     return () => {
       controller.abort();
     };
-  }, [isLoading, selectedBenchmark, userExposureMix]);
+  }, [isLoading, selectedBenchmark, userExposureMix, capture, benchmarkSymbol, positionsCount]);
 
   const handleShare = async () => {
     if (!cardRef.current || isSharing) return;
@@ -680,7 +696,9 @@ export default function ResultsPageClient({
     : "Add ETFs to see your breakdown.";
   const hasExposure = exposure.length > 0;
   const shouldShowSaveCta =
-    hasValidPositions && hasExposure && (hasInteractedWithMix || hasPositionsParam);
+    hasValidPositions &&
+    hasExposure &&
+    (hasInteractedWithMix || hasPositionsParam);
   const shouldShowStickySave =
     hasValidPositions && hasExposure && !isLoading && !error;
 
@@ -711,6 +729,48 @@ export default function ResultsPageClient({
 
   const isRoughlyComplete = (total: number) => total >= 99 && total <= 101;
 
+  // Helper: canonicalize positions and check if this mix already exists in recentMixes
+  const normalizeForComparison = useCallback(
+    (positionsToNormalize: UserPosition[]) => {
+      const valid = positionsToNormalize.filter(
+        (p) => p.symbol.trim() !== "" && (p.weightPct ?? 0) > 0,
+      );
+      const normalized = normalizePositions(valid);
+      return normalized.map((p) => ({
+        symbol: p.symbol.trim().toUpperCase(),
+        weight: Math.round((p.weightPct ?? 0) * 1000) / 1000,
+      }));
+    },
+    [],
+  );
+
+  const isDuplicateMix = useCallback(
+    (positionsToCheck: UserPosition[]) => {
+      if (!recentMixes.length) return false;
+
+      const target = normalizeForComparison(positionsToCheck);
+      if (!target.length) return false;
+
+      return recentMixes.some((mix) => {
+        const candidate = normalizeForComparison(mix.positions);
+        if (candidate.length !== target.length) return false;
+
+        for (let i = 0; i < candidate.length; i += 1) {
+          if (
+            candidate[i].symbol !== target[i].symbol ||
+            Math.abs(candidate[i].weight - target[i].weight) > 0.001
+          ) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+    },
+    [recentMixes, normalizeForComparison],
+  );
+
+  // Initial snapshot (first time on results with a complete mix)
   useEffect(() => {
     if (initialSnapshotRef.current) return;
     if (!anonId) return;
@@ -724,15 +784,22 @@ export default function ResultsPageClient({
 
     if (!normalizedInitial.length || !isRoughlyComplete(total)) return;
 
+    // 🚫 Avoid snapshot if this exact mix is already in chips
+    if (isDuplicateMix(initialPositions)) return;
+
     initialSnapshotRef.current = true;
 
-    void snapshotPreviousMix(normalizedInitial, {
-      source: initialMixSource,
-      templateKey: mixTemplateKey,
-      benchmarkSymbol: benchmarkSymbol ?? null,
-      anonId,
-      userId: user?.id ?? null,
-    }, addLocalMixSnapshot);
+    void snapshotPreviousMix(
+      normalizedInitial,
+      {
+        source: initialMixSource,
+        templateKey: mixTemplateKey,
+        benchmarkSymbol: benchmarkSymbol ?? null,
+        anonId,
+        userId: user?.id ?? null,
+      },
+      addLocalMixSnapshot,
+    );
   }, [
     initialPositions,
     anonId,
@@ -741,21 +808,30 @@ export default function ResultsPageClient({
     benchmarkSymbol,
     user?.id,
     addLocalMixSnapshot,
+    isDuplicateMix,
   ]);
 
+  // Snapshot when user lands on a new complete mix (after edits / chips / templates)
   useEffect(() => {
     if (!anonId) return;
     if (!normalizedPositions.length) return;
     if (!isRoughlyComplete(totalWeight)) return;
 
+    // 🚫 Avoid snapshot if this exact mix is already in chips
+    if (isDuplicateMix(normalizedPositions)) return;
+
     const timer = window.setTimeout(() => {
-      void snapshotPreviousMix(normalizedPositions, {
-        source: mixSource,
-        templateKey: mixTemplateKey,
-        benchmarkSymbol: benchmarkSymbol ?? null,
-        anonId,
-        userId: user?.id ?? null,
-      }, addLocalMixSnapshot);
+      void snapshotPreviousMix(
+        normalizedPositions,
+        {
+          source: mixSource,
+          templateKey: mixTemplateKey,
+          benchmarkSymbol: benchmarkSymbol ?? null,
+          anonId,
+          userId: user?.id ?? null,
+        },
+        addLocalMixSnapshot,
+      );
     }, 2500);
 
     return () => window.clearTimeout(timer);
@@ -768,11 +844,15 @@ export default function ResultsPageClient({
     benchmarkSymbol,
     user?.id,
     addLocalMixSnapshot,
+    isDuplicateMix,
   ]);
 
   const handlePositionsChange = (
     next: UserPosition[],
-    meta?: { source?: "scratch" | "template" | "url"; templateKey?: string | null },
+    meta?: {
+      source?: "scratch" | "template" | "url";
+      templateKey?: string | null;
+    },
   ) => {
     const nextValid = next.filter(
       (p) => p.symbol.trim() !== "" && (p.weightPct ?? 0) > 0,
@@ -792,8 +872,8 @@ export default function ResultsPageClient({
     // Reset inline success/error messages
     setStatusMessage(null);
 
-  setMixSource(meta?.source ?? "scratch");
-  setMixTemplateKey(meta?.templateKey ?? null);
+    setMixSource(meta?.source ?? "scratch");
+    setMixTemplateKey(meta?.templateKey ?? null);
 
     if (!hasInteractedWithMix) {
       setHasInteractedWithMix(true);
@@ -865,7 +945,8 @@ export default function ResultsPageClient({
             </p>
 
             <p className="mt-1 text-[11px] text-neutral-500">
-              Tap "Edit mix" to change ETFs or weights. Results update in real time.
+              Tap "Edit mix" to change ETFs or weights. Results update in real
+              time.
             </p>
           </section>
         ) : (
@@ -874,7 +955,10 @@ export default function ResultsPageClient({
               <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 text-[10px] font-semibold text-white">
                 i
               </span>
-              <span>Edit ETF weights or tickers below to see exposure update instantly.</span>
+              <span>
+                Edit ETF weights or tickers below to see exposure update
+                instantly.
+              </span>
             </div>
             <PortfolioInput
               positions={positions}
@@ -1023,15 +1107,24 @@ export default function ResultsPageClient({
                 {!isLoading && !error && hasExposure && (
                   <>
                     {slide === 0 && (
-                      <ExposureSummary exposure={exposure} showHeader={false} />
+                      <ExposureSummary
+                        exposure={exposure}
+                        showHeader={false}
+                      />
                     )}
 
                     {slide === 1 && (
-                      <RegionExposureChart exposure={exposure} variant="bare" />
+                      <RegionExposureChart
+                        exposure={exposure}
+                        variant="bare"
+                      />
                     )}
 
                     {slide === 2 && (
-                      <SectorBreakdownCard exposure={exposure} variant="bare" />
+                      <SectorBreakdownCard
+                        exposure={exposure}
+                        variant="bare"
+                      />
                     )}
 
                     {slide === 3 && (
@@ -1150,7 +1243,9 @@ export default function ResultsPageClient({
                       {pos.symbol || "—"}
                     </span>
                     <span className="tabular-nums text-neutral-700">
-                      {(pos.weightPct ?? 0).toFixed(1).replace(/\.0$/, "")}%
+                      {(pos.weightPct ?? 0)
+                        .toFixed(1)
+                        .replace(/\.0$/, "")}
                     </span>
                   </li>
                 ),
@@ -1159,17 +1254,18 @@ export default function ResultsPageClient({
           )}
         </section>
 
-{/* Friendly orientation section (subtle helper style) */}
-<section className="mt-4 space-y-2 rounded-2xl border border-neutral-200 bg-neutral-50/70 p-4 text-[11px] text-neutral-600 shadow-sm">
-  <p className="font-medium text-neutral-800">What you can do here</p>
-  <ul className="list-disc space-y-1 pl-4">
-    <li>Adjust ETFs above and watch everything update in real time.</li>
-    <li>Save this mix to your dashboard to revisit later.</li>
-    <li>Compare your mix with benchmarks using the tabs above.</li>
-    <li>Try a popular template in “Top mixes”.</li>
-  </ul>
-</section>
-
+        {/* Friendly orientation section (subtle helper style) */}
+        <section className="mt-4 space-y-2 rounded-2xl border border-neutral-200 bg-neutral-50/70 p-4 text-[11px] text-neutral-600 shadow-sm">
+          <p className="font-medium text-neutral-800">
+            What you can do here
+          </p>
+          <ul className="list-disc space-y-1 pl-4">
+            <li>Adjust ETFs above and watch everything update in real time.</li>
+            <li>Save this mix to your dashboard to revisit later.</li>
+            <li>Compare your mix with benchmarks using the tabs above.</li>
+            <li>Try a popular template in “Top mixes”.</li>
+          </ul>
+        </section>
 
         <AuthDialog
           open={authDialogOpen}

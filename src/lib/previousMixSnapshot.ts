@@ -1,50 +1,45 @@
-import { getSupabaseBrowserClient } from "@/lib/supabase";
+// src/lib/previousMixSnapshot.ts
 import type { UserPosition } from "@/lib/exposureEngine";
+import { logMixEvent } from "@/lib/logMixEvent";
 
-export type PreviousMixContext = {
-  source: "scratch" | "template" | "url";
+export type PreviousMixSource = "scratch" | "template" | "url";
+
+export type PreviousMixMeta = {
+  source: PreviousMixSource;
   templateKey?: string | null;
   benchmarkSymbol?: string | null;
   anonId: string;
-  userId: string | null;
+  userId?: string | null; // optional, currently only used for analytics if you want
 };
 
-export type AddLocalSnapshotFn = (
-  positions: UserPosition[],
-) => { didAdd: boolean; mixId: string | null; key: string | null };
+type AddLocalMixSnapshotFn = (positions: UserPosition[]) => void;
 
 export async function snapshotPreviousMix(
   positions: UserPosition[],
-  context: PreviousMixContext,
-  addLocalSnapshot: AddLocalSnapshotFn,
-): Promise<{ didAdd: boolean; mixId: string | null }> {
-  const { didAdd, mixId } = addLocalSnapshot(positions);
+  meta: PreviousMixMeta,
+  addLocalMixSnapshot: AddLocalMixSnapshotFn,
+): Promise<void> {
+  if (!positions || positions.length === 0) return;
 
-  if (!didAdd) {
-    return { didAdd: false, mixId: null };
-  }
+  // 1) Update local chips immediately
+  addLocalMixSnapshot(positions);
 
+  // 2) Best-effort logging through the existing admin-powered API route
   try {
-    const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.from("mix_events").insert({
-      positions,
-      benchmark_symbol: context.benchmarkSymbol ?? null,
-      source: context.source,
-      template_key: context.templateKey ?? null,
-      referrer: "previous_mix_snapshot",
-      anon_id: context.anonId,
-      user_id: context.userId,
+    await logMixEvent({
+      positions: positions.map((p) => ({
+        symbol: p.symbol,
+        weightPct: p.weightPct ?? 0,
+      })),
+      benchmarkSymbol: meta.benchmarkSymbol ?? null,
+      source: meta.source,
+      templateKey: meta.templateKey ?? null,
+      // referrer is optional; you can use this to distinguish flows if you want
+      referrer: "results_previous_mix_snapshot",
+      anonId: meta.anonId,
     });
-
-    if (error) {
-      // Best-effort logging only
-      console.error("[mix_events] snapshot insert error", error.message);
-    }
-  } catch (error) {
-    // Best-effort logging only
-    const err = error as Error;
-    console.error("[mix_events] snapshot insert unexpected error", err?.message);
+  } catch (err) {
+    console.error("[mix_events] snapshot insert error", err);
+    // best-effort: don't throw to the UI
   }
-
-  return { didAdd: true, mixId };
 }
