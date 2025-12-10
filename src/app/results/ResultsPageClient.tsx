@@ -44,7 +44,6 @@ import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { getAnonId } from "@/lib/analytics/anonId";
 import { snapshotPreviousMix } from "@/lib/previousMixSnapshot";
 import SaveMixCta from "./SaveMixCta";
-import SaveMixStickyBar from "./SaveMixStickyBar";
 import {
   useRecentMixes,
   type RecentMix,
@@ -432,7 +431,6 @@ export default function ResultsPageClient({
   const resultsLoadedRef = useRef(false);
   const { shareElementAsImage, isSharing } = useImageShare();
   const exposureLoadedRef = useRef(false);
-  const stickyImpressionRef = useRef(false);
   const initialSnapshotRef = useRef(false);
 
   const top10 = useMemo(() => {
@@ -704,8 +702,6 @@ export default function ResultsPageClient({
     hasValidPositions &&
     hasExposure &&
     (hasInteractedWithMix || hasPositionsParam);
-  const shouldShowStickySave =
-  !isAuthenticated && hasValidPositions && hasExposure && !isLoading && !error;
 
 
   // Fire once when exposure data is available
@@ -719,16 +715,6 @@ export default function ResultsPageClient({
       positions_count: positionsCount,
     });
   }, [capture, error, exposure.length, hasExposure, isLoading, positionsCount]);
-
-  // Fire once when sticky save CTA becomes visible
-  useEffect(() => {
-    if (shouldShowStickySave && !stickyImpressionRef.current) {
-      stickyImpressionRef.current = true;
-      capture("results_sticky_save_visible", {
-        positions_count: positionsCount,
-      });
-    }
-  }, [shouldShowStickySave, capture, positionsCount]);
 
   const isRoughlyComplete = (total: number) => total >= 99 && total <= 101;
 
@@ -931,14 +917,6 @@ export default function ResultsPageClient({
 
   return (
     <>
-      {shouldShowStickySave && (
-        <SaveMixStickyBar
-          onSaveClick={handleSaveClick}
-          isSaving={isSaving}
-          hasSaved={hasSaved}
-        />
-      )}
-
       <div className="space-y-5 md:space-y-6">
         {isInputCollapsed ? (
           <section className="flex flex-col gap-2 rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
