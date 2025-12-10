@@ -140,20 +140,40 @@ export default function HomePage() {
         {/* HERO */}
         <section className="space-y-2">
           <h1 className="text-2xl font-semibold text-neutral-900 md:text-3xl">
-            ETF Look-Through
+            ETF look-through for DIY investors
           </h1>
           <p className="mt-2 text-sm text-neutral-700">
             Mix a few ETFs and we’ll show you the real stocks, sectors, and
             regions underneath.
           </p>
+          <p className="text-xs text-neutral-500 md:text-sm">
+            Built for long-term ETF investors who want to see what they actually own.
+          </p>
+
+          {/* “Designed for” chips */}
+        <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-neutral-600">
+          <span className="inline-flex items-center rounded-full bg-neutral-100 px-3 py-1">
+            Made for Canadian &amp; U.S. investors
+          </span>
+          <span className="inline-flex items-center rounded-full bg-neutral-100 px-3 py-1">
+            Works with any ETF mix
+          </span>
+          <span className="inline-flex items-center rounded-full bg-neutral-100 px-3 py-1">
+            Simple, long-term investing tools
+          </span>
+        </div>
+
         </section>
 
         {/* QUICK START CARD */}
         <section className="space-y-3 rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm">
-          <header className="mb-3">
+          <header className="mb-3 space-y-1">
             <h2 className="text-base font-semibold text-neutral-900">
               Try a preset — results load instantly
             </h2>
+            <p className="text-xs text-neutral-600">
+              Click any mix and we&apos;ll show you the stocks, sectors, and regions inside it.
+            </p>
           </header>
 
           <QuickStartTemplates
@@ -227,17 +247,30 @@ export default function HomePage() {
 
         {/* PORTFOLIO INPUT — single strong card, title lives inside component */}
         <section ref={step2Ref} className="space-y-3">
+          <div className="space-y-1 text-[11px] text-neutral-500">
+            <p className="font-medium uppercase tracking-[0.12em] text-neutral-500">
+              How it works
+            </p>
+            <ol className="space-y-1 text-[11px] text-neutral-600">
+              <li>1. Add your ETFs and their allocations.</li>
+              <li>2. We look through all the underlying holdings.</li>
+              <li>3. You see the real stocks, sectors, regions, and benchmark tilts.</li>
+            </ol>
+          </div>
+
           <PortfolioInput
             positions={positions}
             onChange={setPositions}
             onAnalyze={() => handleAnalyze()}
           />
+
           {feedbackMessage && (
             <p className="text-xs text-rose-500">{feedbackMessage}</p>
           )}
 
           <div className="mt-3 space-y-1 text-[11px] text-neutral-500">
             <p>For education only. This isn&apos;t investment advice.</p>
+            <p>No login required to try it. We don&apos;t manage money or trade — we just analyze what&apos;s inside your ETFs.</p>
           </div>
         </section>
       </div>
