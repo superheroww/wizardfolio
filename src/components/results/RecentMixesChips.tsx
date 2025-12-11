@@ -51,7 +51,7 @@ export default function RecentMixesChips({
                 });
                 onSelectMix(mix);
               }}
-              className="inline-flex max-w-[60%] items-center truncate rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200"
+              className="inline-flex max-w-[90%] items-center truncate rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200"
             >
               <span className="truncate">{mix.label}</span>
             </button>

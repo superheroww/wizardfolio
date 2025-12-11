@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
 
     // Country from Vercel's geo header (e.g., "CA", "US")
     const countryCode = req.headers.get("x-vercel-ip-country") ?? null;
+    console.log("countryCode:", countryCode);
 
     const supabase = getSupabaseAdminClient();
 

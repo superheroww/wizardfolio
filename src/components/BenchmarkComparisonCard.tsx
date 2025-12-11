@@ -189,13 +189,17 @@ export default function BenchmarkComparisonCard({
 
   const targetStockRowsData = useMemo<BenchmarkExposureRow[]>(() => {
     const aggregated = aggregateHoldingsBySymbol(normalizedTargetExposure);
-    return aggregated.map((row) => ({
-      group_key:
-        row.holding_symbol?.trim().toUpperCase() ??
-        row.symbol?.toUpperCase() ??
-        "OTHER",
-      weight_pct: row.total_weight_pct ?? 0,
-    }));
+    return aggregated.map((row) => {
+      const holdingSymbol = (row as any).holding_symbol as string | undefined;
+      const genericSymbol = (row as any).symbol as string | undefined;
+      return {
+        group_key:
+          holdingSymbol?.trim().toUpperCase() ??
+          genericSymbol?.trim().toUpperCase() ??
+          "OTHER",
+        weight_pct: row.total_weight_pct ?? 0,
+      };
+    });
   }, [normalizedTargetExposure]);
 
   const targetSectorRowsData = useMemo<BenchmarkExposureRow[]>(

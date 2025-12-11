@@ -88,14 +88,14 @@ const SLIDE_INDICES: SlideIndex[] = [0, 1, 2, 3, 4];
 
 const COMPARE_UPSELL_STORAGE_KEY = "wizardfolio_compare_upsell_seen_v1";
 
-type CompareTarget =
+type ComparisonTarget =
   | { type: "benchmark"; benchmarkId: string }
-  | { type: "previous"; mix: RecentMix };
+  | { type: "previous_mix"; mix: RecentMix };
 
 type CompareOptionsPanelProps = {
   chipClassName: string;
   benchmarks: BenchmarkMix[];
-  activeTarget: CompareTarget;
+  activeTarget: ComparisonTarget;
   recentMixes: RecentMix[];
   isAuthenticated: boolean;
   onBenchmarkSelect: (benchmarkId: string) => void;
@@ -121,43 +121,18 @@ function CompareOptionsPanel({
       : chipClassName;
 
   const activePreviousMixId =
-    activeTarget.type === "previous" ? activeTarget.mix.id : null;
+    activeTarget.type === "previous_mix" ? activeTarget.mix.id : null;
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white/90 p-4 shadow-sm">
       <div className="mb-3">
         <h3 className="text-sm font-semibold text-neutral-900">
-          Compare with
+          Compare with your previous mixes
         </h3>
       </div>
 
       <div className="space-y-4">
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-600">
-            Benchmarks
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {benchmarks.map((benchmark) => (
-              <button
-                key={benchmark.id}
-                type="button"
-                className={getChipClass(
-                  activeTarget.type === "benchmark" &&
-                    activeTarget.benchmarkId === benchmark.id,
-                )}
-                onClick={() => onBenchmarkSelect(benchmark.id)}
-              >
-                {getBenchmarkLabel(benchmark)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-600">
-            Your previous mixes
-          </p>
-
           {recentMixes.length === 0 ? (
             <p className="text-xs text-neutral-500">
               You don't have any previous mixes yet. Adjust the ETFs above and
@@ -166,7 +141,7 @@ function CompareOptionsPanel({
           ) : (
             <>
               <div className="flex flex-wrap gap-2">
-                {recentMixes.map((mix) => (
+                {recentMixes.slice(0, 3).map((mix) => (
                   <button
                     key={mix.id}
                     type="button"
@@ -177,23 +152,13 @@ function CompareOptionsPanel({
                   </button>
                 ))}
               </div>
-
-              {showUpsell && !isAuthenticated && (
-                <div className="mt-3 rounded-2xl border border-dashed border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
-                  <p className="font-medium">Enjoying the compare view?</p>
-                  <p className="mt-0.5">
-                    Create a free account to keep your favourite mixes in one
-                    place and compare them anytime.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={onSignInClick}
-                    className="mt-2 inline-flex items-center rounded-full bg-neutral-900 px-3 py-1 text-[11px] font-semibold text-white hover:bg-neutral-800"
-                  >
-                    Create free account
-                  </button>
-                </div>
+              {recentMixes.length > 3 && (
+                <p className="mt-2 text-[11px] text-neutral-500">
+                  Showing your 3 most recent mixes.
+                </p>
               )}
+
+              {/* upsell below */}
             </>
           )}
         </div>
@@ -345,18 +310,18 @@ export default function ResultsPageClient({
   const [statusMessage, setStatusMessage] = useState<
     { type: "success" | "error"; message: string } | null
   >(null);
-  const [isCompareMode, setIsCompareMode] = useState(false);
   const [compareCount, setCompareCount] = useState(0);
   const [hasShownCompareUpsell, setHasShownCompareUpsell] = useState(false);
-  const [compareTarget, setCompareTarget] = useState<CompareTarget>({
-    type: "benchmark",
-    benchmarkId: defaultBenchmark.id,
-  });
-  const [compareTargetExposure, setCompareTargetExposure] =
+  const [comparisonTarget, setComparisonTarget] =
+    useState<ComparisonTarget>({
+      type: "benchmark",
+      benchmarkId: defaultBenchmark.id,
+    });
+  const [comparisonTargetExposure, setComparisonTargetExposure] =
     useState<ApiExposureRow[] | null>(null);
 
   useEffect(() => {
-    setCompareTarget((current) =>
+    setComparisonTarget((current: ComparisonTarget) =>
       current.type === "benchmark"
         ? current.benchmarkId === defaultBenchmark.id
           ? current
@@ -394,14 +359,14 @@ export default function ResultsPageClient({
 
   const selectedBenchmark = useMemo(() => {
     const activeId =
-      compareTarget.type === "benchmark"
-        ? compareTarget.benchmarkId
+      comparisonTarget.type === "benchmark"
+        ? comparisonTarget.benchmarkId
         : defaultBenchmark.id;
 
     return (
       BENCHMARK_MIXES.find((mix) => mix.id === activeId) ?? defaultBenchmark
     );
-  }, [compareTarget, defaultBenchmark]);
+  }, [comparisonTarget, defaultBenchmark]);
 
   useEffect(() => {
     const searchParams = buildPositionsSearchParams(normalizedPositions);
@@ -410,13 +375,26 @@ export default function ResultsPageClient({
   }, [normalizedPositions]);
 
   const benchmarkSymbol =
-    compareTarget.type === "benchmark"
+    comparisonTarget.type === "benchmark"
       ? selectedBenchmark.positions?.[0]?.symbol ?? selectedBenchmark.id
       : "previous_mix";
   const benchmarkLabel =
-    compareTarget.type === "benchmark"
+    comparisonTarget.type === "benchmark"
       ? getBenchmarkLabel(selectedBenchmark)
       : "Previous mix";
+  const compareTargetForCard = useMemo(() => {
+    if (comparisonTarget.type === "benchmark") {
+      return {
+        type: "benchmark" as const,
+        benchmarkId: comparisonTarget.benchmarkId,
+      };
+    }
+
+    return {
+      type: "previous" as const,
+      mix: comparisonTarget.mix,
+    };
+  }, [comparisonTarget]);
 
   const handleBenchmarkChange = (newBenchmarkId: string) => {
     const nextBenchmark =
@@ -436,11 +414,22 @@ export default function ResultsPageClient({
       source_page: "results",
       mix_name: mixName,
       positions_count: positionsCount,
-      benchmark_source: compareTarget.type,
+      benchmark_source: comparisonTarget.type,
     });
 
-    setCompareTarget({ type: "benchmark", benchmarkId: newBenchmarkId });
-    setCompareTargetExposure(null);
+    setComparisonTarget({ type: "benchmark", benchmarkId: newBenchmarkId });
+    setComparisonTargetExposure(null);
+  };
+
+  const handleBenchmarkChipSelect = (benchmarkId: string) => {
+    capture("compare_with_benchmark_chip_clicked", {
+      benchmark_id: benchmarkId,
+      source_page: "results",
+      mix_name: mixName,
+      positions_count: positionsCount,
+    });
+
+    handleBenchmarkChange(benchmarkId);
   };
 
   // Helper to centralize PostHog props for save actions
@@ -557,10 +546,6 @@ export default function ResultsPageClient({
     void saveMix("auth");
   };
 
-  const handleCompareClick = () => {
-    setIsCompareMode((prev) => !prev);
-  };
-
   const handleCompareUpsellSignIn = () => {
     setAuthDialogOpen(true);
     capture("compare_upsell_signin_clicked", {
@@ -580,8 +565,8 @@ export default function ResultsPageClient({
     const nextCount = compareCount + 1;
     setCompareCount(nextCount);
 
-    setCompareTarget({ type: "previous", mix });
-    setCompareTargetExposure(null);
+    setComparisonTarget({ type: "previous_mix", mix });
+    setComparisonTargetExposure(null);
 
     if (!user && !hasShownCompareUpsell && nextCount >= 1) {
       setHasShownCompareUpsell(true);
@@ -731,30 +716,30 @@ export default function ResultsPageClient({
   useEffect(() => {
     if (isLoading || !userExposureMix.length) {
       setBenchmarkComparison(null);
-      setCompareTargetExposure(null);
+      setComparisonTargetExposure(null);
       return;
     }
 
     const controller = new AbortController();
     const targetBenchmark =
-      compareTarget.type === "benchmark"
-        ? BENCHMARK_MIXES.find((mix) => mix.id === compareTarget.benchmarkId) ??
+      comparisonTarget.type === "benchmark"
+        ? BENCHMARK_MIXES.find((mix) => mix.id === comparisonTarget.benchmarkId) ??
           defaultBenchmark
         : null;
     const targetPositions =
-      compareTarget.type === "benchmark"
+      comparisonTarget.type === "benchmark"
         ? targetBenchmark?.positions ?? []
-        : compareTarget.mix.positions ?? [];
+        : comparisonTarget.mix.positions ?? [];
 
     if (!targetPositions.length) {
       setBenchmarkComparison(null);
-      setCompareTargetExposure(null);
+      setComparisonTargetExposure(null);
       setBenchmarkError("Comparison mix is empty.");
       setIsBenchmarkLoading(false);
       return;
     }
 
-    const benchmarkSource = compareTarget.type;
+    const benchmarkSource = comparisonTarget.type;
     const benchmarkSymbolForEvent =
       benchmarkSource === "benchmark"
         ? targetBenchmark?.positions?.[0]?.symbol ??
@@ -790,7 +775,7 @@ export default function ResultsPageClient({
 
         if (controller.signal.aborted) return;
         setBenchmarkComparison(comparison);
-        setCompareTargetExposure(benchmarkRows);
+        setComparisonTargetExposure(benchmarkRows);
 
         capture("results_benchmark_loaded", {
           benchmark_symbol: benchmarkSymbolForEvent,
@@ -804,7 +789,7 @@ export default function ResultsPageClient({
           err?.message || "Unable to compare with the selected mix.",
         );
         setBenchmarkComparison(null);
-        setCompareTargetExposure(null);
+        setComparisonTargetExposure(null);
 
         capture("results_benchmark_error", {
           error_message: String(err?.message || "unknown"),
@@ -826,7 +811,7 @@ export default function ResultsPageClient({
   }, [
     isLoading,
     userExposureMix,
-    compareTarget,
+    comparisonTarget,
     capture,
     positionsCount,
     defaultBenchmark,
@@ -924,19 +909,6 @@ export default function ResultsPageClient({
   const compareChipClass =
     "inline-flex items-center rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs font-semibold text-neutral-800 hover:bg-neutral-50";
   const showCompareUpsell = !isAuthenticated && hasShownCompareUpsell;
-  const renderComparePanel = () => (
-    <CompareOptionsPanel
-      chipClassName={compareChipClass}
-      benchmarks={BENCHMARK_MIXES}
-      activeTarget={compareTarget}
-      recentMixes={recentMixes}
-      isAuthenticated={isAuthenticated}
-      onBenchmarkSelect={handleBenchmarkChange}
-      onCompareWithMix={handleCompareWithPreviousMix}
-      onSignInClick={handleCompareUpsellSignIn}
-      showUpsell={showCompareUpsell}
-    />
-  );
 
   // Fire once when exposure data is available
   useEffect(() => {
@@ -1220,12 +1192,6 @@ export default function ResultsPageClient({
           </section>
         )}
 
-        {isCompareMode && (
-          <div className="hidden md:block md:pt-2">
-            {renderComparePanel()}
-          </div>
-        )}
-
         <div>
           <div className="mb-3 hidden items-center justify-between gap-3 text-sm md:flex">
             <div className="flex flex-wrap items-center gap-2">
@@ -1434,27 +1400,20 @@ export default function ResultsPageClient({
           </div>
         </div>
 
-        {isCompareMode && (
-          <div className="mt-4 border-t border-neutral-100 pt-4 md:hidden">
-            {renderComparePanel()}
+        {hasValidPositions && hasExposure && (
+          <div className="mt-4">
+            <CompareOptionsPanel
+              chipClassName={compareChipClass}
+              benchmarks={BENCHMARK_MIXES}
+              activeTarget={comparisonTarget}
+              recentMixes={recentMixes}
+              isAuthenticated={isAuthenticated}
+              onBenchmarkSelect={handleBenchmarkChipSelect}
+              onCompareWithMix={handleCompareWithPreviousMix}
+              onSignInClick={handleCompareUpsellSignIn}
+              showUpsell={showCompareUpsell}
+            />
           </div>
-        )}
-
-        {shouldShowSaveCta && (
-          <SaveMixCta
-            onSaveClick={handleSaveClick}
-            onCompareClick={handleCompareClick}
-            isSaving={isSaving}
-            hasSaved={hasSaved}
-            statusMessage={statusMessage}
-          />
-        )}
-
-        {isCompareMode && hasValidPositions && (
-          <p className="mt-4 mb-2 text-[11px] text-neutral-500">
-            Compare your current mix with benchmarks or your previous mixes
-            below.
-          </p>
         )}
 
         {hasValidPositions && (
@@ -1471,11 +1430,22 @@ export default function ResultsPageClient({
             positionsCount={positionsCount}
             benchmarkSymbol={benchmarkSymbol}
             hasBenchmarkComparison={Boolean(benchmarkComparison)}
-            compareTarget={compareTarget}
+            compareTarget={compareTargetForCard}
             benchmarkError={benchmarkError}
             isBenchmarkLoading={isBenchmarkLoading}
-            targetExposure={compareTargetExposure ?? []}
+            targetExposure={comparisonTargetExposure ?? []}
           />
+        )}
+
+        {shouldShowSaveCta && (
+          <div className="mt-4">
+            <SaveMixCta
+              onSaveClick={handleSaveClick}
+              isSaving={isSaving}
+              hasSaved={hasSaved}
+              statusMessage={statusMessage}
+            />
+          </div>
         )}
 
         {/* Friendly orientation section (subtle helper style) */}
@@ -1486,7 +1456,10 @@ export default function ResultsPageClient({
           <ul className="list-disc space-y-1 pl-4">
             <li>Adjust ETFs above and watch everything update in real time.</li>
             <li>Save this mix to your dashboard to revisit later.</li>
-            <li>Compare your mix with benchmarks using the tabs above.</li>
+            <li>
+              Compare your mix with benchmarks or your previous mixes using the
+              Compare button.
+            </li>
             <li>Try a popular template in “Top mixes”.</li>
           </ul>
         </section>
