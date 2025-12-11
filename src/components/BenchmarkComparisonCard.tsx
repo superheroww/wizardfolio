@@ -6,16 +6,25 @@ import type { ApiExposureRow } from "@/lib/exposureEngine";
 import type { BenchmarkMix } from "@/lib/benchmarkPresets";
 import { getBenchmarkLabel } from "@/lib/benchmarkUtils";
 import type { MixComparisonResult } from "@/lib/benchmarkEngine";
-import { aggregateByRegion, aggregateBySector } from "@/lib/exposureAggregations";
-import { useBenchmarkExposure } from "@/hooks/useBenchmarkExposure";
+import {
+  aggregateByRegion,
+  aggregateBySector,
+  aggregateHoldingsBySymbol,
+} from "@/lib/exposureAggregations";
 import type { BenchmarkExposureRow } from "@/lib/benchmarkExposure";
 import BenchmarkComparisonTable, {
   type BenchmarkRow,
 } from "@/components/BenchmarkComparisonTable";
 import { buildBenchmarkRows, type RawExposureRow } from "@/lib/benchmarkDiffs";
 import type { GroupExposure } from "@/lib/benchmarkTilts";
+import { formatMixSummary } from "@/lib/mixFormatting";
+import type { RecentMix } from "@/hooks/useRecentMixes";
 
 type ExposureTab = "stock" | "sector" | "region";
+
+type CompareTarget =
+  | { type: "benchmark"; benchmarkId: string }
+  | { type: "previous"; mix: RecentMix };
 
 const EXPOSURE_TABS: { id: ExposureTab; label: string }[] = [
   { id: "stock", label: "Stocks" },
@@ -36,6 +45,10 @@ type BenchmarkComparisonCardProps = {
   positionsCount: number;
   benchmarkSymbol: string;
   hasBenchmarkComparison: boolean;
+  compareTarget: CompareTarget;
+  benchmarkError?: string | null;
+  isBenchmarkLoading?: boolean;
+  targetExposure?: ApiExposureRow[];
 };
 
 const formatPercent = (value: number | null | undefined) => {
@@ -111,6 +124,10 @@ export default function BenchmarkComparisonCard({
   positionsCount,
   benchmarkSymbol: benchmarkSymbolProp,
   hasBenchmarkComparison,
+  compareTarget,
+  benchmarkError,
+  isBenchmarkLoading = false,
+  targetExposure = [],
 }: BenchmarkComparisonCardProps) {
   const overlapPct = comparison?.overlapPct ?? 0;
   const labelSlice =
@@ -132,6 +149,18 @@ export default function BenchmarkComparisonCard({
     benchmark.positions?.[0]?.symbol ??
     benchmark.id;
   const benchmarkLabel = getBenchmarkLabel(benchmark);
+  const previousMixSummary =
+    compareTarget.type === "previous"
+      ? formatMixSummary(compareTarget.mix.positions)
+      : null;
+  const comparisonLabelText =
+    compareTarget.type === "benchmark"
+      ? benchmarkLabel
+      : previousMixSummary
+        ? `previous mix (${previousMixSummary})`
+        : "previous mix";
+  const canChangeBenchmark =
+    compareTarget.type === "benchmark" && Boolean(onBenchmarkChange);
   const normalizedSingleSymbol = singleSymbol?.trim().toUpperCase() ?? null;
 
   const handleTabChange = (tabId: ExposureTab) => {
@@ -144,6 +173,7 @@ export default function BenchmarkComparisonCard({
       previous_view_type: activeTab,
       source_card: "benchmark_comparison",
       benchmark_symbol: benchmarkSymbol,
+      benchmark_source: compareTarget.type,
       has_benchmark_enabled: hasBenchmarkComparison,
       mix_name: mixName,
       positions_count: positionsCount,
@@ -152,12 +182,39 @@ export default function BenchmarkComparisonCard({
     setActiveTab(tabId);
   };
 
-  const { data: stockRowsData, isLoading: loadingStocks, error: stockError } =
-    useBenchmarkExposure(benchmarkSymbol, "stock");
-  const { data: sectorRowsData, isLoading: loadingSectors, error: sectorError } =
-    useBenchmarkExposure(benchmarkSymbol, "sector");
-  const { data: regionRowsData, isLoading: loadingRegions, error: regionError } =
-    useBenchmarkExposure(benchmarkSymbol, "region");
+  const normalizedTargetExposure = useMemo(
+    () => targetExposure ?? [],
+    [targetExposure],
+  );
+
+  const targetStockRowsData = useMemo<BenchmarkExposureRow[]>(() => {
+    const aggregated = aggregateHoldingsBySymbol(normalizedTargetExposure);
+    return aggregated.map((row) => ({
+      group_key:
+        row.holding_symbol?.trim().toUpperCase() ??
+        row.symbol?.toUpperCase() ??
+        "OTHER",
+      weight_pct: row.total_weight_pct ?? 0,
+    }));
+  }, [normalizedTargetExposure]);
+
+  const targetSectorRowsData = useMemo<BenchmarkExposureRow[]>(
+    () =>
+      aggregateBySector(normalizedTargetExposure).map((slice) => ({
+        group_key: slice.sector,
+        weight_pct: slice.weightPct,
+      })),
+    [normalizedTargetExposure],
+  );
+
+  const targetRegionRowsData = useMemo<BenchmarkExposureRow[]>(
+    () =>
+      aggregateByRegion(normalizedTargetExposure).map((slice) => ({
+        group_key: slice.region,
+        weight_pct: slice.weightPct,
+      })),
+    [normalizedTargetExposure],
+  );
 
   const userStockExposure = useMemo<GroupExposure[]>(() => {
     return (userExposureMix ?? []).map((entry) => ({
@@ -182,10 +239,10 @@ export default function BenchmarkComparisonCard({
 
   const stockRows = useMemo(
     () =>
-      buildGroupBenchmarkRows(userStockExposure, stockRowsData, {
+      buildGroupBenchmarkRows(userStockExposure, targetStockRowsData, {
         includeSymbol: true,
       }).filter((row) => Math.abs(row.diffPct) >= MIN_TILT_DELTA),
-    [userStockExposure, stockRowsData],
+    [userStockExposure, targetStockRowsData],
   );
 
   const stockRowsSorted = useMemo(
@@ -212,13 +269,13 @@ export default function BenchmarkComparisonCard({
   );
 
   const sectorRows = useMemo(
-    () => buildGroupBenchmarkRows(userSectorExposure, sectorRowsData),
-    [userSectorExposure, sectorRowsData],
+    () => buildGroupBenchmarkRows(userSectorExposure, targetSectorRowsData),
+    [userSectorExposure, targetSectorRowsData],
   );
 
   const regionRows = useMemo(
-    () => buildGroupBenchmarkRows(userRegionExposure, regionRowsData),
-    [userRegionExposure, regionRowsData],
+    () => buildGroupBenchmarkRows(userRegionExposure, targetRegionRowsData),
+    [userRegionExposure, targetRegionRowsData],
   );
 
   const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -233,17 +290,12 @@ const renderStockTables = () => {
 
   return (
     <div className="space-y-3">
-      {/* Updated title — now consistent with sectors & regions */}
       <div className="flex items-center justify-between text-xs text-neutral-500">
         <p className="text-[11px] text-neutral-500">
-          Your mix vs {benchmarkLabel} by stock
+          Your mix vs {comparisonLabelText} by stock
         </p>
-        {loadingStocks && <span>Loading…</span>}
+        {isBenchmarkLoading && <span>Loading…</span>}
       </div>
-
-      {stockError && (
-        <p className="text-[11px] text-rose-500">{stockError}</p>
-      )}
 
       {hasRows ? (
         <div className="space-y-4">
@@ -261,10 +313,10 @@ const renderStockTables = () => {
           />
         </div>
       ) : (
-        !loadingStocks &&
-        !stockError && (
+        !isBenchmarkLoading &&
+        !benchmarkError && (
           <p className="text-xs text-neutral-500">
-            No meaningful tilts vs {benchmarkLabel}.
+            No meaningful tilts vs {comparisonLabelText}.
           </p>
         )
       )}
@@ -273,23 +325,17 @@ const renderStockTables = () => {
 };
 
 
-  const renderGroupTable = (
-    rows: BenchmarkRow[],
-    loading: boolean,
-    error: string | null,
-    dimension: string,
-  ) => {
+  const renderGroupTable = (rows: BenchmarkRow[], dimension: string) => {
     const hasRows = rows.length > 0;
 
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-neutral-500">
           <p className="text-[11px] text-neutral-500">
-            Your mix vs {benchmarkLabel} by {dimension}
+            Your mix vs {comparisonLabelText} by {dimension}
           </p>
-          {loading && <span>Loading…</span>}
+          {isBenchmarkLoading && <span>Loading…</span>}
         </div>
-        {error && <p className="text-[11px] text-rose-500">{error}</p>}
         {hasRows ? (
           <BenchmarkComparisonTable
             rows={rows}
@@ -297,8 +343,8 @@ const renderStockTables = () => {
             hideEmpty
           />
         ) : (
-          !loading &&
-          !error && (
+          !isBenchmarkLoading &&
+          !benchmarkError && (
             <p className="text-xs text-neutral-500">
               No benchmark data available.
             </p>
@@ -316,44 +362,52 @@ const renderStockTables = () => {
             Benchmark comparison
           </p>
           <h3 className="text-base font-semibold text-neutral-900">
-            {userLabel} vs {benchmark.label}
+            {userLabel} vs {comparisonLabelText}
           </h3>
         </div>
 
-        <div className="flex flex-col items-start gap-1 text-xs">
-          <label className="text-xs text-neutral-500">Benchmark</label>
-          <div className="relative inline-flex w-full min-w-[150px] rounded-full border border-neutral-200 bg-white px-3 py-1 text-left text-sm font-semibold text-neutral-900 shadow-sm transition hover:border-neutral-300">
-            <select
-              value={benchmark.id}
-              onChange={handleChange}
-              className="w-full appearance-none bg-transparent text-left text-sm font-semibold text-neutral-900 outline-none"
-            >
-              {benchmarks.map((option) => {
-                const optionSymbol =
-                  option.positions?.[0]?.symbol?.trim().toUpperCase() ??
-                  option.id.toUpperCase();
-                const isDisabled = Boolean(
-                  normalizedSingleSymbol &&
-                    optionSymbol === normalizedSingleSymbol,
-                );
+        {canChangeBenchmark && (
+          <div className="flex flex-col items-start gap-1 text-xs">
+            <label className="text-xs text-neutral-500">Benchmark</label>
+            <div className="relative inline-flex w-full min-w-[150px] rounded-full border border-neutral-200 bg-white px-3 py-1 text-left text-sm font-semibold text-neutral-900 shadow-sm transition hover:border-neutral-300">
+              <select
+                value={benchmark.id}
+                onChange={handleChange}
+                className="w-full appearance-none bg-transparent text-left text-sm font-semibold text-neutral-900 outline-none"
+              >
+                {benchmarks.map((option) => {
+                  const optionSymbol =
+                    option.positions?.[0]?.symbol?.trim().toUpperCase() ??
+                    option.id.toUpperCase();
+                  const isDisabled = Boolean(
+                    normalizedSingleSymbol &&
+                      optionSymbol === normalizedSingleSymbol,
+                  );
 
-                return (
-                  <option
-                    key={option.id}
-                    value={option.id}
-                    disabled={isDisabled}
-                  >
-                    {option.label}
-                  </option>
-                );
-              })}
-            </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">
-              ▾
-            </span>
+                  return (
+                    <option
+                      key={option.id}
+                      value={option.id}
+                      disabled={isDisabled}
+                    >
+                      {option.label}
+                    </option>
+                  );
+                })}
+              </select>
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">
+                ▾
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
+
+      {benchmarkError && (
+        <div className="rounded-2xl border border-rose-100 bg-rose-50/60 px-3 py-2 text-xs text-rose-600">
+          {benchmarkError}
+        </div>
+      )}
 
       <div className="space-y-2 text-sm text-neutral-700">
         <p>
@@ -391,20 +445,8 @@ const renderStockTables = () => {
 
         <div className="mt-4 space-y-4">
           {activeTab === "stock" && renderStockTables()}
-          {activeTab === "sector" &&
-            renderGroupTable(
-              sectorRows,
-              loadingSectors,
-              sectorError,
-              "sector",
-            )}
-          {activeTab === "region" &&
-            renderGroupTable(
-              regionRows,
-              loadingRegions,
-              regionError,
-              "region",
-            )}
+          {activeTab === "sector" && renderGroupTable(sectorRows, "sector")}
+          {activeTab === "region" && renderGroupTable(regionRows, "region")}
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import type { FC } from "react";
 
 export type SaveMixCtaProps = {
   onSaveClick: () => void;
+  onCompareClick: () => void;
   isSaving: boolean;
   hasSaved: boolean;
   statusMessage?: { type: "success" | "error"; message: string } | null;
@@ -11,6 +12,7 @@ export type SaveMixCtaProps = {
 
 const SaveMixCta: FC<SaveMixCtaProps> = ({
   onSaveClick,
+  onCompareClick,
   isSaving,
   hasSaved,
   statusMessage,
@@ -32,14 +34,23 @@ const SaveMixCta: FC<SaveMixCtaProps> = ({
             Keep this combination in your dashboard so you can revisit or stack it against another mix anytime.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onSaveClick}
-          disabled={isSaving || hasSaved}
-          className="inline-flex items-center rounded-full bg-neutral-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {label}
-        </button>
+        <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
+          <button
+            type="button"
+            onClick={onCompareClick}
+            className="inline-flex items-center rounded-full border border-neutral-300 bg-white px-4 py-1.5 text-xs font-semibold text-neutral-900 transition hover:bg-neutral-50"
+          >
+            Compare
+          </button>
+          <button
+            type="button"
+            onClick={onSaveClick}
+            disabled={isSaving || hasSaved}
+            className="inline-flex items-center rounded-full bg-neutral-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {label}
+          </button>
+        </div>
       </div>
 
       {statusMessage && (
