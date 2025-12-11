@@ -122,6 +122,8 @@ function CompareOptionsPanel({
 
   const activePreviousMixId =
     activeTarget.type === "previous_mix" ? activeTarget.mix.id : null;
+  const visibleRecentMixes = recentMixes.slice(0, 3);
+  const showRecentMixHelper = recentMixes.length > 3;
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white/90 p-4 shadow-sm">
@@ -141,7 +143,7 @@ function CompareOptionsPanel({
           ) : (
             <>
               <div className="flex flex-wrap gap-2">
-                {recentMixes.slice(0, 3).map((mix) => (
+                {visibleRecentMixes.map((mix) => (
                   <button
                     key={mix.id}
                     type="button"
@@ -152,13 +154,28 @@ function CompareOptionsPanel({
                   </button>
                 ))}
               </div>
-              {recentMixes.length > 3 && (
+              {showRecentMixHelper && (
                 <p className="mt-2 text-[11px] text-neutral-500">
                   Showing your 3 most recent mixes.
                 </p>
               )}
 
-              {/* upsell below */}
+              {showUpsell && !isAuthenticated && (
+                <div className="mt-3 rounded-2xl border border-dashed border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
+                  <p className="font-medium">Enjoying the compare view?</p>
+                  <p className="mt-0.5">
+                    Create a free account to keep your favourite mixes in one place and compare them anytime.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={onSignInClick}
+                    className="mt-2 inline-flex items-center rounded-full bg-neutral-900 px-3 py-1 text-[11px] font-semibold text-white hover:bg-neutral-800"
+                  >
+                    Create free account
+                  </button>
+                </div>
+              )}
+
             </>
           )}
         </div>
@@ -1080,6 +1097,24 @@ export default function ResultsPageClient({
       total_weight: nextTotalWeight,
       source_page: "results",
     });
+
+    let resetComparisonTarget = false;
+    setComparisonTarget((current) => {
+      if (current.type === "benchmark") {
+        return current;
+      }
+
+      resetComparisonTarget = true;
+      return {
+        type: "benchmark",
+        benchmarkId: defaultBenchmark.id,
+      };
+    });
+
+    if (resetComparisonTarget) {
+      setComparisonTargetExposure(null);
+      setBenchmarkComparison(null);
+    }
   };
 
   const handleExpandInput = () => {
@@ -1455,14 +1490,18 @@ export default function ResultsPageClient({
           </p>
           <ul className="list-disc space-y-1 pl-4">
             <li>Adjust ETFs above and watch everything update in real time.</li>
-            <li>Save this mix to your dashboard to revisit later.</li>
+            <li>Explore different views with the tabs: exposure, regions, sectors, and top holdings.</li>
             <li>
-              Compare your mix with benchmarks or your previous mixes using the
-              Compare button.
+              Compare your mix with benchmarks or your previous mixes in the compare section below.
             </li>
+            <li>
+              We’ll remember a few of your recent mixes on this device so you can quickly jump back to them.
+            </li>
+            <li>Save this mix to your dashboard to revisit later.</li>
             <li>Try a popular template in “Top mixes”.</li>
           </ul>
         </section>
+
 
         <AuthDialog
           open={authDialogOpen}
